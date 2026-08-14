@@ -218,11 +218,33 @@ async def upload_profile_photo(
     with open(filepath, "wb") as f:
         f.write(content)
 
-    url = f"/api/attendees/{attendee.id}/profile-photo"
-    attendee.profile_photo_url = f"/api/attendees/photos/{filename}"
+    url = f"/api/attendees/photos/{filename}"
+    attendee.profile_photo_url = url
     await session.commit()
     await session.refresh(attendee)
     return {"success": True, "profile_photo_url": attendee.profile_photo_url}
+
+
+@router.get("/photos/{filename}")
+async def get_profile_photo(filename: str):
+    filepath = Path(settings.profile_photo_dir) / filename
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Photo not found")
+    return FileResponse(filepath)
+
+
+@router.delete("/me/profile-photo")
+async def delete_my_profile_photo(
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    attendee = await _get_attendee_for_user(session, current_user)
+    if attendee is None:
+        raise HTTPException(status_code=404, detail="Attendee profile not found")
+
+    attendee.profile_photo_url = None
+    await session.commit()
+    return {"success": True}
 
 
 @router.get("/me/registration/status", response_model=RegistrationStatusResponse)
