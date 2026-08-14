@@ -59,8 +59,21 @@ export async function getLiveStats(
 }
 
 export function buildWsUrl(sessionId: string): string {
-  const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const rawApiUrl = import.meta.env.VITE_API_URL as string | undefined;
+  let host = window.location.host;
+  let proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+
+  if (rawApiUrl) {
+    try {
+      const url = new URL(rawApiUrl);
+      host = url.host;
+      proto = url.protocol === "https:" ? "wss:" : "ws:";
+    } catch {
+      // fallback
+    }
+  }
+
   const token = localStorage.getItem("token");
-  const base = `${proto}//${window.location.host}/api/scanner/${sessionId}/stream`;
+  const base = `${proto}//${host}/api/scanner/${sessionId}/stream`;
   return token ? `${base}?token=${encodeURIComponent(token)}` : base;
 }

@@ -1,8 +1,16 @@
 import axios from "axios";
 import { handleSessionExpired } from "../utils/session";
 
+const rawApiUrl = import.meta.env.VITE_API_URL as string | undefined;
+
+let baseURL = "/api";
+if (rawApiUrl) {
+  const cleanUrl = rawApiUrl.replace(/\/+$/, "");
+  baseURL = cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
+}
+
 const client = axios.create({
-  baseURL: "/api",
+  baseURL,
 });
 
 client.interceptors.request.use((config) => {
@@ -27,5 +35,6 @@ client.interceptors.response.use(
 export default client;
 
 export const publicClient = axios.create({
-  baseURL: "/api",
+  baseURL,
 });
+
