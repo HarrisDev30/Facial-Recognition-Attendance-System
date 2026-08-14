@@ -1,0 +1,116 @@
+:root {
+  --surface-0: #050505;
+  --surface-1: #111111;
+  --surface-2: #171717;
+  --surface-3: #1a1a1a;
+  --text-primary: #ededed;
+  --text-secondary: #888888;
+  --text-muted: #666666;
+  --border-subtle: #2a2a2a;
+  --border-strong: #3a3a3a;
+  --link: #3b82f6;
+  --link-deep: #2563eb;
+  --link-bg-soft: rgba(59, 130, 246, 0.15);
+  --error: #ff4444;
+  --error-soft: rgba(255, 68, 68, 0.15);
+  --error-deep: #cc0000;
+  --warning: #f5a623;
+  --warning-soft: rgba(245, 166, 35, 0.15);
+  --warning-deep: #cc7a00;
+  --violet: #a78bfa;
+  --violet-soft: rgba(167, 139, 250, 0.15);
+  --violet-deep: #7c3aed;
+  --cyan: #22d3ee;
+  --cyan-soft: rgba(34, 211, 238, 0.15);
+  --cyan-deep: #0891b2;
+  --highlight-pink: #f472b6;
+  --highlight-magenta: #fb7185;
+  --selection-bg: #ededed;
+  --selection-fg: #0a0a0a;
+
+  --sidebar-bg: #050505;
+  --sidebar-text: #ededed;
+  --sidebar-text-muted: rgba(237, 237, 237, 0.45);
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-active: rgba(255, 255, 255, 0.1);
+}
+
+::selection {
+  background-color: var(--selection-bg);
+  color: var(--selection-fg);
+}
+
+html, body {
+  background-color: var(--surface-0);
+  color: var(--text-primary);
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: #ffffff;
+    color: #000000;
+    padding: 2rem;
+  }
+  .print-area h1,
+  .print-area h2,
+  .print-area h3 {
+    color: #000000;
+  }
+  .print-area table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .print-area th,
+  .print-area td {
+    border: 1px solid #cccccc;
+    padding: 6px 10px;
+    text-align: left;
+    font-size: 13px;
+    color: #000000;
+  }
+  .print-area th {
+    background: #eeeeee;
+    font-weight: 600;
+  }
+.print-no-print {
+  display: none !important;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #22c55e;
+  animation: pulse-dot 1.8s ease-in-out infinite;
+  display: inline-block;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.log-row {
+  transition: background-color 0.15s ease, transform 0.15s ease;
+  cursor: default;
+}
+.log-row:hover {
+  background-color: var(--surface-2) !important;
+  transform: scale(1.01);
+}
+
+[data-expanded="true"] .menu-chevron {
+  transform: rotate(180deg);
+}

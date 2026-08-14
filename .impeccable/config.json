@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "designSystem": {
+      "enabled": true,
+      "colors": {
+        "primary": "#ededed",
+        "secondary": "#888888",
+        "surface": "#171717",
+        "background": "#050505"
+      },
+      "typography": {
+        "sans": "Inter, system-ui, -apple-system, sans-serif",
+        "mono": "JetBrains Mono, ui-monospace, monospace"
+      }
+    }
+  }
+}

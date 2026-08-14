@@ -1,0 +1,11 @@
+*.md
+*.txt
+*.pdf
+*.png
+*.jpg
+*.html
+*.rst
+*.yaml
+*.yml
+node_modules/
+dist/
