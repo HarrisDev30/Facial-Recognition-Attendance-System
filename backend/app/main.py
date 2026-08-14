@@ -109,7 +109,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -120,7 +120,7 @@ SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Permissions-Policy": "camera=(self *), microphone=()",
 }
 
 
@@ -133,15 +133,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(SecurityHeadersMiddleware)
-
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0", "*"]
-for origin in settings.cors_origins:
-    if origin != "*":
-        host = origin.split("://")[-1].split(":")[0]
-        if host not in ALLOWED_HOSTS:
-            ALLOWED_HOSTS.append(host)
-
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 
 app.include_router(auth.router)
 app.include_router(events.router)
