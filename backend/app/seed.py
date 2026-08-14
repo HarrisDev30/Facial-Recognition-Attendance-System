@@ -94,7 +94,7 @@ async def seed() -> None:
                     first_name="Dr. Alan",
                     last_name="Turing",
                     email="prof.turing@university.edu",
-                    attendee_type=AttendeeType.FACULTY,
+                    attendee_type=AttendeeType.faculty,
                     organization_id=ccis_org.id,
                 )
                 session.add(fac_prof)
@@ -119,7 +119,7 @@ async def seed() -> None:
                     first_name="John",
                     last_name="Doe",
                     email="john.doe@student.university.edu",
-                    attendee_type=AttendeeType.STUDENT,
+                    attendee_type=AttendeeType.student,
                     organization_id=ccis_org.id,
                 )
                 session.add(stud_john)
