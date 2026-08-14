@@ -203,9 +203,14 @@ async def upload_profile_photo(
             detail=f"File size exceeds maximum {settings.profile_photo_max_size // (1024*1024)} MB",
         )
 
-    ext = Path(file.filename or "photo.jpg").suffix.lower()
-    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
-        raise HTTPException(status_code=400, detail="Invalid image format (JPG, PNG, WebP allowed)")
+    ext = Path(file.filename or "").suffix.lower()
+    if not ext or ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+        if file.content_type == "image/png":
+            ext = ".png"
+        elif file.content_type == "image/webp":
+            ext = ".webp"
+        else:
+            ext = ".jpg"
 
     os.makedirs(settings.profile_photo_dir, exist_ok=True)
     filename = f"{attendee.id}_{uuid.uuid4().hex[:8]}{ext}"
