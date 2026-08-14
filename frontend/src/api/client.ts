@@ -12,6 +12,7 @@ if (rawApiUrl) {
 
 const client = axios.create({
   baseURL,
+  withCredentials: true,
 });
 
 client.interceptors.request.use((config) => {
@@ -37,4 +38,5 @@ export default client;
 
 export const publicClient = axios.create({
   baseURL,
+  withCredentials: true,
 });
