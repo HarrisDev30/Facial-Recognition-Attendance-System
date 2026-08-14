@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.production
+.env.example
 
 # Python
 __pycache__/
@@ -23,53 +24,35 @@ node_modules/
 # Build output
 frontend/dist/
 
-# IDE
+# IDE & Tooling
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 *.sublime-workspace
+.opencode/
+opencode.json
+.graphifyignore
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Internal tools / docs (not needed for running the project)
+# Internal tools & documentation (not needed in production repository)
 .agents/
 .docs/
 AGENTS.md
 DESIGN.md
+PRODUCT.md
+PHASE.md
+references image.webp
 
-# Cache
+# Cache & Graphs
 .ruff_cache/
+graphify-out/
+.impeccable/
 
 # Face recognition model binaries (auto-downloaded on first run)
 backend/models/insightface/models/buffalo_l/
 backend/models/insightface/models/buffalo_l.zip
-
-# Graphify (local-only, not needed in repo)
-graphify-out/cost.json
-graphify-out/cache/
-graphify-out/.graphify_root
-
-# opencodesettings
-opencode.json
-
-# impeccable-ignore-start
-.impeccable/config.local.json
-.impeccable/hook.cache.json
-.impeccable/hook.pending.json
-.impeccable/*.png
-.impeccable/live/server.json
-.impeccable/live/sessions/
-.impeccable/live/previews/
-.impeccable/live/annotations/
-.impeccable/live/cache/
-.impeccable/live/manual-edit-apply-transaction.json
-.impeccable/live/manual-edit-events.jsonl
-.impeccable/live/manual-edit-evidence/
-.impeccable/live/pending-manual-edits.json
-.impeccable/live/deferred-svelte-component-accepts.json
-.impeccable/live/*.png
-# impeccable-ignore-end
