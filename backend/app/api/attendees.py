@@ -214,9 +214,120 @@ async def upload_profile_photo(
         f.write(content)
 
     url = f"/api/attendees/{attendee.id}/profile-photo"
-    attendee.profile_photo_url = url
+    attendee.profile_photo_url = f"/api/attendees/photos/{filename}"
     await session.commit()
-    return {"profile_photo_url": url}
+    await session.refresh(attendee)
+    return {"success": True, "profile_photo_url": attendee.profile_photo_url}
+
+
+@router.get("/me/registration/status", response_model=RegistrationStatusResponse)
+async def get_my_registration_status(
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    attendee = await _get_attendee_for_user(session, current_user)
+    if attendee is None:
+        raise HTTPException(status_code=404, detail="Attendee profile not found")
+
+    num_emb = await registration_service.count_embeddings(session, attendee.id)
+    embeddings = await registration_service.get_embeddings(session, attendee.id)
+    last_reg = embeddings[0].created_at.isoformat() if embeddings else None
+
+    return RegistrationStatusResponse(
+        is_registered=num_emb >= 6,
+        num_embeddings=num_emb,
+        can_register=num_emb < 6,
+        last_registration=last_reg,
+    )
+
+
+@router.post("/me/embeddings", response_model=EmbeddingUploadResult)
+async def upload_my_embedding(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    image_angle: str | None = Form(None),
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    attendee = await _get_attendee_for_user(session, current_user)
+    if attendee is None:
+        raise HTTPException(status_code=404, detail="Attendee profile not found")
+
+    image_bytes = await file.read()
+    if len(image_bytes) > settings.max_image_size_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Image too large — maximum {settings.max_image_size_bytes // (1024*1024)} MB",
+        )
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    face_data = await face_recognition.extract_embeddings(image_bytes)
+    if not face_data:
+        raise HTTPException(
+            status_code=400,
+            detail="No face detected in the uploaded image",
+        )
+
+    if len(face_data) > 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Multiple faces detected — ensure only one face is in frame",
+        )
+
+    embedding_bytes, det_score, _ = face_data[0]
+
+    emb = await registration_service.save_embedding(
+        session=session,
+        attendee_id=attendee.id,
+        embedding_bytes=embedding_bytes,
+        camera_angle=image_angle,
+    )
+
+    background_tasks.add_task(force_rebuild)
+    num_emb = await registration_service.count_embeddings(session, attendee.id)
+
+    return EmbeddingUploadResult(
+        success=True,
+        embedding_id=str(emb.id),
+        num_embeddings=num_emb,
+        message=f"Face embedding saved for {image_angle or 'frontal'}",
+    )
+
+
+@router.delete("/me/embeddings/{embedding_id}", response_model=EmbeddingDeleteResult)
+async def delete_my_embedding(
+    embedding_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    attendee = await _get_attendee_for_user(session, current_user)
+    if attendee is None:
+        raise HTTPException(status_code=404, detail="Attendee profile not found")
+
+    ok = await registration_service.delete_embedding(session, embedding_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Embedding not found")
+
+    background_tasks.add_task(force_rebuild)
+    num_emb = await registration_service.count_embeddings(session, attendee.id)
+    return EmbeddingDeleteResult(success=True, remaining_embeddings=num_emb)
+
+
+@router.post("/me/registration/reset", response_model=RegistrationResetResult)
+async def reset_my_registration(
+    background_tasks: BackgroundTasks,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    attendee = await _get_attendee_for_user(session, current_user)
+    if attendee is None:
+        raise HTTPException(status_code=404, detail="Attendee profile not found")
+
+    await registration_service.reset_registration(session, attendee.id)
+    background_tasks.add_task(force_rebuild)
+    return RegistrationResetResult(success=True, status="reset_complete")
 
 
 @router.get("/{attendee_id}/profile-photo")
@@ -392,4 +503,27 @@ async def _get_attendee_for_user(session: AsyncSession, user: User) -> Attendee 
     result = await session.execute(
         select(Attendee).where(Attendee.user_id == user.id)
     )
-    return result.scalar_one_or_none()
+    attendee = result.scalar_one_or_none()
+    if attendee is not None:
+        return attendee
+
+    # Auto-create an Attendee profile for this user if missing
+    org_res = await session.execute(select(Organization).limit(1))
+    org = org_res.scalar_one_or_none()
+    if not org:
+        return None
+
+    new_attendee = Attendee(
+        user_id=user.id,
+        organization_id=org.id,
+        identifier=user.email.split("@")[0],
+        first_name=user.first_name or "User",
+        last_name=user.last_name or "Account",
+        email=user.email,
+        attendee_type=AttendeeType.student,
+        consent_given=True,
+    )
+    session.add(new_attendee)
+    await session.commit()
+    await session.refresh(new_attendee)
+    return new_attendee
