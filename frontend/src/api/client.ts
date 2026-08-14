@@ -1,7 +1,8 @@
 import axios from "axios";
 import { handleSessionExpired } from "../utils/session";
 
-const rawApiUrl = import.meta.env.VITE_API_URL as string | undefined;
+const DEFAULT_API_URL = "https://silver-spork-jrj976w6xwggf799-8000.app.github.dev";
+const rawApiUrl = (import.meta.env.VITE_API_URL as string | undefined) || DEFAULT_API_URL;
 
 let baseURL = "/api";
 if (rawApiUrl) {
@@ -37,4 +38,3 @@ export default client;
 export const publicClient = axios.create({
   baseURL,
 });
-
