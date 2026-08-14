@@ -36,7 +36,10 @@ def do_run_migrations(connection):
 import ssl
 
 async def run_async_migrations() -> None:
-    connect_args = {}
+    connect_args = {
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+    }
     if "neon.tech" in settings.database_url or "ssl" in settings.database_url:
         ssl_context = ssl.create_default_context()
         ssl_context.check_hostname = False
