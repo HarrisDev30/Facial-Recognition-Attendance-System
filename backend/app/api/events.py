@@ -121,6 +121,32 @@ async def list_upcoming_events(
     return UpcomingEventListResponse(items=items, total=total, page=page, size=size)
 
 
+@router.get("/all", response_model=UpcomingEventListResponse)
+async def list_all_events(
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    session: AsyncSession = Depends(get_session),
+):
+    skip = (page - 1) * size
+    events_with_counts = await event_service.get_upcoming_events(session, skip=skip, limit=size)
+    total = await event_service.count_upcoming_events(session)
+    items = [
+        UpcomingEventResponse(
+            id=str(event.id),
+            name=event.name,
+            event_type=event.event_type.value if hasattr(event.event_type, "value") else str(event.event_type),
+            description=event.description,
+            venue=event.venue,
+            date=event.start_date.isoformat() if event.start_date else "",
+            sessions_count=sessions_count,
+            active_sessions_count=active_sessions_count,
+            photo_url=event.photo_url,
+        )
+        for event, sessions_count, active_sessions_count in events_with_counts
+    ]
+    return UpcomingEventListResponse(items=items, total=total, page=page, size=size)
+
+
 @router.get("/{event_id}", response_model=EventResponse)
 async def get_event(
     event_id: uuid.UUID,
