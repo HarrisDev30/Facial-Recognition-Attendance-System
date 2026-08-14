@@ -338,4 +338,26 @@ async def session_summary(
 
 async def _get_attendee_for_user(session: AsyncSession, user: User) -> Attendee | None:
     result = await session.execute(select(Attendee).where(Attendee.user_id == user.id))
-    return result.scalar_one_or_none()
+    attendee = result.scalar_one_or_none()
+    if attendee is not None:
+        return attendee
+
+    org_res = await session.execute(select(Organization).limit(1))
+    org = org_res.scalar_one_or_none()
+    if not org:
+        return None
+
+    new_attendee = Attendee(
+        user_id=user.id,
+        organization_id=org.id,
+        identifier=user.email.split("@")[0],
+        first_name=user.first_name or "User",
+        last_name=user.last_name or "Account",
+        email=user.email,
+        attendee_type=AttendeeType.student,
+        consent_given=True,
+    )
+    session.add(new_attendee)
+    await session.commit()
+    await session.refresh(new_attendee)
+    return new_attendee
