@@ -33,8 +33,16 @@ def do_run_migrations(connection):
         context.run_migrations()
 
 
+import ssl
+
 async def run_async_migrations() -> None:
-    connectable = create_async_engine(settings.database_url)
+    connect_args = {}
+    if "neon.tech" in settings.database_url or "ssl" in settings.database_url:
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        connect_args["ssl"] = ssl_context
+    connectable = create_async_engine(settings.database_url, connect_args=connect_args)
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
     await connectable.dispose()
