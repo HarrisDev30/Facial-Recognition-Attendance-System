@@ -10,8 +10,17 @@ import type {
   UserProfileResponse,
 } from "../types/auth";
 
+const rawApiUrl = import.meta.env.VITE_API_URL as string | undefined;
+
+let authBaseURL = "/api/auth";
+if (rawApiUrl) {
+  const cleanUrl = rawApiUrl.replace(/\/+$/, "");
+  const base = cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
+  authBaseURL = `${base}/auth`;
+}
+
 const authClient = axios.create({
-  baseURL: "/api/auth",
+  baseURL: authBaseURL,
 });
 
 authClient.interceptors.response.use(
