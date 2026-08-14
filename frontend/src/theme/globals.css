@@ -83,14 +83,16 @@ html, body {
     background: #eeeeee;
     font-weight: 600;
   }
-.print-no-print {
-  display: none !important;
+  .print-no-print {
+    display: none !important;
+  }
 }
 
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
 .pulse-dot {
   width: 8px;
   height: 8px;
@@ -106,6 +108,7 @@ html, body {
   transition: background-color 0.15s ease, transform 0.15s ease;
   cursor: default;
 }
+
 .log-row:hover {
   background-color: var(--surface-2) !important;
   transform: scale(1.01);
