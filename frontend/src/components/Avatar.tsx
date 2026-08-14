@@ -12,6 +12,20 @@ interface AvatarProps {
 const SIZE_MAP = { sm: 40, md: 80, lg: 120 };
 const FONT_SIZES = { sm: 14, md: 28, lg: 40 };
 
+const DEFAULT_API_URL = "https://silver-spork-jrj976w6xwggf799-8000.app.github.dev";
+const envUrl = import.meta.env.VITE_API_URL as string | undefined;
+const BASE_URL = (envUrl && envUrl.trim() !== "") ? envUrl.trim() : DEFAULT_API_URL;
+
+function resolveImageUrl(url?: string | null): string | null {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  const cleanBase = BASE_URL.replace(/\/+$/, "");
+  const cleanPath = url.startsWith("/") ? url : `/${url}`;
+  return `${cleanBase}${cleanPath}`;
+}
+
 const GRADIENTS = [
   "linear-gradient(135deg, #2d2d2d, #3b3b3b)",
   "linear-gradient(135deg, #2a2832, #3a3844)",
@@ -48,7 +62,8 @@ export default function Avatar({
   const px = SIZE_MAP[size];
   const fontSize = FONT_SIZES[size];
 
-  const showImage = src && !imgFailed;
+  const fullSrc = resolveImageUrl(src);
+  const showImage = Boolean(fullSrc && !imgFailed);
   const initials = getInitials(firstName, lastName);
   const gradient = GRADIENTS[hashStr(initials) % GRADIENTS.length];
 
@@ -72,10 +87,10 @@ export default function Avatar({
         flexShrink: 0,
       }}
     >
-      {showImage ? (
+      {showImage && fullSrc ? (
         <img
           ref={imgRef}
-          src={src}
+          src={fullSrc}
           alt={initials}
           style={{
             width: "100%",
