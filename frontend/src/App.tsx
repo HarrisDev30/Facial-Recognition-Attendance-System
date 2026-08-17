@@ -84,14 +84,11 @@ export default function App() {
           <Route path="/student/attendance" element={<AttendanceHistoryPage />} />
           <Route path="/student/events" element={<UpcomingEventsPage />} />
           <Route path="/student/events/:eventId" element={<EventAttendanceDetailPage />} />
+          <Route path="/student/profile" element={<StudentProfilePage />} />
+          <Route path="/profile" element={<StudentProfilePage />} />
+          <Route path="/register-biometrics" element={<StudentBiometricRegistration />} />
           <Route path="/privacy/data-removal" element={<DataRemovalRequestPage />} />
         </Route>
-      </Route>
-
-      {/* Shared Profile & Biometrics Route for all logged in roles */}
-      <Route element={<ProtectedRoute roles={["admin", "org_admin", "marshal", "student", "staff"]} />}>
-        <Route path="/profile" element={<StudentProfilePage />} />
-        <Route path="/register-biometrics" element={<StudentBiometricRegistration />} />
       </Route>
 
       {/* Marshal */}

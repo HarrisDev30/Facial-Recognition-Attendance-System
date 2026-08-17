@@ -40,7 +40,7 @@ export default function UserMenu({
     } else if (role === "marshal") {
       navigate("/marshal/profile");
     } else {
-      navigate("/profile");
+      navigate("/student/profile");
     }
   };
 

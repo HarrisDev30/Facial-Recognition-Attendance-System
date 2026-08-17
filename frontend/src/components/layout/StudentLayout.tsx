@@ -13,7 +13,7 @@ const navItems = [
   { label: "Dashboard", icon: IconDashboard, to: "/student/dashboard" },
   { label: "Events", icon: IconCalendarEvent, to: "/student/events" },
   { label: "Attendance", icon: IconHistory, to: "/student/attendance" },
-  { label: "Profile", icon: IconUser, to: "/profile" },
+  { label: "Profile", icon: IconUser, to: "/student/profile" },
   { label: "Biometrics", icon: IconCameraSelfie, to: "/register-biometrics" },
 ];
 
