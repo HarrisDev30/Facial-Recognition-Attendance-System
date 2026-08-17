@@ -90,12 +90,18 @@ export default function App() {
         </Route>
       </Route>
 
+      {/* Shared Profile Route for all logged in roles */}
+      <Route element={<ProtectedRoute roles={["admin", "org_admin", "marshal", "student", "staff"]} />}>
+        <Route path="/profile" element={<StudentProfilePage />} />
+      </Route>
+
       {/* Marshal */}
       <Route element={<ProtectedRoute roles={["marshal"]} />}>
         <Route element={<MarshalLayout />}>
           <Route path="/marshal/dashboard" element={<MarshalDashboardPage />} />
           <Route path="/marshal/events" element={<MarshalEventsPage />} />
           <Route path="/marshal/events/:eventId/sessions" element={<MarshalEventDetailPage />} />
+          <Route path="/marshal/profile" element={<StudentProfilePage />} />
         </Route>
       </Route>
 
@@ -111,6 +117,7 @@ export default function App() {
           <Route path="/admin/enrollment" element={<AdminEnrollmentPage />} />
           <Route path="/admin/scanner-devices" element={<AdminScannerDevicesPage />} />
           <Route path="/admin/scanner-config/:deviceId" element={<DetectionZoneConfig />} />
+          <Route path="/admin/profile" element={<StudentProfilePage />} />
           <Route index element={<AdminDashboardPage />} />
         </Route>
       </Route>

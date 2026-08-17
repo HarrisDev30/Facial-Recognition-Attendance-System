@@ -29,7 +29,15 @@ async def _get_assigned_org_ids(session: AsyncSession, user_id: uuid.UUID) -> li
     res = await session.execute(
         select(OrganizationStaff.organization_id).where(OrganizationStaff.user_id == user_id)
     )
-    return [str(org_id) for org_id in res.scalars().all()]
+    org_ids = [str(org_id) for org_id in res.scalars().all()]
+    if not org_ids:
+        att_res = await session.execute(
+            select(Attendee.organization_id).where(Attendee.user_id == user_id)
+        )
+        att_org_id = att_res.scalar_one_or_none()
+        if att_org_id:
+            org_ids.append(str(att_org_id))
+    return org_ids
 
 
 @router.post("/login", response_model=TokenResponse)
