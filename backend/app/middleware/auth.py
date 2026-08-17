@@ -53,6 +53,6 @@ def require_role(*roles: UserRole):
     return _role_checker
 
 
-require_admin = require_role(UserRole.admin)
+require_admin = require_role(UserRole.admin, UserRole.org_admin)
 require_marshal = require_role(UserRole.marshal)
-require_admin_or_marshal = require_role(UserRole.admin, UserRole.marshal)
+require_admin_or_marshal = require_role(UserRole.admin, UserRole.org_admin, UserRole.marshal)
