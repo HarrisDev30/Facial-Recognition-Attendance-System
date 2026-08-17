@@ -28,7 +28,7 @@ import {
   markAllNotificationsRead,
 } from "../../api/notifications";
 import type { NotificationItem } from "../../api/notifications";
-import { formatDate } from "../../utils/formatters";
+import { timeAgo } from "../../utils/formatters";
 
 export default function NotificationBell() {
   const navigate = useNavigate();
@@ -231,7 +231,7 @@ export default function NotificationBell() {
                         {n.message}
                       </Text>
                       <Text size="10px" c="dimmed" mt={4} style={{ opacity: 0.6 }}>
-                        {formatDate(n.created_at)}
+                        {timeAgo(n.created_at)}
                       </Text>
                     </div>
                   </Group>

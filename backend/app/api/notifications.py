@@ -11,6 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
 
+def _clean_type(val) -> str:
+    if hasattr(val, "value"):
+        val = val.value
+    s = str(val)
+    return s.split(".")[-1]
+
+
 @router.get("", response_model=NotificationListResponse)
 async def list_my_notifications(
     session: AsyncSession = Depends(get_session),
@@ -26,9 +33,7 @@ async def list_my_notifications(
                 user_id=str(n.user_id),
                 title=n.title,
                 message=n.message,
-                notification_type=n.notification_type.value
-                if hasattr(n.notification_type, "value")
-                else str(n.notification_type),
+                notification_type=_clean_type(n.notification_type),
                 is_read=n.is_read,
                 link_url=n.link_url,
                 created_at=n.created_at,
