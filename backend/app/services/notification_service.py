@@ -62,7 +62,8 @@ async def notify_department_admins(
         if uid:
             user_ids.add(uid)
 
-    # 3. Department Admins matching role
+    # 3. Department Admins matching role for target department
+    target_admin_ids = set()
     if user_ids:
         admin_res = await session.execute(
             select(User.id).where(
@@ -72,9 +73,10 @@ async def notify_department_admins(
         )
         for uid in admin_res.scalars().all():
             if uid:
-                user_ids.add(uid)
-    else:
-        # Fallback to all org_admin/admin users excluding caller
+                target_admin_ids.add(uid)
+
+    # If no specific staff found, find admins matching organization
+    if not target_admin_ids:
         admin_res = await session.execute(
             select(User.id).where(
                 User.role.in_([UserRole.org_admin, UserRole.admin, UserRole.ORG_ADMIN, UserRole.ADMIN])
@@ -82,13 +84,13 @@ async def notify_department_admins(
         )
         for uid in admin_res.scalars().all():
             if uid:
-                user_ids.add(uid)
+                target_admin_ids.add(uid)
 
     # Exclude creator user ID
-    if exclude_user_id and exclude_user_id in user_ids:
-        user_ids.remove(exclude_user_id)
+    if exclude_user_id and exclude_user_id in target_admin_ids:
+        target_admin_ids.remove(exclude_user_id)
 
-    for uid in user_ids:
+    for uid in target_admin_ids:
         await create_notification(
             session=session,
             user_id=uid,

@@ -81,12 +81,15 @@ export default function NotificationBell() {
 
   const handleNotificationClick = async (notif: NotificationItem) => {
     if (!notif.is_read) {
-      // Synchronous optimistic state update for instant responsiveness & aliveness
       setNotifications((prev) =>
         prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
-      markNotificationRead(notif.id).catch(() => {});
+      try {
+        await markNotificationRead(notif.id);
+      } catch {
+        /* ignore */
+      }
     }
     setOpened(false);
     if (notif.link_url) {
@@ -94,14 +97,17 @@ export default function NotificationBell() {
     }
   };
 
-  const handleSingleMarkRead = (e: React.MouseEvent, notifId: string) => {
+  const handleSingleMarkRead = async (e: React.MouseEvent, notifId: string) => {
     e.stopPropagation();
-    // Synchronous optimistic update
     setNotifications((prev) =>
       prev.map((n) => (n.id === notifId ? { ...n, is_read: true } : n))
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
-    markNotificationRead(notifId).catch(() => {});
+    try {
+      await markNotificationRead(notifId);
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleMarkAllRead = async (e: React.MouseEvent) => {
