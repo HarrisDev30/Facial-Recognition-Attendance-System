@@ -20,7 +20,8 @@ import { getDepartments } from "../api/departments";
 import { useFormSubmit } from "../hooks";
 import { getApiError } from "../utils/error";
 import { notifications } from "@mantine/notifications";
-import type { DepartmentResponse } from "../types/auth";
+import { useAuthStore } from "../store/authStore";
+import type { DepartmentResponse, TokenResponse } from "../types/auth";
 
 function getPasswordStrength(password: string): number {
   let score = 0;
@@ -74,13 +75,21 @@ export default function StudentSignUpPage() {
   const { submit: doRegister, submitting, error: apiError } = useFormSubmit(
     registerStudent,
     {
-      onSuccess: () => {
+      onSuccess: (res: TokenResponse) => {
         setSuccess(true);
-        setTimeout(() => {
-          if (mountedRef.current) navigate("/login");
-        }, 2000);
+        if (res && res.access_token) {
+          localStorage.setItem("token", res.access_token);
+          useAuthStore.setState({ token: res.access_token, user: res.user, loading: false });
+          setTimeout(() => {
+            if (mountedRef.current) navigate("/register-biometrics");
+          }, 1200);
+        } else {
+          setTimeout(() => {
+            if (mountedRef.current) navigate("/login");
+          }, 1500);
+        }
       },
-      successMessage: "Registration successful!",
+      successMessage: "Registration successful! Redirecting to biometric enrollment...",
       showErrorNotification: false,
     },
   );

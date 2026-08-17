@@ -157,13 +157,33 @@ async def _register_attendee(
         organization_id=dept_id,
     )
     session.add(attendee)
-    await session.flush()
+    assigned_orgs = await _get_assigned_org_ids(session, user.id)
+    role_val = user.role.value if hasattr(user.role, "value") else str(user.role)
 
-    return {
-        "success": True,
-        "user_id": str(user.id),
-        "message": "Registration successful. Please login.",
-    }
+    token = create_access_token(
+        {
+            "sub": str(user.id),
+            "email": user.email,
+            "role": role_val,
+            "attendee_id": str(attendee.id),
+            "assigned_org_ids": assigned_orgs,
+        }
+    )
+
+    return TokenResponse(
+        access_token=token,
+        user=UserProfileResponse(
+            id=str(user.id),
+            email=user.email,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            role=role_val,
+            attendee_id=str(attendee.id),
+            attendee_type=attendee.attendee_type.value if hasattr(attendee.attendee_type, "value") else str(attendee.attendee_type),
+            profile_photo_url=attendee.profile_photo_url,
+            assigned_org_ids=assigned_orgs,
+        ),
+    )
 
 
 @router.post("/register", response_model=UserResponse)

@@ -15,23 +15,15 @@ export async function login(body: LoginRequest): Promise<TokenResponse> {
 
 export async function registerStudent(
   body: RegisterAttendeeRequest,
-): Promise<{ success: boolean; user_id: string; message: string }> {
-  const { data } = await client.post<{
-    success: boolean;
-    user_id: string;
-    message: string;
-  }>("/auth/register/student", body);
+): Promise<TokenResponse> {
+  const { data } = await client.post<TokenResponse>("/auth/register/student", body);
   return data;
 }
 
 export async function registerStaff(
   body: RegisterAttendeeRequest,
-): Promise<{ success: boolean; user_id: string; message: string }> {
-  const { data } = await client.post<{
-    success: boolean;
-    user_id: string;
-    message: string;
-  }>("/auth/register/staff", body);
+): Promise<TokenResponse> {
+  const { data } = await client.post<TokenResponse>("/auth/register/staff", body);
   return data;
 }
 
