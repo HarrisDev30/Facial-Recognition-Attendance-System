@@ -4,8 +4,9 @@ import uuid
 from app.config import settings
 from app.database import get_session
 from app.middleware.auth import get_current_user, require_admin, require_admin_or_marshal
+from app.models.attendee import Attendee
 from app.models.organization import Organization
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.attendance import UpcomingEventResponse, UpcomingEventListResponse
 from app.schemas.event import (
     EventCreate,
