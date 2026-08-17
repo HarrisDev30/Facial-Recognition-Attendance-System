@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 
 from app.models.attendance_session import AttendanceSession, SessionStatus
-from app.models.event import Event, EventStatus, EventType
+from app.models.event import Event, EventStatus, EventTargetScope, EventType
 from sqlalchemy import case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
