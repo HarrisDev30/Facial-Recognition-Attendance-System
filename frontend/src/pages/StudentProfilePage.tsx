@@ -42,6 +42,7 @@ import PhotoCropper from "../components/PhotoCropper";
 import { useAsync, useFormSubmit } from "../hooks";
 import { getApiError } from "../utils/error";
 import { formatDate } from "../utils/formatters";
+import { roleHome } from "../utils/routes";
 
 export default function StudentProfilePage() {
   const { user } = useAuthStore();
@@ -227,7 +228,14 @@ export default function StudentProfilePage() {
   if (loading) {
     return (
       <Container size="md" pt={0} pb="4xl">
-        <PageHeader title="Profile" />
+        <PageHeader
+          title="My Profile & Settings"
+          subtitle="Manage your personal details, organization info, and biometric facial registration"
+          breadcrumbs={[
+            { label: "Dashboard", to: roleHome(user?.role ?? "student") },
+            { label: "Profile" },
+          ]}
+        />
         <Group mb="xl" gap="lg" wrap="nowrap">
           <Skeleton circle width={120} height={120} />
           <Box style={{ flex: 1 }}>
@@ -250,7 +258,14 @@ export default function StudentProfilePage() {
   if (!profile) {
     return (
       <Container size="md" pt={0} pb="4xl">
-        <PageHeader title="Profile" />
+        <PageHeader
+          title="My Profile & Settings"
+          subtitle="Manage your personal details, organization info, and biometric facial registration"
+          breadcrumbs={[
+            { label: "Dashboard", to: roleHome(user?.role ?? "student") },
+            { label: "Profile" },
+          ]}
+        />
         <Alert color="red" variant="light">
           Could not load your profile. <Button variant="subtle" size="compact-xs" onClick={loadProfile} ml="xs" color="red">Retry</Button>
         </Alert>
@@ -260,9 +275,18 @@ export default function StudentProfilePage() {
 
   const embProgress = Math.min((profile.num_embeddings || 0) / 6 * 100, 100);
 
+  const dashboardRoute = roleHome(user?.role ?? "student");
+
   return (
     <Container size="md" pt={0} pb="4xl">
-      <PageHeader title="Profile" />
+      <PageHeader
+        title="My Profile & Settings"
+        subtitle="Manage your personal details, organization info, and biometric facial registration"
+        breadcrumbs={[
+          { label: "Dashboard", to: dashboardRoute },
+          { label: "Profile" },
+        ]}
+      />
 
       {error && (
         <Alert color="red" mb="md" withCloseButton onClose={() => setError(null)}>

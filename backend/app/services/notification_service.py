@@ -164,9 +164,9 @@ async def mark_as_read(
     session: AsyncSession, user_id: uuid.UUID, notification_id: uuid.UUID
 ) -> bool:
     notif = await session.get(Notification, notification_id)
-    if notif and notif.user_id == user_id:
+    if notif and str(notif.user_id) == str(user_id):
         notif.is_read = True
-        await session.flush()
+        await session.commit()
         return True
     return False
 
@@ -178,5 +178,5 @@ async def mark_all_as_read(session: AsyncSession, user_id: uuid.UUID) -> int:
         .values(is_read=True)
     )
     res = await session.execute(stmt)
-    await session.flush()
+    await session.commit()
     return res.rowcount
