@@ -80,3 +80,8 @@ async def delete_all_embeddings(session: AsyncSession, attendee_id: uuid.UUID) -
         await session.delete(emb)
     await session.flush()
     return count
+
+
+async def reset_registration(session: AsyncSession, attendee_id: uuid.UUID) -> bool:
+    await delete_all_embeddings(session, attendee_id)
+    return True

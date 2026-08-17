@@ -89,12 +89,15 @@ async def preview_frame(
     }
 
 
+from app.middleware.auth import get_current_user
+
+
 @router.post("/consent/{attendee_id}")
 async def set_consent(
     attendee_id: uuid.UUID,
     body: ConsentRequest,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
 ):
     attendee = await registration_service.update_consent(session, attendee_id, body.consent_given)
     if attendee is None:
@@ -116,7 +119,7 @@ async def upload_embedding(
     file: UploadFile = File(...),
     camera_angle: str | None = Form(None),
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
 ):
     attendee = await attendee_service.get_attendee(session, attendee_id)
     if attendee is None:
@@ -190,7 +193,7 @@ async def upload_embedding(
 async def list_embeddings(
     attendee_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
 ):
     embeddings = await registration_service.get_embeddings(session, attendee_id)
     return [

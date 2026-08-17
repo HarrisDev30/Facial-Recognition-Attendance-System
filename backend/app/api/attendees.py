@@ -340,7 +340,7 @@ async def delete_my_embedding(
     if attendee is None:
         raise HTTPException(status_code=404, detail="Attendee profile not found")
 
-    ok = await registration_service.delete_embedding(session, embedding_id)
+    ok = await registration_service.delete_embedding(session, attendee.id, embedding_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Embedding not found")
 
