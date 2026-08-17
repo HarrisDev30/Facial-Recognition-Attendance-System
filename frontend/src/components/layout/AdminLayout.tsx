@@ -6,6 +6,7 @@ import {
   IconCameraSelfie,
   IconDeviceCctv,
   IconBuildingCommunity,
+  IconUser,
 } from "@tabler/icons-react";
 import { useAuthStore } from "../../store/authStore";
 import AppShellChrome from "./AppShellChrome";
@@ -29,6 +30,7 @@ export default function AdminLayout() {
     ...(!isOrgAdmin
       ? [{ label: "Scanner Devices", icon: IconDeviceCctv, to: "/admin/scanner-devices" }]
       : []),
+    { label: "Profile", icon: IconUser, to: "/admin/profile" },
   ];
 
   const handleLogout = () => {

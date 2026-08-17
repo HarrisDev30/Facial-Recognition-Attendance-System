@@ -12,6 +12,7 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import Avatar from "../Avatar";
+import { useAuthStore } from "../../store/authStore";
 
 interface UserMenuProps {
   email?: string;
@@ -29,7 +30,19 @@ export default function UserMenu({
   onLogout,
 }: UserMenuProps) {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const displayName = firstName ? `${firstName} ${lastName ?? ""}`.trim() : email ?? "User";
+
+  const handleProfileClick = () => {
+    const role = user?.role;
+    if (role === "admin" || role === "org_admin") {
+      navigate("/admin/profile");
+    } else if (role === "marshal") {
+      navigate("/marshal/profile");
+    } else {
+      navigate("/profile");
+    }
+  };
 
   return (
     <Menu shadow="md" width={240} offset={8}>
@@ -75,7 +88,7 @@ export default function UserMenu({
           leftSection={
             <IconUser style={{ width: rem(16), height: rem(16) }} />
           }
-          onClick={() => navigate("/profile")}
+          onClick={handleProfileClick}
         >
           Profile Settings
         </Menu.Item>

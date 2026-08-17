@@ -208,15 +208,16 @@ export default function NotificationBell() {
         <Paper
           p="xs"
           style={{
-            position: "absolute",
-            top: "calc(100% + 10px)",
-            right: isMobile ? "-12px" : 0,
-            width: isMobile ? "calc(100vw - 32px)" : "360px",
-            maxWidth: "calc(100vw - 32px)",
+            position: isMobile ? "fixed" : "absolute",
+            top: isMobile ? "58px" : "calc(100% + 10px)",
+            left: isMobile ? "12px" : "auto",
+            right: isMobile ? "12px" : 0,
+            width: isMobile ? "auto" : "360px",
+            maxWidth: isMobile ? "calc(100vw - 24px)" : 380,
             zIndex: 1000,
             background: "#121214",
             backdropFilter: "blur(16px)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.1)",
             boxShadow: "0px 20px 40px -10px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05)",
             borderRadius: "14px",
             animation: "fadeIn 0.15s ease-out",
