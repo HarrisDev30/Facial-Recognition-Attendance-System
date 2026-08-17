@@ -11,6 +11,7 @@ import {
   Box,
   ScrollArea,
   Indicator,
+  ThemeIcon,
 } from "@mantine/core";
 import {
   IconBell,
@@ -19,6 +20,7 @@ import {
   IconUsers,
   IconInfoCircle,
   IconChecklist,
+  IconBellOff,
 } from "@tabler/icons-react";
 import {
   getMyNotifications,
@@ -47,11 +49,12 @@ export default function NotificationBell() {
 
   useEffect(() => {
     loadNotifications();
-    const interval = setInterval(loadNotifications, 15000);
+    const interval = setInterval(loadNotifications, 10000);
     return () => clearInterval(interval);
   }, [loadNotifications]);
 
   const handleNotificationClick = async (notif: NotificationItem) => {
+    setOpened(false);
     if (!notif.is_read) {
       try {
         await markNotificationRead(notif.id);
@@ -63,7 +66,6 @@ export default function NotificationBell() {
         /* ignore */
       }
     }
-    setOpened(false);
     if (notif.link_url) {
       navigate(notif.link_url);
     }
@@ -85,13 +87,13 @@ export default function NotificationBell() {
   const getIcon = (type: string) => {
     switch (type) {
       case "cohost_invite":
-        return <IconUsers size={16} style={{ color: "#a855f7" }} />;
+        return <IconUsers size={16} style={{ color: "#c084fc" }} />;
       case "event_announcement":
-        return <IconCalendar size={16} style={{ color: "#3b82f6" }} />;
+        return <IconCalendar size={16} style={{ color: "#60a5fa" }} />;
       case "attendance_checkin":
-        return <IconCheck size={16} style={{ color: "#22c55e" }} />;
+        return <IconCheck size={16} style={{ color: "#4ade80" }} />;
       default:
-        return <IconInfoCircle size={16} style={{ color: "#f59e0b" }} />;
+        return <IconInfoCircle size={16} style={{ color: "#fbbf24" }} />;
     }
   };
 
@@ -99,40 +101,48 @@ export default function NotificationBell() {
     <Popover
       opened={opened}
       onChange={setOpened}
-      width={340}
+      width={360}
       position="bottom-end"
-      shadow="lg"
+      shadow="xl"
       withArrow
+      arrowSize={10}
+      transitionProps={{ transition: "pop", duration: 150 }}
     >
       <Popover.Target>
-        <Indicator
-          disabled={unreadCount === 0}
-          label={unreadCount > 9 ? "9+" : unreadCount}
-          size={16}
-          color="red"
-          offset={2}
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          size="lg"
+          radius="md"
+          onClick={() => {
+            setOpened((o) => !o);
+            loadNotifications();
+          }}
+          aria-label="Notifications"
+          style={{
+            position: "relative",
+            transition: "all 0.15s ease",
+          }}
         >
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            size="lg"
-            radius="xl"
-            onClick={() => {
-              setOpened((o) => !o);
-              if (!opened) loadNotifications();
-            }}
-            aria-label="Notifications"
+          <Indicator
+            disabled={unreadCount === 0}
+            label={unreadCount > 9 ? "9+" : unreadCount}
+            size={18}
+            color="red"
+            offset={-2}
+            processing={unreadCount > 0}
           >
             <IconBell size={20} />
-          </ActionIcon>
-        </Indicator>
+          </Indicator>
+        </ActionIcon>
       </Popover.Target>
       <Popover.Dropdown
         p="xs"
         style={{
           background: "#141414",
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: "0px 8px 24px rgba(0,0,0,0.6)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          boxShadow: "0px 12px 32px rgba(0,0,0,0.7)",
+          borderRadius: "12px",
         }}
       >
         <Group justify="space-between" px="xs" py="xs" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -141,7 +151,7 @@ export default function NotificationBell() {
               Notifications
             </Text>
             {unreadCount > 0 && (
-              <Badge size="xs" color="teal" variant="light">
+              <Badge size="xs" color="teal" variant="light" radius="sm">
                 {unreadCount} new
               </Badge>
             )}
@@ -162,10 +172,32 @@ export default function NotificationBell() {
 
         <ScrollArea.Autosize mah={360} mx="-xs" px="xs" mt="xs">
           {notifications.length === 0 ? (
-            <Box p="lg" style={{ textAlign: "center" }}>
-              <IconBell size={32} style={{ opacity: 0.3, marginBottom: 8 }} />
-              <Text size="sm" c="dimmed">
-                No notifications yet
+            <Box
+              py="xl"
+              px="md"
+              style={{
+                textAlign: "center",
+                background: "rgba(255,255,255,0.02)",
+                borderRadius: "8px",
+                margin: "8px 0",
+              }}
+            >
+              <ThemeIcon
+                size={44}
+                radius="xl"
+                variant="light"
+                color="gray"
+                mx="auto"
+                mb="xs"
+                style={{ background: "rgba(255,255,255,0.05)" }}
+              >
+                <IconBellOff size={22} style={{ opacity: 0.7 }} />
+              </ThemeIcon>
+              <Text size="sm" fw={600} c="dimmed">
+                All caught up! 🎉
+              </Text>
+              <Text size="xs" c="dimmed" mt={2} style={{ opacity: 0.7 }}>
+                You have no new notifications or alerts at the moment.
               </Text>
             </Box>
           ) : (
@@ -175,11 +207,11 @@ export default function NotificationBell() {
                   key={n.id}
                   p="xs"
                   style={{
-                    borderRadius: "6px",
-                    background: n.is_read ? "transparent" : "rgba(45, 212, 191, 0.05)",
+                    borderRadius: "8px",
+                    background: n.is_read ? "transparent" : "rgba(45, 212, 191, 0.07)",
                     borderLeft: n.is_read ? "3px solid transparent" : "3px solid #2dd4bf",
                     cursor: "pointer",
-                    transition: "background 0.15s ease",
+                    transition: "background 0.15s ease, transform 0.1s ease",
                   }}
                   className="notification-item"
                   onClick={() => handleNotificationClick(n)}
@@ -193,7 +225,7 @@ export default function NotificationBell() {
                       <Text size="xs" c="dimmed" lh={1.3} mt={2}>
                         {n.message}
                       </Text>
-                      <Text size="10px" c="dimmed" mt={4}>
+                      <Text size="10px" c="dimmed" mt={4} style={{ opacity: 0.6 }}>
                         {formatDate(n.created_at)}
                       </Text>
                     </div>
