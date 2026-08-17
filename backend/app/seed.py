@@ -49,7 +49,7 @@ async def seed() -> None:
         # 2. Seed Default Colleges & Student Clubs
         colleges_and_clubs = [
             # Colleges
-            {"name": "College of Computer Studies", "code": "CCIS", "type": OrgType.COLLEGE, "desc": "Department of Computer Science & IT"},
+            {"name": "College of Computing and Information Sciences", "code": "CCIS", "type": OrgType.COLLEGE, "desc": "Department of Computer Science & IT"},
             {"name": "College of Engineering & Architecture", "code": "COE", "type": OrgType.COLLEGE, "desc": "Department of Engineering"},
             {"name": "College of Education & Arts", "code": "CEDAS", "type": OrgType.COLLEGE, "desc": "Department of Education & Humanities"},
             {"name": "College of Health Sciences", "code": "CHS", "type": OrgType.COLLEGE, "desc": "Department of Nursing & Allied Health"},
