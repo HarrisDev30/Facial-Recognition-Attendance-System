@@ -80,43 +80,38 @@ export default function NotificationBell() {
   };
 
   const handleNotificationClick = async (notif: NotificationItem) => {
-    setOpened(false);
     if (!notif.is_read) {
-      try {
-        await markNotificationRead(notif.id);
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      } catch {
-        /* ignore */
-      }
+      // Synchronous optimistic state update for instant responsiveness & aliveness
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+      markNotificationRead(notif.id).catch(() => {});
     }
+    setOpened(false);
     if (notif.link_url) {
       navigate(notif.link_url);
     }
   };
 
-  const handleSingleMarkRead = async (e: React.MouseEvent, notifId: string) => {
+  const handleSingleMarkRead = (e: React.MouseEvent, notifId: string) => {
     e.stopPropagation();
-    try {
-      await markNotificationRead(notifId);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notifId ? { ...n, is_read: true } : n))
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch {
-      /* ignore */
-    }
+    // Synchronous optimistic update
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notifId ? { ...n, is_read: true } : n))
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+    markNotificationRead(notifId).catch(() => {});
   };
 
   const handleMarkAllRead = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setLoading(true);
+    // Optimistic clear
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    setUnreadCount(0);
     try {
       await markAllNotificationsRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-      setUnreadCount(0);
     } catch {
       /* ignore */
     } finally {
@@ -209,9 +204,9 @@ export default function NotificationBell() {
           style={{
             position: "absolute",
             top: "calc(100% + 10px)",
-            right: isMobile ? "-40px" : 0,
-            width: isMobile ? "calc(100vw - 32px)" : 370,
-            maxWidth: 380,
+            right: isMobile ? "-12px" : 0,
+            width: isMobile ? "calc(100vw - 32px)" : "360px",
+            maxWidth: "calc(100vw - 32px)",
             zIndex: 1000,
             background: "#121214",
             backdropFilter: "blur(16px)",
