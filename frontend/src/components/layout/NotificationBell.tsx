@@ -15,6 +15,7 @@ import {
   ActionIcon,
   Tooltip,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconBell,
   IconCalendar,
@@ -39,6 +40,8 @@ export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const isMobile = useMediaQuery("(max-width: 576px)");
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -206,8 +209,9 @@ export default function NotificationBell() {
           style={{
             position: "absolute",
             top: "calc(100% + 10px)",
-            right: 0,
-            width: 370,
+            right: isMobile ? "-40px" : 0,
+            width: isMobile ? "calc(100vw - 32px)" : 370,
+            maxWidth: 380,
             zIndex: 1000,
             background: "#121214",
             backdropFilter: "blur(16px)",
@@ -243,7 +247,7 @@ export default function NotificationBell() {
             )}
           </Group>
 
-          <ScrollArea.Autosize mah={380} mx="-xs" px="xs" mt="xs">
+          <ScrollArea.Autosize mah={isMobile ? 300 : 380} mx="-xs" px="xs" mt="xs">
             {notifications.length === 0 ? (
               <Box
                 py="xl"
