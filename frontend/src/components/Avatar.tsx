@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import client from "../api/client";
 
 interface AvatarProps {
   src?: string | null;
@@ -58,12 +59,52 @@ export default function Avatar({
   loading,
 }: AvatarProps) {
   const imgRef = useRef<HTMLImageElement>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [imgFailed, setImgFailed] = useState(false);
   const px = SIZE_MAP[size];
   const fontSize = FONT_SIZES[size];
 
   const fullSrc = resolveImageUrl(src);
-  const showImage = Boolean(fullSrc && !imgFailed);
+
+  useEffect(() => {
+    let isMounted = true;
+    let createdUrl: string | null = null;
+
+    if (!fullSrc) {
+      setBlobUrl(null);
+      setImgFailed(false);
+      return;
+    }
+
+    if (fullSrc.startsWith("data:") || fullSrc.startsWith("blob:")) {
+      setBlobUrl(fullSrc);
+      setImgFailed(false);
+      return;
+    }
+
+    client
+      .get(fullSrc, { responseType: "blob" })
+      .then((res) => {
+        if (!isMounted) return;
+        createdUrl = URL.createObjectURL(res.data);
+        setBlobUrl(createdUrl);
+        setImgFailed(false);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setBlobUrl(fullSrc);
+      });
+
+    return () => {
+      isMounted = false;
+      if (createdUrl) {
+        URL.revokeObjectURL(createdUrl);
+      }
+    };
+  }, [fullSrc]);
+
+  const activeSrc = blobUrl || fullSrc;
+  const showImage = Boolean(activeSrc && !imgFailed);
   const initials = getInitials(firstName, lastName);
   const gradient = GRADIENTS[hashStr(initials) % GRADIENTS.length];
 
@@ -87,10 +128,10 @@ export default function Avatar({
         flexShrink: 0,
       }}
     >
-      {showImage && fullSrc ? (
+      {showImage && activeSrc ? (
         <img
           ref={imgRef}
-          src={fullSrc}
+          src={activeSrc}
           alt={initials}
           style={{
             width: "100%",

@@ -64,8 +64,8 @@ async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)
         user=UserProfileResponse(
             id=str(user.id),
             email=user.email,
-            first_name=user.first_name,
-            last_name=user.last_name,
+            first_name=user.first_name or (attendee.first_name if attendee else None),
+            last_name=user.last_name or (attendee.last_name if attendee else None),
             role=role_val,
             attendee_id=str(attendee.id) if attendee else None,
             attendee_type=attendee.attendee_type.value if attendee and hasattr(attendee.attendee_type, 'value') else str(attendee.attendee_type) if attendee else None,
@@ -219,8 +219,8 @@ async def me(
     return UserProfileResponse(
         id=str(current_user.id),
         email=current_user.email,
-        first_name=current_user.first_name,
-        last_name=current_user.last_name,
+        first_name=current_user.first_name or (attendee.first_name if attendee else None),
+        last_name=current_user.last_name or (attendee.last_name if attendee else None),
         role=role_val,
         attendee_id=str(attendee.id) if attendee else None,
         attendee_type=attendee.attendee_type.value if attendee and hasattr(attendee.attendee_type, 'value') else str(attendee.attendee_type) if attendee else None,
