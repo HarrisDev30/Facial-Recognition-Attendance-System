@@ -38,40 +38,48 @@ async def notify_department_admins(
     notification_type: NotificationType = NotificationType.cohost_invite,
     link_url: str | None = None,
 ):
-    # Find org_admin users linked via OrganizationStaff
-    staff_stmt = select(OrganizationStaff.user_id).where(
-        OrganizationStaff.organization_id == organization_id
-    )
-    staff_res = await session.execute(staff_stmt)
-    user_ids = set(staff_res.scalars().all())
+    user_ids = set()
 
-    # Also find org_admin users linked via Attendee
-    att_stmt = select(Attendee.user_id).where(
-        Attendee.organization_id == organization_id,
-        Attendee.user_id.isnot(None),
+    # 1. OrganizationStaff
+    staff_res = await session.execute(
+        select(OrganizationStaff.user_id).where(
+            OrganizationStaff.organization_id == organization_id
+        )
     )
-    att_res = await session.execute(att_stmt)
+    for uid in staff_res.scalars().all():
+        if uid:
+            user_ids.add(uid)
+
+    # 2. Attendee
+    att_res = await session.execute(
+        select(Attendee.user_id).where(
+            Attendee.organization_id == organization_id,
+            Attendee.user_id.isnot(None),
+        )
+    )
     for uid in att_res.scalars().all():
         if uid:
             user_ids.add(uid)
 
-    # Filter for users with role == org_admin or admin
-    if user_ids:
-        users_stmt = select(User.id).where(
-            User.id.in_(list(user_ids)),
-            User.role.in_([UserRole.org_admin, UserRole.admin, UserRole.ORG_ADMIN, UserRole.ADMIN]),
+    # 3. All Admin and Department Admin users
+    admin_res = await session.execute(
+        select(User.id).where(
+            User.role.in_([UserRole.org_admin, UserRole.admin, UserRole.ORG_ADMIN, UserRole.ADMIN])
         )
-        final_users_res = await session.execute(users_stmt)
-        target_user_ids = final_users_res.scalars().all()
-        for uid in target_user_ids:
-            await create_notification(
-                session=session,
-                user_id=uid,
-                title=title,
-                message=message,
-                notification_type=notification_type,
-                link_url=link_url,
-            )
+    )
+    for uid in admin_res.scalars().all():
+        if uid:
+            user_ids.add(uid)
+
+    for uid in user_ids:
+        await create_notification(
+            session=session,
+            user_id=uid,
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            link_url=link_url,
+        )
 
 
 async def notify_target_students(

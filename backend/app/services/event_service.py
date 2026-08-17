@@ -87,6 +87,7 @@ async def create_event(
     except Exception as e:
         print(f"Error sending event notifications: {e}")
 
+    await session.commit()
     return event_obj
 
 
