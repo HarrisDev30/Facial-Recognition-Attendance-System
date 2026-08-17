@@ -50,10 +50,10 @@ async def seed() -> None:
         colleges_and_clubs = [
             # Colleges
             {"name": "College of Computing and Information Sciences", "code": "CCIS", "type": OrgType.COLLEGE, "desc": "Department of Computer Science & IT"},
-            {"name": "College of Engineering & Architecture", "code": "COE", "type": OrgType.COLLEGE, "desc": "Department of Engineering"},
-            {"name": "College of Education & Arts", "code": "CEDAS", "type": OrgType.COLLEGE, "desc": "Department of Education & Humanities"},
+            {"name": "College of Engineering", "code": "COE", "type": OrgType.COLLEGE, "desc": "Department of Engineering"},
+            {"name": "College of Education, Arts and Sciences", "code": "CEDAS", "type": OrgType.COLLEGE, "desc": "Department of Education & Humanities"},
             {"name": "College of Health Sciences", "code": "CHS", "type": OrgType.COLLEGE, "desc": "Department of Nursing & Allied Health"},
-            {"name": "College of Business", "code": "CABE", "type": OrgType.COLLEGE, "desc": "Department of Business & Accountancy"},
+            {"name": "College of Accountancy, Business and Entrepreneurship", "code": "CABE", "type": OrgType.COLLEGE, "desc": "Department of Business & Accountancy"},
             # Dynamic Clubs
             {"name": "Math Club", "code": "MATHCLUB", "type": OrgType.CLUB, "desc": "University Mathematics & Analytics Society"},
             {"name": "Chess Club", "code": "CHESSCLUB", "type": OrgType.CLUB, "desc": "University Competitive Chess Organization"},
