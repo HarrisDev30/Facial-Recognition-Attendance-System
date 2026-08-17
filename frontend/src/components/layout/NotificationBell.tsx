@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Menu,
   Badge,
   Text,
   Group,
@@ -12,6 +11,7 @@ import {
   Indicator,
   ThemeIcon,
   UnstyledButton,
+  Paper,
 } from "@mantine/core";
 import {
   IconBell,
@@ -32,9 +32,11 @@ import { timeAgo } from "../../utils/formatters";
 
 export default function NotificationBell() {
   const navigate = useNavigate();
+  const [opened, setOpened] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -52,7 +54,28 @@ export default function NotificationBell() {
     return () => clearInterval(interval);
   }, [loadNotifications]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpened(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleToggle = () => {
+    setOpened((prev) => {
+      const next = !prev;
+      if (next) {
+        loadNotifications();
+      }
+      return next;
+    });
+  };
+
   const handleNotificationClick = async (notif: NotificationItem) => {
+    setOpened(false);
     if (!notif.is_read) {
       try {
         await markNotificationRead(notif.id);
@@ -97,149 +120,149 @@ export default function NotificationBell() {
   };
 
   return (
-    <Menu
-      shadow="xl"
-      width={360}
-      position="bottom-end"
-      offset={8}
-      onOpen={loadNotifications}
-    >
-      <Menu.Target>
-        <UnstyledButton
-          aria-label="Notifications"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 36,
-            height: 36,
-            borderRadius: "8px",
-            transition: "background 0.15s ease",
-            color: "var(--text-secondary)",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)";
-            e.currentTarget.style.color = "var(--text-primary)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "var(--text-secondary)";
-          }}
-        >
-          <Indicator
-            disabled={unreadCount === 0}
-            label={unreadCount > 9 ? "9+" : unreadCount}
-            size={18}
-            color="red"
-            offset={-2}
-            processing={unreadCount > 0}
-          >
-            <IconBell size={20} />
-          </Indicator>
-        </UnstyledButton>
-      </Menu.Target>
-
-      <Menu.Dropdown
-        p="xs"
+    <Box ref={containerRef} style={{ position: "relative", display: "inline-block" }}>
+      <UnstyledButton
+        aria-label="Notifications"
+        onClick={handleToggle}
         style={{
-          background: "#141414",
-          border: "1px solid rgba(255,255,255,0.1)",
-          boxShadow: "0px 12px 32px rgba(0,0,0,0.7)",
-          borderRadius: "12px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 36,
+          height: 36,
+          borderRadius: "8px",
+          transition: "background 0.15s ease",
+          color: "var(--text-secondary)",
+          cursor: "pointer",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)";
+          e.currentTarget.style.color = "var(--text-primary)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = opened ? "rgba(255,255,255,0.06)" : "transparent";
+          e.currentTarget.style.color = "var(--text-secondary)";
         }}
       >
-        <Group justify="space-between" px="xs" py="xs" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <Group gap="xs">
-            <Text size="sm" fw={700}>
-              Notifications
-            </Text>
+        <Indicator
+          disabled={unreadCount === 0}
+          label={unreadCount > 9 ? "9+" : unreadCount}
+          size={18}
+          color="red"
+          offset={-2}
+          processing={unreadCount > 0}
+        >
+          <IconBell size={20} />
+        </Indicator>
+      </UnstyledButton>
+
+      {opened && (
+        <Paper
+          p="xs"
+          style={{
+            position: "absolute",
+            top: "calc(100% + 8px)",
+            right: 0,
+            width: 360,
+            zIndex: 1000,
+            background: "#141414",
+            border: "1px solid rgba(255,255,255,0.1)",
+            boxShadow: "0px 12px 32px rgba(0,0,0,0.7)",
+            borderRadius: "12px",
+          }}
+        >
+          <Group justify="space-between" px="xs" py="xs" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <Group gap="xs">
+              <Text size="sm" fw={700}>
+                Notifications
+              </Text>
+              {unreadCount > 0 && (
+                <Badge size="xs" color="teal" variant="light" radius="sm">
+                  {unreadCount} new
+                </Badge>
+              )}
+            </Group>
             {unreadCount > 0 && (
-              <Badge size="xs" color="teal" variant="light" radius="sm">
-                {unreadCount} new
-              </Badge>
+              <Button
+                variant="subtle"
+                size="xs"
+                color="gray"
+                leftSection={<IconChecklist size={12} />}
+                loading={loading}
+                onClick={handleMarkAllRead}
+              >
+                Mark all read
+              </Button>
             )}
           </Group>
-          {unreadCount > 0 && (
-            <Button
-              variant="subtle"
-              size="xs"
-              color="gray"
-              leftSection={<IconChecklist size={12} />}
-              loading={loading}
-              onClick={handleMarkAllRead}
-            >
-              Mark all read
-            </Button>
-          )}
-        </Group>
 
-        <ScrollArea.Autosize mah={360} mx="-xs" px="xs" mt="xs">
-          {notifications.length === 0 ? (
-            <Box
-              py="xl"
-              px="md"
-              style={{
-                textAlign: "center",
-                background: "rgba(255,255,255,0.02)",
-                borderRadius: "8px",
-                margin: "8px 0",
-              }}
-            >
-              <ThemeIcon
-                size={44}
-                radius="xl"
-                variant="light"
-                color="gray"
-                mx="auto"
-                mb="xs"
-                style={{ background: "rgba(255,255,255,0.05)" }}
+          <ScrollArea.Autosize mah={360} mx="-xs" px="xs" mt="xs">
+            {notifications.length === 0 ? (
+              <Box
+                py="xl"
+                px="md"
+                style={{
+                  textAlign: "center",
+                  background: "rgba(255,255,255,0.02)",
+                  borderRadius: "8px",
+                  margin: "8px 0",
+                }}
               >
-                <IconBellOff size={22} style={{ opacity: 0.7 }} />
-              </ThemeIcon>
-              <Text size="sm" fw={600} c="dimmed">
-                All caught up! 🎉
-              </Text>
-              <Text size="xs" c="dimmed" mt={2} style={{ opacity: 0.7 }}>
-                You have no new notifications or alerts at the moment.
-              </Text>
-            </Box>
-          ) : (
-            <Stack gap={4}>
-              {notifications.map((n) => (
-                <Box
-                  key={n.id}
-                  p="xs"
-                  style={{
-                    borderRadius: "8px",
-                    background: n.is_read ? "transparent" : "rgba(45, 212, 191, 0.07)",
-                    borderLeft: n.is_read ? "3px solid transparent" : "3px solid #2dd4bf",
-                    cursor: "pointer",
-                    transition: "background 0.15s ease",
-                  }}
-                  className="notification-item"
-                  onClick={() => handleNotificationClick(n)}
+                <ThemeIcon
+                  size={44}
+                  radius="xl"
+                  variant="light"
+                  color="gray"
+                  mx="auto"
+                  mb="xs"
+                  style={{ background: "rgba(255,255,255,0.05)" }}
                 >
-                  <Group align="flex-start" gap="xs" wrap="nowrap">
-                    <Box mt={2}>{getIcon(n.notification_type)}</Box>
-                    <div style={{ flex: 1 }}>
-                      <Text size="xs" fw={n.is_read ? 500 : 700} lh={1.3}>
-                        {n.title}
-                      </Text>
-                      <Text size="xs" c="dimmed" lh={1.3} mt={2}>
-                        {n.message}
-                      </Text>
-                      <Text size="10px" c="dimmed" mt={4} style={{ opacity: 0.6 }}>
-                        {timeAgo(n.created_at)}
-                      </Text>
-                    </div>
-                  </Group>
-                </Box>
-              ))}
-            </Stack>
-          )}
-        </ScrollArea.Autosize>
-      </Menu.Dropdown>
-    </Menu>
+                  <IconBellOff size={22} style={{ opacity: 0.7 }} />
+                </ThemeIcon>
+                <Text size="sm" fw={600} c="dimmed">
+                  All caught up! 🎉
+                </Text>
+                <Text size="xs" c="dimmed" mt={2} style={{ opacity: 0.7 }}>
+                  You have no new notifications or alerts at the moment.
+                </Text>
+              </Box>
+            ) : (
+              <Stack gap={4}>
+                {notifications.map((n) => (
+                  <Box
+                    key={n.id}
+                    p="xs"
+                    style={{
+                      borderRadius: "8px",
+                      background: n.is_read ? "transparent" : "rgba(45, 212, 191, 0.07)",
+                      borderLeft: n.is_read ? "3px solid transparent" : "3px solid #2dd4bf",
+                      cursor: "pointer",
+                      transition: "background 0.15s ease",
+                    }}
+                    className="notification-item"
+                    onClick={() => handleNotificationClick(n)}
+                  >
+                    <Group align="flex-start" gap="xs" wrap="nowrap">
+                      <Box mt={2}>{getIcon(n.notification_type)}</Box>
+                      <div style={{ flex: 1 }}>
+                        <Text size="xs" fw={n.is_read ? 500 : 700} lh={1.3}>
+                          {n.title}
+                        </Text>
+                        <Text size="xs" c="dimmed" lh={1.3} mt={2}>
+                          {n.message}
+                        </Text>
+                        <Text size="10px" c="dimmed" mt={4} style={{ opacity: 0.6 }}>
+                          {timeAgo(n.created_at)}
+                        </Text>
+                      </div>
+                    </Group>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </ScrollArea.Autosize>
+        </Paper>
+      )}
+    </Box>
   );
 }
