@@ -24,8 +24,9 @@ router = APIRouter(prefix="/api/events", tags=["events"])
 
 def _event_response(e) -> EventResponse:
     org_id_str = str(e.organization_id) if e.organization_id else None
-    org_code = e.organization.code if hasattr(e, "organization") and e.organization else None
-    org_name = e.organization.name if hasattr(e, "organization") and e.organization else None
+    org = e.__dict__.get("organization")
+    org_code = org.code if org else None
+    org_name = org.name if org else None
     ev_type = e.event_type.value if hasattr(e.event_type, "value") else str(e.event_type)
     ev_status = e.status.value if hasattr(e.status, "value") else str(e.status)
 

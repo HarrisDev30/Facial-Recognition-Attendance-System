@@ -5,6 +5,7 @@ from app.models.attendance_session import AttendanceSession, SessionStatus
 from app.models.event import Event, EventStatus, EventType
 from sqlalchemy import case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 
 def _event_from_dict(data: dict, created_by: uuid.UUID) -> Event:
@@ -35,7 +36,10 @@ async def create_event(
     event = _event_from_dict(data, created_by)
     session.add(event)
     await session.flush()
-    return event
+    res = await session.execute(
+        select(Event).options(selectinload(Event.organization)).where(Event.id == event.id)
+    )
+    return res.scalar_one()
 
 
 async def get_events(
@@ -44,7 +48,13 @@ async def get_events(
     department_id: str | None = None,
 ) -> list[Event]:
     org_filter = organization_id or department_id
-    query = select(Event).order_by(Event.created_at.desc()).offset(skip).limit(limit)
+    query = (
+        select(Event)
+        .options(selectinload(Event.organization))
+        .order_by(Event.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
     if org_filter:
         query = query.where(Event.organization_id == uuid.UUID(org_filter))
     result = await session.execute(query)
@@ -65,7 +75,10 @@ async def count_events(
 
 
 async def get_event(session: AsyncSession, event_id: uuid.UUID) -> Event | None:
-    return await session.get(Event, event_id)
+    res = await session.execute(
+        select(Event).options(selectinload(Event.organization)).where(Event.id == event_id)
+    )
+    return res.scalar_one_or_none()
 
 
 async def update_event(
