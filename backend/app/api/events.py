@@ -112,11 +112,23 @@ async def create_event(
 async def list_upcoming_events(
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
+    organization_id: str | None = Query(None),
+    department_id: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
+    current_user: User | None = Depends(get_current_user),
 ):
+    org_filter = organization_id or department_id
+    if not org_filter and current_user and current_user.role != UserRole.admin:
+        attendee_res = await session.execute(
+            select(Attendee).where(Attendee.user_id == current_user.id)
+        )
+        att = attendee_res.scalar_one_or_none()
+        if att and att.organization_id:
+            org_filter = str(att.organization_id)
+
     skip = (page - 1) * size
-    events_with_counts = await event_service.get_upcoming_events(session, skip=skip, limit=size)
-    total = await event_service.count_upcoming_events(session)
+    events_with_counts = await event_service.get_upcoming_events(session, skip=skip, limit=size, organization_id=org_filter)
+    total = await event_service.count_upcoming_events(session, organization_id=org_filter)
     items = [
         UpcomingEventResponse(
             id=str(event.id),
@@ -140,11 +152,23 @@ async def list_upcoming_events(
 async def list_all_events(
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
+    organization_id: str | None = Query(None),
+    department_id: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
+    current_user: User | None = Depends(get_current_user),
 ):
+    org_filter = organization_id or department_id
+    if not org_filter and current_user and current_user.role != UserRole.admin:
+        attendee_res = await session.execute(
+            select(Attendee).where(Attendee.user_id == current_user.id)
+        )
+        att = attendee_res.scalar_one_or_none()
+        if att and att.organization_id:
+            org_filter = str(att.organization_id)
+
     skip = (page - 1) * size
-    events_with_counts = await event_service.get_upcoming_events(session, skip=skip, limit=size)
-    total = await event_service.count_upcoming_events(session)
+    events_with_counts = await event_service.get_all_events(session, skip=skip, limit=size, organization_id=org_filter)
+    total = await event_service.count_upcoming_events(session, organization_id=org_filter)
     items = [
         UpcomingEventResponse(
             id=str(event.id),

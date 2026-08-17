@@ -79,10 +79,8 @@ export default function App() {
 
       {/* Student + Staff (shared attendee routes) */}
       <Route element={<ProtectedRoute roles={["student", "staff"]} />}>
-        <Route path="/register-biometrics" element={<StudentBiometricRegistration />} />
         <Route element={<StudentLayout />}>
           <Route path="/student/dashboard" element={<StudentDashboardPage />} />
-          <Route path="/profile" element={<StudentProfilePage />} />
           <Route path="/student/attendance" element={<AttendanceHistoryPage />} />
           <Route path="/student/events" element={<UpcomingEventsPage />} />
           <Route path="/student/events/:eventId" element={<EventAttendanceDetailPage />} />
@@ -90,9 +88,10 @@ export default function App() {
         </Route>
       </Route>
 
-      {/* Shared Profile Route for all logged in roles */}
+      {/* Shared Profile & Biometrics Route for all logged in roles */}
       <Route element={<ProtectedRoute roles={["admin", "org_admin", "marshal", "student", "staff"]} />}>
         <Route path="/profile" element={<StudentProfilePage />} />
+        <Route path="/register-biometrics" element={<StudentBiometricRegistration />} />
       </Route>
 
       {/* Marshal */}
