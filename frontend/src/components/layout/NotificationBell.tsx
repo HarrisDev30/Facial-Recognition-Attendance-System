@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Popover,
-  ActionIcon,
   Badge,
   Text,
   Group,
@@ -12,6 +11,7 @@ import {
   ScrollArea,
   Indicator,
   ThemeIcon,
+  UnstyledButton,
 } from "@mantine/core";
 import {
   IconBell,
@@ -32,7 +32,6 @@ import { formatDate } from "../../utils/formatters";
 
 export default function NotificationBell() {
   const navigate = useNavigate();
-  const [opened, setOpened] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -54,7 +53,6 @@ export default function NotificationBell() {
   }, [loadNotifications]);
 
   const handleNotificationClick = async (notif: NotificationItem) => {
-    setOpened(false);
     if (!notif.is_read) {
       try {
         await markNotificationRead(notif.id);
@@ -99,8 +97,6 @@ export default function NotificationBell() {
 
   return (
     <Popover
-      opened={opened}
-      onChange={setOpened}
       width={360}
       position="bottom-end"
       shadow="xl"
@@ -109,19 +105,27 @@ export default function NotificationBell() {
       transitionProps={{ transition: "pop", duration: 150 }}
     >
       <Popover.Target>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          size="lg"
-          radius="md"
-          onClick={() => {
-            setOpened((o) => !o);
-            loadNotifications();
-          }}
+        <UnstyledButton
           aria-label="Notifications"
+          onClick={loadNotifications}
           style={{
-            position: "relative",
-            transition: "all 0.15s ease",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 36,
+            height: 36,
+            borderRadius: "8px",
+            transition: "background 0.15s ease",
+            color: "var(--text-secondary)",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)";
+            e.currentTarget.style.color = "var(--text-primary)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = "var(--text-secondary)";
           }}
         >
           <Indicator
@@ -134,8 +138,9 @@ export default function NotificationBell() {
           >
             <IconBell size={20} />
           </Indicator>
-        </ActionIcon>
+        </UnstyledButton>
       </Popover.Target>
+
       <Popover.Dropdown
         p="xs"
         style={{
@@ -211,7 +216,7 @@ export default function NotificationBell() {
                     background: n.is_read ? "transparent" : "rgba(45, 212, 191, 0.07)",
                     borderLeft: n.is_read ? "3px solid transparent" : "3px solid #2dd4bf",
                     cursor: "pointer",
-                    transition: "background 0.15s ease, transform 0.1s ease",
+                    transition: "background 0.15s ease",
                   }}
                   className="notification-item"
                   onClick={() => handleNotificationClick(n)}

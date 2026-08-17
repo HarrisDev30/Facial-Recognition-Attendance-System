@@ -100,7 +100,7 @@ function EventFormModal({
       end_date: endDate,
       department_id: departmentId || null,
       target_scope: targetScope,
-      co_host_dept_ids: targetScope === "selected_departments" ? coHostDeptIds : [],
+      co_host_dept_ids: coHostDeptIds,
     };
     onSubmit(payload);
   };
