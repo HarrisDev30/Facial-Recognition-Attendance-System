@@ -63,7 +63,7 @@ async def get_events(
                 or_(
                     Event.organization_id == org_uuid,
                     Event.target_scope == EventTargetScope.all,
-                    Event.co_host_dept_ids.contains([org_str]),
+                    cast(Event.co_host_dept_ids, String).like(f"%{org_str}%"),
                 )
             )
         except ValueError:
@@ -80,9 +80,20 @@ async def count_events(
     org_filter = organization_id or department_id
     query = select(func.count(Event.id))
     if org_filter:
-        query = query.where(Event.organization_id == uuid.UUID(org_filter))
+        try:
+            org_uuid = uuid.UUID(org_filter)
+            org_str = str(org_uuid)
+            query = query.where(
+                or_(
+                    Event.organization_id == org_uuid,
+                    Event.target_scope == EventTargetScope.all,
+                    cast(Event.co_host_dept_ids, String).like(f"%{org_str}%"),
+                )
+            )
+        except ValueError:
+            pass
     result = await session.execute(query)
-    return result.scalar()
+    return result.scalar() or 0
 
 
 async def get_event(session: AsyncSession, event_id: uuid.UUID) -> Event | None:

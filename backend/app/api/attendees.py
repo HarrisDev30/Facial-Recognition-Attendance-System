@@ -533,6 +533,10 @@ async def delete_attendee(
     return None
 
 
+from app.models.organization_staff import OrganizationStaff
+from app.models.user import UserRole
+
+
 async def _get_attendee_for_user(session: AsyncSession, user: User) -> Attendee | None:
     result = await session.execute(
         select(Attendee).where(Attendee.user_id == user.id)
@@ -542,19 +546,29 @@ async def _get_attendee_for_user(session: AsyncSession, user: User) -> Attendee 
         return attendee
 
     # Auto-create an Attendee profile for this user if missing
-    org_res = await session.execute(select(Organization).limit(1))
-    org = org_res.scalar_one_or_none()
-    if not org:
+    org_id = None
+    staff_res = await session.execute(
+        select(OrganizationStaff.organization_id).where(OrganizationStaff.user_id == user.id)
+    )
+    org_id = staff_res.scalar_one_or_none()
+
+    if not org_id:
+        org_res = await session.execute(select(Organization.id).limit(1))
+        org_id = org_res.scalar_one_or_none()
+
+    if not org_id:
         return None
+
+    att_type = AttendeeType.faculty if user.role in (UserRole.admin, UserRole.org_admin, UserRole.ADMIN, UserRole.ORG_ADMIN) else AttendeeType.student
 
     new_attendee = Attendee(
         user_id=user.id,
-        organization_id=org.id,
+        organization_id=org_id,
         identifier=user.email.split("@")[0],
         first_name=user.first_name or "User",
         last_name=user.last_name or "Account",
         email=user.email,
-        attendee_type=AttendeeType.student,
+        attendee_type=att_type,
         consent_given=True,
     )
     session.add(new_attendee)

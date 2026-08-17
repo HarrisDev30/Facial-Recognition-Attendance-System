@@ -236,10 +236,8 @@ async def me(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    attendee_result = await session.execute(
-        select(Attendee).where(Attendee.user_id == current_user.id)
-    )
-    attendee = attendee_result.scalar_one_or_none()
+    from app.api.attendees import _get_attendee_for_user
+    attendee = await _get_attendee_for_user(session, current_user)
     assigned_orgs = await _get_assigned_org_ids(session, current_user.id)
 
     role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
