@@ -4,12 +4,16 @@ import {
   TextInput,
   Textarea,
   Select,
+  MultiSelect,
   Stack,
   Group,
   Button,
   Box,
+  Radio,
+  Text,
+  Paper,
 } from "@mantine/core";
-import { IconPhoto, IconX } from "@tabler/icons-react";
+import { IconPhoto, IconX, IconGlobe, IconBuilding, IconUsers } from "@tabler/icons-react";
 import type { EventResponse, EventCreate } from "../../types/event";
 import { getDepartments } from "../../api/departments";
 import type { DepartmentResponse } from "../../types/auth";
@@ -43,6 +47,8 @@ function EventFormModal({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [departmentId, setDepartmentId] = useState<string | null>(null);
+  const [targetScope, setTargetScope] = useState<string>("department_only");
+  const [coHostDeptIds, setCoHostDeptIds] = useState<string[]>([]);
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -65,6 +71,9 @@ function EventFormModal({
       setStartDate(initial?.start_date ?? "");
       setEndDate(initial?.end_date ?? "");
       setDepartmentId((initial as any)?.department_id ?? null);
+      setTargetScope(initial?.target_scope ?? "department_only");
+      setCoHostDeptIds(initial?.co_host_dept_ids ?? []);
+
       if (initial?.photo_url) {
         setPhotoPreview(initial.photo_url);
         if (onPhotoChange) onPhotoChange(null);
@@ -90,6 +99,8 @@ function EventFormModal({
       start_date: startDate,
       end_date: endDate,
       department_id: departmentId || null,
+      target_scope: targetScope,
+      co_host_dept_ids: targetScope === "selected_departments" ? coHostDeptIds : [],
     };
     onSubmit(payload);
   };
@@ -130,13 +141,14 @@ function EventFormModal({
         size="lg"
       >
         <form onSubmit={handleSubmit}>
-          <Stack>
+          <Stack gap="md">
             <TextInput
-              label="Name"
+              label="Event Name"
               value={name}
               onChange={(e) => setName(e.currentTarget.value)}
               required
               maxLength={200}
+              placeholder="e.g. Annual Tech Summit 2026"
             />
             <Select
               label="Event Type"
@@ -154,13 +166,69 @@ function EventFormModal({
               onChange={(e) => setDescription(e.currentTarget.value)}
               minRows={3}
               maxLength={500}
+              placeholder="Brief overview of the event..."
             />
             <TextInput
-              label="Venue"
+              label="Venue / Location"
               value={venue}
               onChange={(e) => setVenue(e.currentTarget.value)}
               maxLength={200}
+              placeholder="e.g. AVR 1, Main Building"
             />
+
+            {/* Target Audience Scope */}
+            <Paper p="md" radius="md" withBorder style={{ background: "rgba(255,255,255,0.02)" }}>
+              <Text size="sm" fw={600} mb="xs">
+                Target Audience & Event Scope
+              </Text>
+              <Radio.Group
+                value={targetScope}
+                onChange={setTargetScope}
+              >
+                <Stack gap="xs">
+                  <Radio
+                    value="department_only"
+                    label={
+                      <Group gap="xs">
+                        <IconBuilding size={16} />
+                        <Text size="sm">My Department Only (Restricted to Home College)</Text>
+                      </Group>
+                    }
+                  />
+                  <Radio
+                    value="selected_departments"
+                    label={
+                      <Group gap="xs">
+                        <IconUsers size={16} />
+                        <Text size="sm">Co-Hosted / Multi-Department (Select Specific Colleges)</Text>
+                      </Group>
+                    }
+                  />
+                  <Radio
+                    value="all"
+                    label={
+                      <Group gap="xs">
+                        <IconGlobe size={16} />
+                        <Text size="sm">University-Wide (Open to All Students)</Text>
+                      </Group>
+                    }
+                  />
+                </Stack>
+              </Radio.Group>
+
+              {targetScope === "selected_departments" && (
+                <MultiSelect
+                  mt="md"
+                  label="Select Co-Hosting Departments"
+                  placeholder="Choose participating colleges..."
+                  data={departments.map((d) => ({ value: d.id, label: `${d.name} (${d.code})` }))}
+                  value={coHostDeptIds}
+                  onChange={setCoHostDeptIds}
+                  searchable
+                  clearable
+                />
+              )}
+            </Paper>
 
             <Box>
               {photoPreview ? (
@@ -169,7 +237,7 @@ function EventFormModal({
                     position: "relative",
                     borderRadius: "var(--mantine-radius-md)",
                     overflow: "hidden",
-                    width: 150,
+                    width: 180,
                   }}
                 >
                   <img
@@ -203,7 +271,7 @@ function EventFormModal({
                     leftSection={<IconPhoto size={18} />}
                     onClick={() => fileInputRef.current?.click()}
                     fullWidth
-                    h={80}
+                    h={70}
                   >
                     Add Cover Photo (optional)
                   </Button>
@@ -219,13 +287,14 @@ function EventFormModal({
             </Box>
 
             <Select
-              label="Department"
+              label="Hosting Department"
               value={departmentId}
               onChange={setDepartmentId}
-              data={departments.map((d) => ({ value: d.id, label: d.name }))}
+              data={departments.map((d) => ({ value: d.id, label: `${d.name} (${d.code})` }))}
               searchable
               clearable
             />
+
             <Group grow>
               <TextInput
                 label="Start Date"
@@ -242,6 +311,7 @@ function EventFormModal({
                 required
               />
             </Group>
+
             <Group justify="flex-end" mt="md">
               <Button variant="default" onClick={onClose}>
                 Cancel

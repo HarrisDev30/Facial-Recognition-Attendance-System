@@ -44,11 +44,52 @@ def _is_good_pose(face_info: dict) -> bool:
     return yaw <= settings.max_face_yaw and pitch <= settings.max_face_pitch
 
 
+def _is_valid_uuid(val: str) -> bool:
+    try:
+        uuid.UUID(str(val))
+        return True
+    except (ValueError, AttributeError):
+        return False
+
+
 async def is_attendee_member(
     session: AsyncSession,
     attendee_id: uuid.UUID,
     organization_id: uuid.UUID | None,
+    event: Event | None = None,
 ) -> bool:
+    if event:
+        scope = getattr(event.target_scope, "value", str(event.target_scope or "department_only"))
+        if scope == "all":
+            return True
+
+        attendee = await session.get(Attendee, attendee_id)
+        if not attendee:
+            return False
+
+        allowed_ids: set[str] = set()
+        if event.organization_id:
+            allowed_ids.add(str(event.organization_id))
+        if scope == "selected_departments" and event.co_host_dept_ids:
+            for item in event.co_host_dept_ids:
+                if _is_valid_uuid(item):
+                    allowed_ids.add(str(item))
+
+        if str(attendee.organization_id) in allowed_ids:
+            return True
+
+        valid_uuids = [uuid.UUID(i) for i in allowed_ids if _is_valid_uuid(i)]
+        if valid_uuids:
+            res = await session.execute(
+                select(Membership).where(
+                    Membership.attendee_id == attendee_id,
+                    Membership.organization_id.in_(valid_uuids),
+                )
+            )
+            if res.scalar_one_or_none() is not None:
+                return True
+        return False
+
     if not organization_id:
         return True
 
@@ -198,15 +239,15 @@ async def process_frame(
             )
             continue
 
-        # Check organization membership
-        is_member = await is_attendee_member(session, matched_attendee_id, event_org_id)
+        # Check organization membership and event target scope
+        is_member = await is_attendee_member(session, matched_attendee_id, event_org_id, event=event)
         if not is_member:
             result["identifications"].append(
                 {
                     "index": idx,
                     "attendee_id": str(matched_attendee_id),
                     "attendee_name": f"{attendee.first_name} {attendee.last_name}",
-                    "message": "Not a member of this organization",
+                    "message": "Attendance Denied — Restricted to authorized department students",
                     "bbox": bbox,
                 }
             )

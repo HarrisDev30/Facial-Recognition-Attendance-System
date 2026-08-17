@@ -115,6 +115,8 @@ class UpcomingEventResponse(BaseModel):
     sessions_count: int = 0
     active_sessions_count: int = 0
     photo_url: str | None = None
+    target_scope: str = "department_only"
+    co_host_dept_ids: list[str] | None = None
 
     model_config = {"from_attributes": True}
 

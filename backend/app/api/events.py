@@ -29,6 +29,7 @@ def _event_response(e) -> EventResponse:
     org_name = org.name if org else None
     ev_type = e.event_type.value if hasattr(e.event_type, "value") else str(e.event_type)
     ev_status = e.status.value if hasattr(e.status, "value") else str(e.status)
+    target_scope_val = e.target_scope.value if hasattr(e.target_scope, "value") else str(e.target_scope or "department_only")
 
     return EventResponse(
         id=str(e.id),
@@ -48,6 +49,8 @@ def _event_response(e) -> EventResponse:
         created_at=e.created_at.isoformat(),
         updated_at=e.updated_at.isoformat(),
         photo_url=e.photo_url,
+        target_scope=target_scope_val,
+        co_host_dept_ids=e.co_host_dept_ids,
     )
 
 
@@ -58,9 +61,17 @@ async def list_events(
     organization_id: str | None = Query(None),
     department_id: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     org_filter = organization_id or department_id
+    if not org_filter and current_user.role != UserRole.admin:
+        attendee_res = await session.execute(
+            select(Attendee).where(Attendee.user_id == current_user.id)
+        )
+        att = attendee_res.scalar_one_or_none()
+        if att and att.organization_id:
+            org_filter = str(att.organization_id)
+
     items = await event_service.get_events(session, skip=skip, limit=limit, organization_id=org_filter)
     total = await event_service.count_events(session, organization_id=org_filter)
     return EventListResponse(
@@ -116,6 +127,8 @@ async def list_upcoming_events(
             sessions_count=sessions_count,
             active_sessions_count=active_sessions_count,
             photo_url=event.photo_url,
+            target_scope=event.target_scope.value if hasattr(event.target_scope, "value") else str(event.target_scope or "department_only"),
+            co_host_dept_ids=event.co_host_dept_ids,
         )
         for event, sessions_count, active_sessions_count in events_with_counts
     ]
@@ -142,6 +155,8 @@ async def list_all_events(
             sessions_count=sessions_count,
             active_sessions_count=active_sessions_count,
             photo_url=event.photo_url,
+            target_scope=event.target_scope.value if hasattr(event.target_scope, "value") else str(event.target_scope or "department_only"),
+            co_host_dept_ids=event.co_host_dept_ids,
         )
         for event, sessions_count, active_sessions_count in events_with_counts
     ]

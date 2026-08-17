@@ -56,7 +56,18 @@ async def get_events(
         .limit(limit)
     )
     if org_filter:
-        query = query.where(Event.organization_id == uuid.UUID(org_filter))
+        try:
+            org_uuid = uuid.UUID(org_filter)
+            org_str = str(org_uuid)
+            query = query.where(
+                or_(
+                    Event.organization_id == org_uuid,
+                    Event.target_scope == EventTargetScope.all,
+                    Event.co_host_dept_ids.contains([org_str]),
+                )
+            )
+        except ValueError:
+            pass
     result = await session.execute(query)
     return list(result.scalars().all())
 

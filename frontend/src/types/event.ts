@@ -13,6 +13,8 @@ export interface EventResponse {
   created_at: string;
   updated_at: string;
   photo_url: string | null;
+  target_scope?: string;
+  co_host_dept_ids?: string[] | null;
 }
 
 export interface EventCreate {
@@ -23,6 +25,8 @@ export interface EventCreate {
   start_date: string;
   end_date: string;
   department_id?: string | null;
+  target_scope?: string;
+  co_host_dept_ids?: string[] | null;
 }
 
 export interface EventUpdate {
@@ -34,6 +38,8 @@ export interface EventUpdate {
   end_date?: string;
   status?: string;
   department_id?: string | null;
+  target_scope?: string;
+  co_host_dept_ids?: string[] | null;
 }
 
 export interface EventListResponse {
@@ -51,6 +57,8 @@ export interface UpcomingEvent {
   sessions_count: number;
   active_sessions_count: number;
   photo_url: string | null;
+  target_scope?: string;
+  co_host_dept_ids?: string[] | null;
 }
 
 export interface UpcomingEventPage {
@@ -59,4 +67,3 @@ export interface UpcomingEventPage {
   page: number;
   size: number;
 }
-

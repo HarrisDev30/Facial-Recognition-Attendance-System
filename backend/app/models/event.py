@@ -3,10 +3,28 @@ import uuid
 from datetime import date, datetime
 
 from app.database import Base
-from sqlalchemy import Date, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Date, DateTime, ForeignKey, JSON, String, Text, func
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+
+class EventTargetScope(str, enum.Enum):
+    all = "all"
+    department_only = "department_only"
+    selected_departments = "selected_departments"
+    ALL = "all"
+    DEPARTMENT_ONLY = "department_only"
+    SELECTED_DEPARTMENTS = "selected_departments"
+
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            val_lower = value.lower()
+            for member in cls:
+                if member.value == val_lower or member.name.lower() == val_lower:
+                    return member
+        return cls.department_only
 
 
 class EventType(str, enum.Enum):
@@ -77,6 +95,12 @@ class Event(Base):
         nullable=False,
         default=EventStatus.draft,
     )
+    target_scope: Mapped[EventTargetScope] = mapped_column(
+        SAEnum(EventTargetScope, native_enum=False, values_callable=lambda obj: [e.value for e in obj]),
+        nullable=False,
+        default=EventTargetScope.department_only,
+    )
+    co_host_dept_ids: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     organization_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
     )

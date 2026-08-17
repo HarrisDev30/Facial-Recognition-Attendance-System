@@ -2,8 +2,8 @@ import { useState, useCallback } from "react";
 import { notifications } from "@mantine/notifications";
 import { getApiError } from "../utils/error";
 
-interface UseFormSubmitOptions<T> {
-  onSuccess?: (result: T) => void;
+interface UseFormSubmitOptions<TResult> {
+  onSuccess?: (result: TResult) => void;
   onError?: (err: unknown) => void;
   successMessage?: string;
   errorMessage?: string;
@@ -11,21 +11,21 @@ interface UseFormSubmitOptions<T> {
   showErrorNotification?: boolean;
 }
 
-interface UseFormSubmitReturn<T> {
-  submit: (data: T) => Promise<void>;
+interface UseFormSubmitReturn<TData> {
+  submit: (data: TData) => Promise<void>;
   submitting: boolean;
   error: string | null;
 }
 
-export function useFormSubmit<T>(
-  submitFn: (data: T) => Promise<any>,
-  options?: UseFormSubmitOptions<T>,
-): UseFormSubmitReturn<T> {
+export function useFormSubmit<TData, TResult = any>(
+  submitFn: (data: TData) => Promise<TResult>,
+  options?: UseFormSubmitOptions<TResult>,
+): UseFormSubmitReturn<TData> {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = useCallback(
-    async (data: T) => {
+    async (data: TData) => {
       setSubmitting(true);
       setError(null);
       try {
