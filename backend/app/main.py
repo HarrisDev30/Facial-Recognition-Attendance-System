@@ -9,6 +9,7 @@ from app.api import (
     devices,
     events,
     marshal,
+    notifications,
     organizations,
     privacy,
     registration,
@@ -147,6 +148,7 @@ app.include_router(organizations.router)
 app.include_router(devices.router)
 app.include_router(marshal.router)
 app.include_router(privacy.router)
+app.include_router(notifications.router)
 
 
 @app.get("/")

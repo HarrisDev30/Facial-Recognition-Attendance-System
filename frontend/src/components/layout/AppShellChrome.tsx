@@ -8,14 +8,14 @@ import {
   ScrollArea,
   Stack,
   UnstyledButton,
-  Box,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { IconLogout, IconBell } from "@tabler/icons-react";
+import { IconLogout } from "@tabler/icons-react";
 import { useState, useCallback, useEffect, type ReactNode, type MouseEvent } from "react";
 import Wordmark from "./Wordmark";
 import UserMenu from "./UserMenu";
+import NotificationBell from "./NotificationBell";
 import ConfirmDialog from "../shared/ConfirmDialog";
 
 export interface NavItem {
@@ -46,8 +46,6 @@ export default function AppShellChrome({
   firstName,
   lastName,
   profilePhotoUrl,
-  hasNotifications = false,
-  onNotificationClick,
 }: AppShellChromeProps) {
   const [opened, { toggle, close }] = useDisclosure(false);
   const [logoutOpen, { open: openLogout, close: closeLogout }] = useDisclosure(false);
@@ -149,42 +147,7 @@ export default function AppShellChrome({
           </Group>
           <Group gap="sm">
             {headerRight}
-            <UnstyledButton
-              onClick={onNotificationClick}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 36,
-                height: 36,
-                borderRadius: rem(8),
-                transition: "background-color 0.15s ease",
-                color: "var(--text-secondary)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)";
-                e.currentTarget.style.color = "var(--text-primary)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "var(--text-secondary)";
-              }}
-            >
-              <Box style={{ position: "relative" }}>
-                <IconBell size={20} />
-                {hasNotifications && (
-                  <span
-                    className="pulse-dot"
-                    style={{
-                      position: "absolute",
-                      top: -2,
-                      right: -2,
-                      margin: 0,
-                    }}
-                  />
-                )}
-              </Box>
-            </UnstyledButton>
+            <NotificationBell />
             <UserMenu
               email={email ?? undefined}
               firstName={firstName}

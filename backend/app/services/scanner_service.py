@@ -303,6 +303,22 @@ async def process_frame(
         _cooldown_cache[cache_key] = time.time()
         result["identified"] = True
         result["new_checkin_count"] += 1
+
+        if attendee.user_id:
+            try:
+                from app.models.notification import NotificationType
+                from app.services import notification_service
+                event_title = event.name if event else "Session"
+                await notification_service.create_notification(
+                    session=session,
+                    user_id=attendee.user_id,
+                    title=f"Attendance Verified: {event_title}",
+                    message=f"You have successfully checked in for '{event_title}' via facial recognition.",
+                    notification_type=NotificationType.attendance_checkin,
+                    link_url="/student/attendance",
+                )
+            except Exception:
+                pass
         result["identifications"].append(
             {
                 "index": idx,

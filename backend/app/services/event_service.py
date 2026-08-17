@@ -39,7 +39,55 @@ async def create_event(
     res = await session.execute(
         select(Event).options(selectinload(Event.organization)).where(Event.id == event.id)
     )
-    return res.scalar_one()
+    event_obj = res.scalar_one()
+
+    # Trigger notifications for co-hosts and students
+    try:
+        from app.models.notification import NotificationType
+        from app.services import notification_service
+
+        host_name = event_obj.organization.code if event_obj.organization else "Host Dept"
+
+        # Co-host invitations for department admins
+        if event_obj.co_host_dept_ids and isinstance(event_obj.co_host_dept_ids, list):
+            for cohost_id_str in event_obj.co_host_dept_ids:
+                try:
+                    cohost_uuid = uuid.UUID(cohost_id_str)
+                    await notification_service.notify_department_admins(
+                        session=session,
+                        organization_id=cohost_uuid,
+                        title=f"Co-Host Tagged: {event_obj.name}",
+                        message=f"Your department was added as a co-host for event '{event_obj.name}' by {host_name}.",
+                        notification_type=NotificationType.cohost_invite,
+                        link_url="/admin/events",
+                    )
+                except ValueError:
+                    pass
+
+        # Target student announcements
+        target_org_uuids = []
+        if event_obj.target_scope == EventTargetScope.department_only and event_obj.organization_id:
+            target_org_uuids = [event_obj.organization_id]
+        elif event_obj.target_scope == EventTargetScope.selected_departments and event_obj.co_host_dept_ids:
+            target_org_uuids = [event_obj.organization_id] if event_obj.organization_id else []
+            for cid in event_obj.co_host_dept_ids:
+                try:
+                    target_org_uuids.append(uuid.UUID(cid))
+                except ValueError:
+                    pass
+
+        await notification_service.notify_target_students(
+            session=session,
+            organization_ids=target_org_uuids if event_obj.target_scope != EventTargetScope.all else [],
+            title=f"New Event: {event_obj.name}",
+            message=f"A new event '{event_obj.name}' has been announced for your department by {host_name}.",
+            notification_type=NotificationType.event_announcement,
+            link_url="/student/events",
+        )
+    except Exception as e:
+        print(f"Error sending event notifications: {e}")
+
+    return event_obj
 
 
 async def get_events(
