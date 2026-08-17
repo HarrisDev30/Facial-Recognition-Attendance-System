@@ -69,7 +69,7 @@ class Event(Base):
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     venue: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    photo_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[date] = mapped_column(Date, nullable=False)
     status: Mapped[EventStatus] = mapped_column(

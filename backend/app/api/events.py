@@ -190,3 +190,48 @@ async def delete_event(
     if not ok:
         raise HTTPException(status_code=404, detail="Event not found")
     return None
+
+
+@router.post("/{event_id}/photo")
+async def upload_event_photo(
+    event_id: uuid.UUID,
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+    _: User = Depends(require_admin_or_marshal),
+):
+    event = await event_service.get_event(session, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    import base64
+    base64_data = base64.b64encode(content).decode("utf-8")
+    mime_type = file.content_type or "image/jpeg"
+    ext = (file.filename or "").lower()
+    if "png" in ext:
+        mime_type = "image/png"
+    elif "webp" in ext:
+        mime_type = "image/webp"
+
+    event.photo_url = f"data:{mime_type};base64,{base64_data}"
+    await session.commit()
+    await session.refresh(event)
+    return {"success": True, "photo_url": event.photo_url}
+
+
+@router.delete("/{event_id}/photo")
+async def delete_event_photo(
+    event_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+    _: User = Depends(require_admin_or_marshal),
+):
+    event = await event_service.get_event(session, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    event.photo_url = None
+    await session.commit()
+    return {"success": True}
