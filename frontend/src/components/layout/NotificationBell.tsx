@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Popover,
+  Menu,
   Badge,
   Text,
   Group,
@@ -69,7 +69,8 @@ export default function NotificationBell() {
     }
   };
 
-  const handleMarkAllRead = async () => {
+  const handleMarkAllRead = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     setLoading(true);
     try {
       await markAllNotificationsRead();
@@ -96,18 +97,16 @@ export default function NotificationBell() {
   };
 
   return (
-    <Popover
+    <Menu
+      shadow="xl"
       width={360}
       position="bottom-end"
-      shadow="xl"
-      withArrow
-      arrowSize={10}
-      transitionProps={{ transition: "pop", duration: 150 }}
+      offset={8}
+      onOpen={loadNotifications}
     >
-      <Popover.Target>
+      <Menu.Target>
         <UnstyledButton
           aria-label="Notifications"
-          onClick={loadNotifications}
           style={{
             display: "flex",
             alignItems: "center",
@@ -139,9 +138,9 @@ export default function NotificationBell() {
             <IconBell size={20} />
           </Indicator>
         </UnstyledButton>
-      </Popover.Target>
+      </Menu.Target>
 
-      <Popover.Dropdown
+      <Menu.Dropdown
         p="xs"
         style={{
           background: "#141414",
@@ -240,7 +239,7 @@ export default function NotificationBell() {
             </Stack>
           )}
         </ScrollArea.Autosize>
-      </Popover.Dropdown>
-    </Popover>
+      </Menu.Dropdown>
+    </Menu>
   );
 }
