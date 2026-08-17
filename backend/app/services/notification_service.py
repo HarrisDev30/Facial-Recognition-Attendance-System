@@ -37,10 +37,11 @@ async def notify_department_admins(
     message: str,
     notification_type: NotificationType = NotificationType.cohost_invite,
     link_url: str | None = None,
+    exclude_user_id: uuid.UUID | None = None,
 ):
     user_ids = set()
 
-    # 1. OrganizationStaff
+    # 1. OrganizationStaff for co-hosting department
     staff_res = await session.execute(
         select(OrganizationStaff.user_id).where(
             OrganizationStaff.organization_id == organization_id
@@ -50,7 +51,7 @@ async def notify_department_admins(
         if uid:
             user_ids.add(uid)
 
-    # 2. Attendee
+    # 2. Attendee for co-hosting department
     att_res = await session.execute(
         select(Attendee.user_id).where(
             Attendee.organization_id == organization_id,
@@ -61,15 +62,31 @@ async def notify_department_admins(
         if uid:
             user_ids.add(uid)
 
-    # 3. All Admin and Department Admin users
-    admin_res = await session.execute(
-        select(User.id).where(
-            User.role.in_([UserRole.org_admin, UserRole.admin, UserRole.ORG_ADMIN, UserRole.ADMIN])
+    # 3. Department Admins matching role
+    if user_ids:
+        admin_res = await session.execute(
+            select(User.id).where(
+                User.id.in_(list(user_ids)),
+                User.role.in_([UserRole.org_admin, UserRole.admin, UserRole.ORG_ADMIN, UserRole.ADMIN])
+            )
         )
-    )
-    for uid in admin_res.scalars().all():
-        if uid:
-            user_ids.add(uid)
+        for uid in admin_res.scalars().all():
+            if uid:
+                user_ids.add(uid)
+    else:
+        # Fallback to all org_admin/admin users excluding caller
+        admin_res = await session.execute(
+            select(User.id).where(
+                User.role.in_([UserRole.org_admin, UserRole.admin, UserRole.ORG_ADMIN, UserRole.ADMIN])
+            )
+        )
+        for uid in admin_res.scalars().all():
+            if uid:
+                user_ids.add(uid)
+
+    # Exclude creator user ID
+    if exclude_user_id and exclude_user_id in user_ids:
+        user_ids.remove(exclude_user_id)
 
     for uid in user_ids:
         await create_notification(
@@ -89,9 +106,9 @@ async def notify_target_students(
     message: str,
     notification_type: NotificationType = NotificationType.event_announcement,
     link_url: str | None = None,
+    exclude_user_id: uuid.UUID | None = None,
 ):
     if not organization_ids:
-        # All students
         att_stmt = select(Attendee.user_id).where(Attendee.user_id.isnot(None))
     else:
         att_stmt = select(Attendee.user_id).where(
@@ -100,6 +117,11 @@ async def notify_target_students(
         )
     att_res = await session.execute(att_stmt)
     target_user_ids = set(att_res.scalars().all())
+
+    # Exclude caller (event creator)
+    if exclude_user_id and exclude_user_id in target_user_ids:
+        target_user_ids.remove(exclude_user_id)
+
     for uid in target_user_ids:
         if uid:
             await create_notification(

@@ -60,6 +60,7 @@ async def create_event(
                         message=f"Your department was added as a co-host for event '{event_obj.name}' by {host_name}.",
                         notification_type=NotificationType.cohost_invite,
                         link_url="/admin/events",
+                        exclude_user_id=created_by,
                     )
                 except ValueError:
                     pass
@@ -83,6 +84,7 @@ async def create_event(
             message=f"A new event '{event_obj.name}' has been announced for your department by {host_name}.",
             notification_type=NotificationType.event_announcement,
             link_url="/student/events",
+            exclude_user_id=created_by,
         )
     except Exception as e:
         print(f"Error sending event notifications: {e}")
