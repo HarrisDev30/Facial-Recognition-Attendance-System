@@ -218,8 +218,15 @@ async def upload_profile_photo(
     with open(filepath, "wb") as f:
         f.write(content)
 
-    url = f"/api/attendees/photos/{filename}"
-    attendee.profile_photo_url = url
+    import base64
+    base64_data = base64.b64encode(content).decode("utf-8")
+    mime_type = file.content_type or "image/jpeg"
+    if "png" in ext:
+        mime_type = "image/png"
+    elif "webp" in ext:
+        mime_type = "image/webp"
+
+    attendee.profile_photo_url = f"data:{mime_type};base64,{base64_data}"
     await session.commit()
     await session.refresh(attendee)
     return {"success": True, "profile_photo_url": attendee.profile_photo_url}

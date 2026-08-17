@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from app.database import Base
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -45,7 +45,7 @@ class Attendee(Base):
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
-    profile_photo_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    profile_photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     consent_given: Mapped[bool] = mapped_column(Boolean, default=False)
     consent_given_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
