@@ -149,6 +149,11 @@ app.include_router(marshal.router)
 app.include_router(privacy.router)
 
 
+@app.get("/")
+async def root():
+    return {"status": "ok", "message": "Attendance Monitoring System API is running"}
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "service": "attendance-api"}
