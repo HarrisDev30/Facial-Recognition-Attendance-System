@@ -2524,15 +2524,16 @@
 }
 
 @media (max-width: 768px) {
-  .cursor-fluid-liquid-aura,
-  .parallax-orbs-wrapper {
+  .cursor-fluid-liquid-aura {
     display: none !important;
   }
-  .animated-bg-container {
-    background: radial-gradient(circle at 50% 15%, rgba(0, 112, 243, 0.08) 0%, transparent 65%);
+  .parallax-orbs-wrapper {
+    display: block !important;
+    opacity: 0.85;
   }
-  .landing-root-container[data-theme="dark"] .animated-bg-container {
-    background: radial-gradient(circle at 50% 15%, rgba(0, 223, 216, 0.07) 0%, transparent 65%);
+  .mesh-orb {
+    filter: blur(28px) !important;
+    transform: translateZ(0) !important;
   }
   .nav-inner-container {
     padding: 0 16px;

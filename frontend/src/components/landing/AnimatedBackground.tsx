@@ -118,165 +118,160 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ theme = 
     { scope: containerRef }
   );
 
-  // 2. Liquid-Smooth GSAP Scroll Timelines across sections (Desktop / Tablet)
+  // 2. Liquid-Smooth GSAP Scroll Timelines across sections (Both Desktop & Mobile)
   useGSAP(
     () => {
-      const mm = gsap.matchMedia();
+      const hero = document.querySelector(".hero-section");
+      const pipeline = document.getElementById("pipeline");
+      const hardware = document.getElementById("hardware");
+      const privacy = document.getElementById("privacy");
+      const campuses = document.getElementById("campuses");
+      const footer = document.querySelector(".landing-global-footer");
 
-      // Only run multi-layer scrub ScrollTriggers on desktop/tablets where GPU handles it effortlessly
-      mm.add("(min-width: 769px)", () => {
-        const hero = document.querySelector(".hero-section");
-        const pipeline = document.getElementById("pipeline");
-        const hardware = document.getElementById("hardware");
-        const privacy = document.getElementById("privacy");
-        const campuses = document.getElementById("campuses");
-        const footer = document.querySelector(".landing-global-footer");
-
-        // 1. Hero Atmosphere: Smooth fade out on scroll
-        if (heroLayerRef.current && hero) {
-          gsap.fromTo(
-            heroLayerRef.current,
-            { opacity: 1, y: 0 },
-            {
-              opacity: 0,
-              y: -50,
-              ease: "none",
-              force3D: true,
-              scrollTrigger: {
-                trigger: hero,
-                start: "top top",
-                end: "bottom top",
-                scrub: 1.2,
-                invalidateOnRefresh: true,
-              },
-            }
-          );
-        }
-
-        // 2. Pipeline Atmosphere: Unified In-Out Timeline
-        if (pipelineLayerRef.current && pipeline) {
-          const tl = gsap.timeline({
-            scrollTrigger: {
-              trigger: pipeline,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: 1.2,
-              invalidateOnRefresh: true,
-            },
-          });
-
-          tl.fromTo(
-            pipelineLayerRef.current,
-            { opacity: 0, y: 40 },
-            { opacity: 1, y: 0, duration: 0.4, ease: "power1.inOut", force3D: true }
-          )
-            .to(pipelineLayerRef.current, { opacity: 1, duration: 0.2 })
-            .to(pipelineLayerRef.current, {
-              opacity: 0,
-              y: -40,
-              duration: 0.4,
-              ease: "power1.inOut",
-              force3D: true,
-            });
-        }
-
-        // 3. Hardware Mesh Atmosphere: Unified In-Out Timeline
-        if (hardwareLayerRef.current && hardware) {
-          const tl = gsap.timeline({
-            scrollTrigger: {
-              trigger: hardware,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: 1.2,
-              invalidateOnRefresh: true,
-            },
-          });
-
-          tl.fromTo(
-            hardwareLayerRef.current,
-            { opacity: 0, y: 40 },
-            { opacity: 1, y: 0, duration: 0.4, ease: "power1.inOut", force3D: true }
-          )
-            .to(hardwareLayerRef.current, { opacity: 1, duration: 0.2 })
-            .to(hardwareLayerRef.current, {
-              opacity: 0,
-              y: -40,
-              duration: 0.4,
-              ease: "power1.inOut",
-              force3D: true,
-            });
-        }
-
-        // 4. Privacy Vault Atmosphere: Unified In-Out Timeline
-        if (privacyLayerRef.current && privacy) {
-          const tl = gsap.timeline({
-            scrollTrigger: {
-              trigger: privacy,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: 1.2,
-              invalidateOnRefresh: true,
-            },
-          });
-
-          tl.fromTo(
-            privacyLayerRef.current,
-            { opacity: 0, y: 40 },
-            { opacity: 1, y: 0, duration: 0.4, ease: "power1.inOut", force3D: true }
-          )
-            .to(privacyLayerRef.current, { opacity: 1, duration: 0.2 })
-            .to(privacyLayerRef.current, {
-              opacity: 0,
-              y: -40,
-              duration: 0.4,
-              ease: "power1.inOut",
-              force3D: true,
-            });
-        }
-
-        // 5. Campuses Atmosphere: In-Out Timeline
-        if (campusesLayerRef.current && campuses) {
-          const tl = gsap.timeline({
-            scrollTrigger: {
-              trigger: campuses,
-              start: "top 85%",
-              end: "bottom 90%",
-              scrub: 1.2,
-              invalidateOnRefresh: true,
-            },
-          });
-
-          tl.fromTo(
-            campusesLayerRef.current,
-            { opacity: 0, y: 40 },
-            { opacity: 1, y: 0, duration: 0.4, ease: "power1.inOut", force3D: true }
-          )
-            .to(campusesLayerRef.current, { opacity: 1, duration: 0.3 })
-            .to(campusesLayerRef.current, {
-              opacity: 0,
-              y: -30,
-              duration: 0.3,
-              ease: "power1.inOut",
-              force3D: true,
-            });
-        }
-
-        // 6. Global Background Fade Out at Footer
-        if (containerRef.current && footer) {
-          gsap.to(containerRef.current, {
+      // 1. Hero Atmosphere: Smooth fade out on scroll
+      if (heroLayerRef.current && hero) {
+        gsap.fromTo(
+          heroLayerRef.current,
+          { opacity: 1, y: 0 },
+          {
             opacity: 0,
+            y: -40,
             ease: "none",
             force3D: true,
             scrollTrigger: {
-              trigger: footer,
-              start: "top 95%",
-              end: "top 70%",
-              scrub: 1,
+              trigger: hero,
+              start: "top top",
+              end: "bottom top",
+              scrub: 0.5,
               invalidateOnRefresh: true,
             },
+          }
+        );
+      }
+
+      // 2. Pipeline Atmosphere: Unified In-Out Timeline
+      if (pipelineLayerRef.current && pipeline) {
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: pipeline,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: 0.5,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        tl.fromTo(
+          pipelineLayerRef.current,
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.4, ease: "power1.inOut", force3D: true }
+        )
+          .to(pipelineLayerRef.current, { opacity: 1, duration: 0.2 })
+          .to(pipelineLayerRef.current, {
+            opacity: 0,
+            y: -30,
+            duration: 0.4,
+            ease: "power1.inOut",
+            force3D: true,
           });
-        }
-      });
+      }
+
+      // 3. Hardware Mesh Atmosphere: Unified In-Out Timeline
+      if (hardwareLayerRef.current && hardware) {
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: hardware,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: 0.5,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        tl.fromTo(
+          hardwareLayerRef.current,
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.4, ease: "power1.inOut", force3D: true }
+        )
+          .to(hardwareLayerRef.current, { opacity: 1, duration: 0.2 })
+          .to(hardwareLayerRef.current, {
+            opacity: 0,
+            y: -30,
+            duration: 0.4,
+            ease: "power1.inOut",
+            force3D: true,
+          });
+      }
+
+      // 4. Privacy Vault Atmosphere: Unified In-Out Timeline
+      if (privacyLayerRef.current && privacy) {
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: privacy,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: 0.5,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        tl.fromTo(
+          privacyLayerRef.current,
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.4, ease: "power1.inOut", force3D: true }
+        )
+          .to(privacyLayerRef.current, { opacity: 1, duration: 0.2 })
+          .to(privacyLayerRef.current, {
+            opacity: 0,
+            y: -30,
+            duration: 0.4,
+            ease: "power1.inOut",
+            force3D: true,
+          });
+      }
+
+      // 5. Campuses Atmosphere: In-Out Timeline
+      if (campusesLayerRef.current && campuses) {
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: campuses,
+            start: "top 85%",
+            end: "bottom 90%",
+            scrub: 0.5,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        tl.fromTo(
+          campusesLayerRef.current,
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.4, ease: "power1.inOut", force3D: true }
+        )
+          .to(campusesLayerRef.current, { opacity: 1, duration: 0.3 })
+          .to(campusesLayerRef.current, {
+            opacity: 0,
+            y: -20,
+            duration: 0.3,
+            ease: "power1.inOut",
+            force3D: true,
+          });
+      }
+
+      // 6. Global Background Fade Out at Footer
+      if (containerRef.current && footer) {
+        gsap.to(containerRef.current, {
+          opacity: 0,
+          ease: "none",
+          force3D: true,
+          scrollTrigger: {
+            trigger: footer,
+            start: "top 95%",
+            end: "top 70%",
+            scrub: 0.5,
+            invalidateOnRefresh: true,
+          },
+        });
+      }
     },
     { dependencies: [theme] }
   );
