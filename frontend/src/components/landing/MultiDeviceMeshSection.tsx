@@ -22,86 +22,109 @@ export const MultiDeviceMeshSection: React.FC = () => {
 
   useGSAP(
     () => {
+      const mm = gsap.matchMedia();
       const cards = [card1Ref.current, card2Ref.current, card3Ref.current];
 
-      // 1. Staggered 3D Perspective Reveal
-      gsap.fromTo(
-        cards,
-        { opacity: 0, y: 35, rotateX: 8, transformPerspective: 1000 },
-        {
-          opacity: 1,
-          y: 0,
-          rotateX: 0,
-          duration: 0.7,
-          stagger: 0.12,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 75%",
-            toggleActions: "play none none reverse",
-          },
-        }
-      );
+      // Desktop (>= 769px): 3D Perspective Stagger & Holographic Mouse Tilt
+      mm.add("(min-width: 769px)", () => {
+        gsap.fromTo(
+          cards,
+          { opacity: 0, y: 35, rotateX: 8, transformPerspective: 1000 },
+          {
+            opacity: 1,
+            y: 0,
+            rotateX: 0,
+            duration: 0.7,
+            stagger: 0.12,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 75%",
+              toggleActions: "play none none reverse",
+            },
+          }
+        );
 
-      // 2. Interactive 3D Holographic Mouse Hover Tilt with gsap.quickTo()
-      const cleanups: (() => void)[] = [];
+        const cleanups: (() => void)[] = [];
 
-      cards.forEach((cardEl) => {
-        if (!cardEl) return;
+        cards.forEach((cardEl) => {
+          if (!cardEl) return;
 
-        gsap.set(cardEl, { transformPerspective: 1000, transformStyle: "preserve-3d" });
+          gsap.set(cardEl, { transformPerspective: 1000, transformStyle: "preserve-3d" });
 
-        const xTo = gsap.quickTo(cardEl, "rotateY", { duration: 0.3, ease: "power2.out" });
-        const yTo = gsap.quickTo(cardEl, "rotateX", { duration: 0.3, ease: "power2.out" });
-        const liftTo = gsap.quickTo(cardEl, "y", { duration: 0.3, ease: "power2.out" });
-        const scaleTo = gsap.quickTo(cardEl, "scale", { duration: 0.3, ease: "power2.out" });
+          const xTo = gsap.quickTo(cardEl, "rotateY", { duration: 0.3, ease: "power2.out" });
+          const yTo = gsap.quickTo(cardEl, "rotateX", { duration: 0.3, ease: "power2.out" });
+          const liftTo = gsap.quickTo(cardEl, "y", { duration: 0.3, ease: "power2.out" });
+          const scaleTo = gsap.quickTo(cardEl, "scale", { duration: 0.3, ease: "power2.out" });
 
-        const handleMouseMove = (e: MouseEvent) => {
-          const rect = cardEl.getBoundingClientRect();
-          const relX = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
-          const relY = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+          const handleMouseMove = (e: MouseEvent) => {
+            const rect = cardEl.getBoundingClientRect();
+            const relX = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+            const relY = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
 
-          xTo(relX * 9);
-          yTo(-relY * 9);
-          liftTo(-10);
-          scaleTo(1.03);
-        };
+            xTo(relX * 9);
+            yTo(-relY * 9);
+            liftTo(-10);
+            scaleTo(1.03);
+          };
 
-        const handleMouseLeave = () => {
-          xTo(0);
-          yTo(0);
-          liftTo(0);
-          scaleTo(1);
-        };
+          const handleMouseLeave = () => {
+            xTo(0);
+            yTo(0);
+            liftTo(0);
+            scaleTo(1);
+          };
 
-        cardEl.addEventListener("mousemove", handleMouseMove, { passive: true });
-        cardEl.addEventListener("mouseleave", handleMouseLeave);
+          cardEl.addEventListener("mousemove", handleMouseMove, { passive: true });
+          cardEl.addEventListener("mouseleave", handleMouseLeave);
 
-        cleanups.push(() => {
-          cardEl.removeEventListener("mousemove", handleMouseMove);
-          cardEl.removeEventListener("mouseleave", handleMouseLeave);
+          cleanups.push(() => {
+            cardEl.removeEventListener("mousemove", handleMouseMove);
+            cardEl.removeEventListener("mouseleave", handleMouseLeave);
+          });
         });
+
+        // SVG Interconnect Line Draw on Scroll
+        gsap.fromTo(
+          ".mesh-network-line",
+          { strokeDashoffset: 600 },
+          {
+            strokeDashoffset: 0,
+            duration: 1.2,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 70%",
+              toggleActions: "play none none reverse",
+            },
+          }
+        );
+
+        return () => {
+          cleanups.forEach((c) => c());
+        };
       });
 
-      // 3. SVG Interconnect Line Draw on Scroll
-      gsap.fromTo(
-        ".mesh-network-line",
-        { strokeDashoffset: 600 },
-        {
-          strokeDashoffset: 0,
-          duration: 1.2,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 70%",
-            toggleActions: "play none none reverse",
-          },
-        }
-      );
-
-      return () => {
-        cleanups.forEach((c) => c());
-      };
+      // Mobile (<= 768px): Lightweight Simple Card Slide (Zero Tilt Overhead)
+      mm.add("(max-width: 768px)", () => {
+        gsap.fromTo(
+          cards,
+          { opacity: 0, y: 20 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            stagger: 0.1,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 85%",
+              toggleActions: "play none none none",
+              once: true,
+            },
+          }
+        );
+      });
     },
     { scope: sectionRef }
   );

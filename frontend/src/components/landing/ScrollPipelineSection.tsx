@@ -111,89 +111,116 @@ export const ScrollPipelineSection: React.FC = () => {
   // GSAP ScrollTrigger setup: Stage Cards & Inertial Data Beam
   useGSAP(
     () => {
+      const mm = gsap.matchMedia();
       const cards = gsap.utils.toArray<HTMLElement>(".pipeline-stage-card");
 
-      // 1. Unified Bidirectional Pipeline In-Out Timeline (Hero -> Pipeline -> Hardware)
-      if (containerRef.current && hudRef.current) {
-        const sectionTl = gsap.timeline({
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 95%",
-            end: "bottom 15%",
-            scrub: 1,
-            invalidateOnRefresh: true,
-          },
-        });
-
-        sectionTl
-          // Phase 1: Entrance Fade from Hero (0% - 18% of scroll)
-          .fromTo(
-            [".section-header-center", hudRef.current, ".pipeline-cards-column"],
-            { opacity: 0, y: 45 },
-            { opacity: 1, y: 0, duration: 0.18, ease: "power1.out", force3D: true, stagger: 0.04 }
-          )
-          // Phase 2: Active Pipeline Stages (18% - 82% of scroll)
-          .to([".section-header-center", hudRef.current, ".pipeline-cards-column"], {
-            opacity: 1,
-            duration: 0.64,
-          })
-          // Phase 3: Exit Fade into Hardware (82% - 100% of scroll)
-          .to([".section-header-center", hudRef.current, ".pipeline-cards-column"], {
-            opacity: 0,
-            y: -45,
-            duration: 0.18,
-            ease: "power1.in",
-            force3D: true,
+      // Desktop & Tablet (>= 769px): Full Pinned Telemetry & Scrub Animations
+      mm.add("(min-width: 769px)", () => {
+        // 1. Unified Bidirectional Pipeline In-Out Timeline (Hero -> Pipeline -> Hardware)
+        if (containerRef.current && hudRef.current) {
+          const sectionTl = gsap.timeline({
+            scrollTrigger: {
+              trigger: containerRef.current,
+              start: "top 95%",
+              end: "bottom 15%",
+              scrub: 1,
+              invalidateOnRefresh: true,
+            },
           });
-      }
 
-      // 2. Smooth Inertial Data-Flow Beam (scrub: 0.8 provides silky momentum lag)
-      if (beamFillRef.current && containerRef.current) {
-        gsap.fromTo(
-          beamFillRef.current,
-          { scaleY: 0 },
-          {
-            scaleY: 1,
-            ease: "none",
-            transformOrigin: "top center",
-            force3D: true,
-            scrollTrigger: {
-              trigger: ".pipeline-cards-column",
-              start: "top 60%",
-              end: "bottom 70%",
-              scrub: 0.8,
-            },
-          }
-        );
-      }
+          sectionTl
+            // Phase 1: Entrance Fade from Hero (0% - 18% of scroll)
+            .fromTo(
+              [".section-header-center", hudRef.current, ".pipeline-cards-column"],
+              { opacity: 0, y: 45 },
+              { opacity: 1, y: 0, duration: 0.18, ease: "power1.out", force3D: true, stagger: 0.04 }
+            )
+            // Phase 2: Active Pipeline Stages (18% - 82% of scroll)
+            .to([".section-header-center", hudRef.current, ".pipeline-cards-column"], {
+              opacity: 1,
+              duration: 0.64,
+            })
+            // Phase 3: Exit Fade into Hardware (82% - 100% of scroll)
+            .to([".section-header-center", hudRef.current, ".pipeline-cards-column"], {
+              opacity: 0,
+              y: -45,
+              duration: 0.18,
+              ease: "power1.in",
+              force3D: true,
+            });
+        }
 
-      // 3. Stage Card ScrollTriggers with smooth entry transitions
-      cards.forEach((card, index) => {
-        ScrollTrigger.create({
-          trigger: card,
-          start: "top 55%",
-          end: "bottom 55%",
-          onEnter: () => handleStageChange(index + 1),
-          onEnterBack: () => handleStageChange(index + 1),
+        // 2. Smooth Inertial Data-Flow Beam
+        if (beamFillRef.current && containerRef.current) {
+          gsap.fromTo(
+            beamFillRef.current,
+            { scaleY: 0 },
+            {
+              scaleY: 1,
+              ease: "none",
+              transformOrigin: "top center",
+              force3D: true,
+              scrollTrigger: {
+                trigger: ".pipeline-cards-column",
+                start: "top 60%",
+                end: "bottom 70%",
+                scrub: 0.8,
+              },
+            }
+          );
+        }
+
+        // 3. Stage Card ScrollTriggers with smooth entry transitions
+        cards.forEach((card, index) => {
+          ScrollTrigger.create({
+            trigger: card,
+            start: "top 55%",
+            end: "bottom 55%",
+            onEnter: () => handleStageChange(index + 1),
+            onEnterBack: () => handleStageChange(index + 1),
+          });
+
+          gsap.fromTo(
+            card,
+            { opacity: 0, y: 35 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.7,
+              ease: "power3.out",
+              force3D: true,
+              overwrite: "auto",
+              scrollTrigger: {
+                trigger: card,
+                start: "top 85%",
+                toggleActions: "play none none reverse",
+              },
+            }
+          );
         });
+      });
 
-        gsap.fromTo(
-          card,
-          { opacity: 0, y: 35 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.7,
-            ease: "power3.out",
-            force3D: true,
-            overwrite: "auto",
-            scrollTrigger: {
-              trigger: card,
-              start: "top 85%",
-              toggleActions: "play none none reverse",
-            },
-          }
-        );
+      // Mobile (<= 768px): Ultra-Lightweight Direct Stagger Reveal (No Heavy Scrub/Pinning)
+      mm.add("(max-width: 768px)", () => {
+        cards.forEach((card) => {
+          gsap.fromTo(
+            card,
+            { opacity: 0, y: 20 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.5,
+              ease: "power2.out",
+              force3D: true,
+              scrollTrigger: {
+                trigger: card,
+                start: "top 90%",
+                toggleActions: "play none none none",
+                once: true,
+              },
+            }
+          );
+        });
       });
     },
     { scope: containerRef }
