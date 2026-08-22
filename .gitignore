@@ -42,6 +42,8 @@ Thumbs.db
 # Internal tools & documentation (not needed in production repository)
 .agents/
 .docs/
+docs/
+CONTEXT.md
 .scratch/
 scratch/
 skills-lock.json
@@ -51,6 +53,10 @@ DESIGN.md
 PRODUCT.md
 PHASE.md
 references image.webp
+
+# Tests & test scripts
+backend/tests/
+backend/scripts/
 
 # Cache & Graphs
 .ruff_cache/
