@@ -67,19 +67,46 @@ export default function StudentProfilePage() {
   const [avatarHovered, setAvatarHovered] = useState(false);
 
   const loadProfileData = useCallback(async () => {
-    const p = await getMyProfile();
-    setProfile(p);
-    setError(null);
-  }, []);
+    try {
+      const p = await getMyProfile();
+      setProfile(p);
+      setError(null);
+    } catch (err: any) {
+      if (user) {
+        // Universal fallback for Admin, Super-Admin, and Marshal accounts
+        setProfile({
+          id: user.id,
+          first_name: user.first_name || "Platform",
+          last_name: user.last_name || "Admin",
+          identifier: user.email,
+          email: user.email,
+          attendee_type: (user.role as any) || "admin",
+          department_id: null,
+          department_code: null,
+          department_name: user.institution_name || (user.role === "super_admin" ? "Platform Control" : "University Campus"),
+          profile_photo_url: user.profile_photo_url || null,
+          created_at: new Date().toISOString(),
+          registration_status: "complete",
+          consent_given: true,
+          num_embeddings: 0,
+        });
+        setError(null);
+      } else {
+        throw err;
+      }
+    }
+  }, [user]);
 
   const { loading, error: loadError, execute: loadProfile } = useAsync(loadProfileData, false);
 
   useEffect(() => {
     if (!user) return;
     loadProfile();
-    getMyAttendanceSummary()
-      .then(setSummary)
-      .catch(() => {});
+    if (user.role === "student" || user.role === "staff") {
+      getMyAttendanceSummary()
+        .then(setSummary)
+        .catch(() => {});
+    }
   }, [user, loadProfile]);
 
   useEffect(() => {
@@ -96,7 +123,7 @@ export default function StudentProfilePage() {
     });
     if (departments.length === 0) {
       try {
-        const res = await getDepartments();
+        const res = await getDepartments({ org_type: "college" });
         setDepartments(res.items);
       } catch { /* ignore */ }
     }

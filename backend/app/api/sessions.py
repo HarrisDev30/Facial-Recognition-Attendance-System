@@ -1,7 +1,7 @@
 import uuid
 
 from app.database import get_session
-from app.middleware.auth import get_current_user, require_admin
+from app.middleware.auth import get_current_user, require_admin, require_admin_or_marshal
 from app.models.user import User
 from app.schemas.attendance import (
     SessionCreate,
@@ -10,27 +10,24 @@ from app.schemas.attendance import (
 )
 from app.services.event_service import (
     activate_session as service_activate_session,
-)
-from app.services.event_service import (
     create_session as service_create_session,
-)
-from app.services.event_service import (
     deactivate_session as service_deactivate_session,
-)
-from app.services.event_service import (
+    extend_session as service_extend_session,
     get_event,
-    get_sessions,
-)
-from app.services.event_service import (
     get_session as service_get_session,
-)
-from app.services.event_service import (
+    get_sessions,
     update_session as service_update_session,
 )
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(tags=["sessions"])
+
+
+class SessionExtendRequest(BaseModel):
+    minutes: int = Field(15, ge=1, le=240)
+
 
 
 @router.get(
@@ -193,3 +190,32 @@ async def deactivate_session(
         deactivated_at=att_session.deactivated_at,
         created_at=att_session.created_at,
     )
+
+
+@router.post(
+    "/api/sessions/{session_id}/extend",
+    response_model=SessionResponse,
+)
+async def extend_session_endpoint(
+    session_id: uuid.UUID,
+    body: SessionExtendRequest = SessionExtendRequest(minutes=15),
+    db: AsyncSession = Depends(get_session),
+    _: User = Depends(require_admin_or_marshal),
+):
+    att_session = await service_extend_session(db, session_id, body.minutes)
+    if att_session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return SessionResponse(
+        id=str(att_session.id),
+        event_id=str(att_session.event_id),
+        name=att_session.name,
+        start_time=att_session.start_time,
+        end_time=att_session.end_time,
+        status=att_session.status.value,
+        confidence_threshold=att_session.confidence_threshold,
+        detection_zone=att_session.detection_zone,
+        activated_at=att_session.activated_at,
+        deactivated_at=att_session.deactivated_at,
+        created_at=att_session.created_at,
+    )
+

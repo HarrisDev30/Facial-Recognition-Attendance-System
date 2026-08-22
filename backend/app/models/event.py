@@ -79,6 +79,9 @@ class Event(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     event_type: Mapped[EventType] = mapped_column(
         SAEnum(EventType, native_enum=False, values_callable=lambda obj: [e.value for e in obj]),
@@ -114,6 +117,7 @@ class Event(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    institution = relationship("Institution", back_populates="events")
     organization = relationship("Organization", back_populates="events")
     sessions = relationship(
         "AttendanceSession", back_populates="event", cascade="all, delete-orphan"

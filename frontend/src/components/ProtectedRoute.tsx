@@ -13,7 +13,7 @@ export default function ProtectedRoute({ children, roles }: Props) {
   const { token, user, loading } = useAuthStore();
   const location = useLocation();
 
-  if (loading) {
+  if (loading || (token && !user)) {
     return <LoadingOverlay visible />;
   }
 

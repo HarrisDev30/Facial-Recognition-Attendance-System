@@ -64,8 +64,9 @@ async def list_events(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
+    inst_id = current_user.institution_id if current_user.role != UserRole.super_admin else None
     org_filter = organization_id or department_id
-    if not org_filter and current_user.role != UserRole.admin:
+    if not org_filter and current_user.role not in (UserRole.admin, UserRole.super_admin):
         attendee_res = await session.execute(
             select(Attendee).where(Attendee.user_id == current_user.id)
         )
@@ -73,8 +74,12 @@ async def list_events(
         if att and att.organization_id:
             org_filter = str(att.organization_id)
 
-    items = await event_service.get_events(session, skip=skip, limit=limit, organization_id=org_filter)
-    total = await event_service.count_events(session, organization_id=org_filter)
+    items = await event_service.get_events(
+        session, skip=skip, limit=limit, organization_id=org_filter, institution_id=inst_id
+    )
+    total = await event_service.count_events(
+        session, organization_id=org_filter, institution_id=inst_id
+    )
     return EventListResponse(
         items=[_event_response(e) for e in items],
         total=total,
@@ -88,17 +93,20 @@ async def create_event(
     user: User = Depends(require_admin_or_marshal),
 ):
     data = body.model_dump()
+    data["institution_id"] = user.institution_id
     target_org_id = body.organization_id or body.department_id
     if target_org_id:
         org = await session.get(Organization, uuid.UUID(target_org_id))
-        if org is None:
-            raise HTTPException(status_code=404, detail="Organization not found")
+        if org is None or (user.role != UserRole.super_admin and org.institution_id != user.institution_id):
+            raise HTTPException(status_code=404, detail="Department not found for this campus")
         data["organization_id"] = uuid.UUID(target_org_id)
     else:
-        res = await session.execute(select(Organization).limit(1))
+        res = await session.execute(
+            select(Organization).where(Organization.institution_id == user.institution_id).limit(1)
+        )
         first_org = res.scalar_one_or_none()
         if not first_org:
-            raise HTTPException(status_code=400, detail="No organization exists to assign event")
+            raise HTTPException(status_code=400, detail="No organization exists for this campus to assign event")
         data["organization_id"] = first_org.id
 
     if "department_id" in data:

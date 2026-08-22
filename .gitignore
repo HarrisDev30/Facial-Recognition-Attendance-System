@@ -42,6 +42,10 @@ Thumbs.db
 # Internal tools & documentation (not needed in production repository)
 .agents/
 .docs/
+.scratch/
+scratch/
+skills-lock.json
+to-questionnaire*.md
 AGENTS.md
 DESIGN.md
 PRODUCT.md

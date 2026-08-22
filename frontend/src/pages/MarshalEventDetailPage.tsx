@@ -153,7 +153,7 @@ export default function MarshalEventDetailPage() {
                   <Text size="xs" c="dimmed">{s.venue || "No location assigned"}</Text>
                 </Group>
 
-                <Group mt="md" gap="xs">
+                  <Group mt="md" gap="xs">
                   <Button
                     size="xs"
                     variant={isActive ? "filled" : "default"}
@@ -170,9 +170,24 @@ export default function MarshalEventDetailPage() {
                     color={isActive ? "teal" : undefined}
                     leftSection={<IconCamera size={14} />}
                     disabled={!isActive}
-                    onClick={() => navigate(`/scanner/multi-face/${s.id}`)}
+                    onClick={() => navigate(`/scanner/multi/${s.id}`)}
                   >
                     Multi Face
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="light"
+                    color="orange"
+                    onClick={async () => {
+                      try {
+                        await sessionsApi.extendSession(s.id, 15);
+                        window.location.reload();
+                      } catch (err) {
+                        console.error("Failed to extend session", err);
+                      }
+                    }}
+                  >
+                    +15m
                   </Button>
                 </Group>
               </Paper>

@@ -5,7 +5,7 @@ export async function getSessions(
   eventId: string,
 ): Promise<SessionResponse[]> {
   const { data } = await client.get<SessionResponse[]>(
-    `/events/${eventId}/sessions`,
+    `/api/events/${eventId}/sessions`,
   );
   return data;
 }
@@ -15,14 +15,14 @@ export async function createSession(
   body: SessionCreate,
 ): Promise<SessionResponse> {
   const { data } = await client.post<SessionResponse>(
-    `/events/${eventId}/sessions`,
+    `/api/events/${eventId}/sessions`,
     body,
   );
   return data;
 }
 
 export async function getSession(id: string): Promise<SessionResponse> {
-  const { data } = await client.get<SessionResponse>(`/sessions/${id}`);
+  const { data } = await client.get<SessionResponse>(`/api/sessions/${id}`);
   return data;
 }
 
@@ -30,7 +30,7 @@ export async function updateSession(
   id: string,
   body: SessionUpdate,
 ): Promise<SessionResponse> {
-  const { data } = await client.put<SessionResponse>(`/sessions/${id}`, body);
+  const { data } = await client.put<SessionResponse>(`/api/sessions/${id}`, body);
   return data;
 }
 
@@ -38,7 +38,7 @@ export async function activateSession(
   id: string,
 ): Promise<SessionResponse> {
   const { data } = await client.patch<SessionResponse>(
-    `/sessions/${id}/activate`,
+    `/api/sessions/${id}/activate`,
   );
   return data;
 }
@@ -47,7 +47,18 @@ export async function deactivateSession(
   id: string,
 ): Promise<SessionResponse> {
   const { data } = await client.patch<SessionResponse>(
-    `/sessions/${id}/deactivate`,
+    `/api/sessions/${id}/deactivate`,
+  );
+  return data;
+}
+
+export async function extendSession(
+  id: string,
+  minutes: number = 15,
+): Promise<SessionResponse> {
+  const { data } = await client.post<SessionResponse>(
+    `/api/sessions/${id}/extend`,
+    { minutes },
   );
   return data;
 }

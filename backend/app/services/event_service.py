@@ -10,6 +10,8 @@ from sqlalchemy.orm import selectinload
 
 def _event_from_dict(data: dict, created_by: uuid.UUID) -> Event:
     data = dict(data)
+    data.pop("auto_create_session", None)
+    data.pop("default_session_name", None)
     if "event_type" in data and isinstance(data["event_type"], str):
         data["event_type"] = EventType(data["event_type"])
     if "status" in data and isinstance(data["status"], str):
@@ -20,6 +22,8 @@ def _event_from_dict(data: dict, created_by: uuid.UUID) -> Event:
             data["organization_id"] = dept_val
     if "organization_id" in data and isinstance(data["organization_id"], str):
         data["organization_id"] = uuid.UUID(data["organization_id"])
+    if "institution_id" in data and isinstance(data["institution_id"], str):
+        data["institution_id"] = uuid.UUID(data["institution_id"])
     return Event(**data, created_by=created_by)
 
 
@@ -33,9 +37,36 @@ def _session_from_dict(data: dict, event_id: uuid.UUID) -> AttendanceSession:
 async def create_event(
     session: AsyncSession, data: dict, created_by: uuid.UUID
 ) -> Event:
+    data = dict(data)
+    auto_create = data.pop("auto_create_session", False)
+    default_sess_name = data.pop("default_session_name", "General Attendance")
+
+    # If institution_id not passed, resolve from organization
+    if "organization_id" in data and "institution_id" not in data:
+        from app.models.organization import Organization
+        org_id_val = uuid.UUID(data["organization_id"]) if isinstance(data["organization_id"], str) else data["organization_id"]
+        org = await session.get(Organization, org_id_val)
+        if org:
+            data["institution_id"] = org.institution_id
+
     event = _event_from_dict(data, created_by)
     session.add(event)
     await session.flush()
+
+    if auto_create:
+        start_dt = datetime.combine(event.start_date, datetime.min.time()).replace(tzinfo=UTC)
+        end_dt = datetime.combine(event.end_date or event.start_date, datetime.max.time().replace(microsecond=0)).replace(tzinfo=UTC)
+        default_session = AttendanceSession(
+            event_id=event.id,
+            name=default_sess_name,
+            start_time=start_dt,
+            end_time=end_dt,
+            status=SessionStatus.active,
+            activated_at=start_dt,
+        )
+        session.add(default_session)
+        await session.flush()
+
     res = await session.execute(
         select(Event).options(selectinload(Event.organization)).where(Event.id == event.id)
     )
@@ -97,6 +128,7 @@ async def get_events(
     session: AsyncSession, skip: int = 0, limit: int = 100,
     organization_id: str | None = None,
     department_id: str | None = None,
+    institution_id: uuid.UUID | None = None,
 ) -> list[Event]:
     org_filter = organization_id or department_id
     query = (
@@ -106,6 +138,9 @@ async def get_events(
         .offset(skip)
         .limit(limit)
     )
+    if institution_id:
+        query = query.where(Event.institution_id == institution_id)
+
     if org_filter:
         try:
             org_uuid = uuid.UUID(org_filter)
@@ -127,9 +162,13 @@ async def count_events(
     session: AsyncSession,
     organization_id: str | None = None,
     department_id: str | None = None,
+    institution_id: uuid.UUID | None = None,
 ) -> int:
     org_filter = organization_id or department_id
     query = select(func.count(Event.id))
+    if institution_id:
+        query = query.where(Event.institution_id == institution_id)
+
     if org_filter:
         try:
             org_uuid = uuid.UUID(org_filter)
@@ -366,3 +405,84 @@ async def deactivate_session(
     att_session.deactivated_at = datetime.now(UTC)
     await session.flush()
     return att_session
+
+
+async def auto_close_expired_sessions(session: AsyncSession) -> list[uuid.UUID]:
+    """Finds all active sessions past their end_time, marks them completed, and broadcasts WebSocket alerts."""
+    from app.services.websocket_manager import broadcast_to_session
+
+    now = datetime.now(UTC)
+    stmt = (
+        select(AttendanceSession)
+        .where(
+            AttendanceSession.status == SessionStatus.active,
+            AttendanceSession.end_time.is_not(None),
+            AttendanceSession.end_time < now,
+        )
+    )
+    result = await session.execute(stmt)
+    expired_sessions = result.scalars().all()
+    closed_ids = []
+
+    for att_sess in expired_sessions:
+        att_sess.status = SessionStatus.completed
+        att_sess.deactivated_at = now
+        closed_ids.append(att_sess.id)
+        try:
+            await broadcast_to_session(
+                att_sess.id,
+                {
+                    "type": "session_expired",
+                    "session_id": str(att_sess.id),
+                    "message": "Attendance session has ended.",
+                },
+            )
+        except Exception:
+            pass
+
+    if closed_ids:
+        await session.commit()
+    return closed_ids
+
+
+async def extend_session(
+    session: AsyncSession, session_id: uuid.UUID, minutes: int = 15
+) -> AttendanceSession | None:
+    """Extends the session end_time by the specified minutes and ensures it is active."""
+    from datetime import timedelta
+    from app.services.websocket_manager import broadcast_to_session
+
+    att_session = await session.get(AttendanceSession, session_id)
+    if att_session is None:
+        return None
+
+    now = datetime.now(UTC)
+    if att_session.end_time is None:
+        att_session.end_time = now + timedelta(minutes=minutes)
+    else:
+        # Base extension from current end_time or now (whichever is later)
+        end_utc = att_session.end_time if att_session.end_time.tzinfo else att_session.end_time.replace(tzinfo=UTC)
+        base_time = max(end_utc, now)
+        att_session.end_time = base_time + timedelta(minutes=minutes)
+
+    att_session.status = SessionStatus.active
+    att_session.deactivated_at = None
+    await session.commit()
+    await session.refresh(att_session)
+
+    try:
+        await broadcast_to_session(
+            session_id,
+            {
+                "type": "session_extended",
+                "session_id": str(session_id),
+                "new_end_time": att_session.end_time.isoformat(),
+                "status": att_session.status.value,
+                "message": f"Session extended by +{minutes} minutes.",
+            },
+        )
+    except Exception:
+        pass
+
+    return att_session
+

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -5,13 +6,21 @@ import {
   Badge,
   Button,
   Group,
+  Modal,
+  Stack,
+  Paper,
+  Title,
+  Alert,
 } from "@mantine/core";
 import {
   IconDeviceCctv,
   IconSettings,
+  IconKey,
+  IconCheck,
+  IconCopy,
 } from "@tabler/icons-react";
-import { listDevices } from "../api/devices";
-import type { ScannerDeviceListItem } from "../api/devices";
+import { listDevices, generatePairingCode } from "../api/devices";
+import type { ScannerDeviceListItem, PairingCodeResponse } from "../api/devices";
 import { useAsync } from "../hooks";
 import { formatDateTime } from "../utils/formatters";
 import DataTable from "../components/shared/DataTable";
@@ -20,18 +29,44 @@ import PageHeader from "../components/layout/PageHeader";
 
 const typeLabels: Record<string, string> = {
   dedicated_scanner: "Dedicated Scanner",
-  mobile_scanner: "Mobile",
+  mobile_scanner: "Mobile Scanner",
+  workstation_laptop: "Workstation / Laptop",
 };
 
 export default function AdminScannerDevicesPage() {
   const navigate = useNavigate();
+  const [pairingModalOpen, setPairingModalOpen] = useState(false);
+  const [pairingData, setPairingData] = useState<PairingCodeResponse | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const { data: devices, loading } = useAsync(
+  const { data: devices, loading, execute: refetchDevices } = useAsync(
     () => listDevices(),
     true,
   );
 
   const deviceList = devices ?? [];
+
+  const handleOpenPairingModal = async () => {
+    setPairingModalOpen(true);
+    setGenerating(true);
+    try {
+      const res = await generatePairingCode();
+      setPairingData(res);
+    } catch (err) {
+      console.error("Failed to generate pairing code", err);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleCopyCode = () => {
+    if (pairingData?.code) {
+      navigator.clipboard.writeText(pairingData.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const columns = [
     {
@@ -78,7 +113,7 @@ export default function AdminScannerDevicesPage() {
           size="xs"
           variant="default"
           leftSection={<IconSettings size={14} />}
-          onClick={() => navigate(`/admin/scanner-config/${row.id}`)}
+          onClick={() => navigate(`/admin/scanner-devices/${row.id}/zone`)}
         >
           Configure
         </Button>
@@ -88,7 +123,18 @@ export default function AdminScannerDevicesPage() {
 
   return (
     <Container size="lg" pt={0} pb="4xl">
-      <PageHeader title="Scanner Devices" />
+      <PageHeader
+        title="Scanner Devices"
+        subtitle="Manage authorized hardware laptops, mobile scanners, and entrance kiosks."
+      >
+        <Button
+          color="blue"
+          leftSection={<IconKey size={16} />}
+          onClick={handleOpenPairingModal}
+        >
+          Pair New Scanner Kiosk
+        </Button>
+      </PageHeader>
 
       <DataTable
         columns={columns}
@@ -97,9 +143,59 @@ export default function AdminScannerDevicesPage() {
         emptyMessage="No scanner devices found."
       />
 
-      <Text size="sm" c="dimmed" mt="sm">
-        Showing {deviceList.length} device{deviceList.length !== 1 ? "s" : ""}
-      </Text>
+      {/* 6-Digit Pairing Code Modal */}
+      <Modal
+        opened={pairingModalOpen}
+        onClose={() => {
+          setPairingModalOpen(false);
+          refetchDevices();
+        }}
+        title="Pair Entrance Scanner Kiosk"
+        centered
+        radius="lg"
+      >
+        <Stack gap="md">
+          <Text size="sm" c="dimmed">
+            On the entrance laptop or mobile device, navigate to <strong>/scanner/pair</strong> and enter the 6-digit code below:
+          </Text>
+
+          <Paper p="xl" radius="md" withBorder style={{ textAlign: "center", background: "rgba(15, 23, 42, 0.6)" }}>
+            {generating ? (
+              <Text size="lg" c="dimmed">Generating secure OTP...</Text>
+            ) : (
+              <Title order={1} style={{ fontSize: "3rem", letterSpacing: "0.25em", color: "#38bdf8", fontFamily: "monospace" }}>
+                {pairingData?.code ?? "------"}
+              </Title>
+            )}
+            <Text size="xs" c="dimmed" mt="xs">
+              Valid for 15 minutes · One-time use per hardware device
+            </Text>
+          </Paper>
+
+          <Group justify="center" gap="sm">
+            <Button
+              variant="light"
+              color={copied ? "teal" : "blue"}
+              leftSection={copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+              onClick={handleCopyCode}
+              disabled={!pairingData}
+            >
+              {copied ? "Copied!" : "Copy Code"}
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleOpenPairingModal}
+              loading={generating}
+            >
+              Generate New Code
+            </Button>
+          </Group>
+
+          <Alert color="blue" variant="light" radius="md" title="Security Note">
+            Pairing binds the entrance device securely to your institution without exposing administrator login credentials on shared hardware.
+          </Alert>
+        </Stack>
+      </Modal>
     </Container>
   );
 }

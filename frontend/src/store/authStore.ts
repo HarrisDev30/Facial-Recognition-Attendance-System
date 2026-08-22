@@ -9,7 +9,7 @@ interface AuthState {
   user: UserProfileResponse | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, institutionSlug?: string) => Promise<void>;
   logout: () => void;
   restoreSession: () => Promise<void>;
   clearError: () => void;
@@ -19,13 +19,13 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   token: localStorage.getItem("token"),
   user: null,
-  loading: false,
+  loading: !!localStorage.getItem("token"),
   error: null,
 
-  login: async (email, password) => {
+  login: async (email, password, institutionSlug) => {
     set({ loading: true, error: null });
     try {
-      const res = await authApi.login({ email, password });
+      const res = await authApi.login({ email, password, institution_slug: institutionSlug });
       localStorage.setItem("token", res.access_token);
       const user = res.user || await authApi.getMe();
       set({ token: res.access_token, user, loading: false });

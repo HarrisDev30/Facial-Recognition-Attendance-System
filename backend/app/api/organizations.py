@@ -9,7 +9,7 @@ from app.models.organization_staff import OrganizationStaff, OrgRole
 from app.models.user import User, UserRole
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/api/organizations", tags=["Organizations"])
@@ -56,28 +56,46 @@ async def list_organizations(
     if org_type:
         query = query.where(Organization.org_type == org_type)
 
-    if current_user and current_user.role not in [UserRole.admin, UserRole.ADMIN]:
-        st_res = await db.execute(
-            select(OrganizationStaff.organization_id).where(OrganizationStaff.user_id == current_user.id)
-        )
-        assigned_ids = st_res.scalars().all()
-        query = query.where(Organization.id.in_(assigned_ids))
+    if current_user:
+        if current_user.role != UserRole.super_admin and current_user.institution_id:
+            query = query.where(Organization.institution_id == current_user.institution_id)
 
-    result = await db.execute(query)
+        if current_user.role not in [UserRole.admin, UserRole.ADMIN, UserRole.super_admin]:
+            st_res = await db.execute(
+                select(OrganizationStaff.organization_id).where(OrganizationStaff.user_id == current_user.id)
+            )
+            assigned_ids = st_res.scalars().all()
+            query = query.where(Organization.id.in_(assigned_ids))
+
+    result = await db.execute(query.order_by(Organization.name.asc()))
     orgs = result.scalars().all()
+
+    if not orgs:
+        return []
+
+    org_ids = [org.id for org in orgs]
+
+    # Batch compute counts with SQL func.count instead of N+1 scalar queries
+    att_counts_stmt = (
+        select(Attendee.organization_id, func.count(Attendee.id))
+        .where(Attendee.organization_id.in_(org_ids))
+        .group_by(Attendee.organization_id)
+    )
+    att_res = await db.execute(att_counts_stmt)
+    primary_map = {row[0]: row[1] for row in att_res.all()}
+
+    mem_counts_stmt = (
+        select(Membership.organization_id, func.count(Membership.id))
+        .where(Membership.organization_id.in_(org_ids))
+        .group_by(Membership.organization_id)
+    )
+    mem_res = await db.execute(mem_counts_stmt)
+    joined_map = {row[0]: row[1] for row in mem_res.all()}
 
     response = []
     for org in orgs:
-        primary_att_res = await db.execute(
-            select(Attendee).where(Attendee.organization_id == org.id)
-        )
-        primary_count = len(primary_att_res.scalars().all())
-
-        mem_res = await db.execute(
-            select(Membership).where(Membership.organization_id == org.id)
-        )
-        joined_count = len(mem_res.scalars().all())
-
+        primary_count = primary_map.get(org.id, 0)
+        joined_count = joined_map.get(org.id, 0)
         org_type_val = org.org_type.value if hasattr(org.org_type, "value") else str(org.org_type)
 
         response.append(
@@ -99,13 +117,29 @@ async def create_organization(
     db: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_admin),
 ):
+    inst_id = current_user.institution_id
+    if not inst_id:
+        inst_res = await db.execute(select(Institution.id).limit(1))
+        inst_id = inst_res.scalar_one_or_none()
+
+    if not inst_id:
+        raise HTTPException(
+            status_code=400,
+            detail="An active university institution is required to create an organization.",
+        )
+
+    # Check code uniqueness within institution
     existing = await db.execute(
-        select(Organization).where(Organization.code == payload.code.upper())
+        select(Organization).where(
+            Organization.institution_id == inst_id,
+            Organization.code == payload.code.upper(),
+        )
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Organization code already exists")
+        raise HTTPException(status_code=400, detail=f"Organization code '{payload.code.upper()}' already exists in this institution.")
 
     org = Organization(
+        institution_id=inst_id,
         name=payload.name,
         code=payload.code.upper(),
         org_type=payload.org_type,
@@ -136,15 +170,13 @@ async def get_organization(
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
 
-    primary_att_res = await db.execute(
-        select(Attendee).where(Attendee.organization_id == org.id)
-    )
-    primary_count = len(primary_att_res.scalars().all())
+    primary_count = (await db.execute(
+        select(func.count(Attendee.id)).where(Attendee.organization_id == org.id)
+    )).scalar() or 0
 
-    mem_res = await db.execute(
-        select(Membership).where(Membership.organization_id == org.id)
-    )
-    joined_count = len(mem_res.scalars().all())
+    joined_count = (await db.execute(
+        select(func.count(Membership.id)).where(Membership.organization_id == org.id)
+    )).scalar() or 0
 
     org_type_val = org.org_type.value if hasattr(org.org_type, "value") else str(org.org_type)
 

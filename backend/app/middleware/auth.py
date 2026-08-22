@@ -1,3 +1,5 @@
+import uuid
+
 from app.models.user import User, UserRole
 from app.services.auth_service import decode_token
 from fastapi import Depends, HTTPException, status
@@ -20,12 +22,20 @@ async def get_optional_user(
 
     email: str = payload.get("email", "")
     role_raw: str = payload.get("role", "")
+    institution_id_raw: str | None = payload.get("institution_id")
+    institution_id = uuid.UUID(institution_id_raw) if institution_id_raw else None
+
     try:
         role = UserRole(role_raw)
     except ValueError:
         return None
 
-    user = User(id=user_id, email=email, role=role)
+    try:
+        uid = uuid.UUID(user_id)
+    except ValueError:
+        uid = user_id
+
+    user = User(id=uid, email=email, role=role, institution_id=institution_id)
     return user
 
 
@@ -53,6 +63,7 @@ def require_role(*roles: UserRole):
     return _role_checker
 
 
-require_admin = require_role(UserRole.admin, UserRole.org_admin)
-require_marshal = require_role(UserRole.marshal)
-require_admin_or_marshal = require_role(UserRole.admin, UserRole.org_admin, UserRole.marshal)
+require_super_admin = require_role(UserRole.super_admin)
+require_admin = require_role(UserRole.super_admin, UserRole.admin, UserRole.org_admin)
+require_marshal = require_role(UserRole.marshal, UserRole.super_admin, UserRole.admin)
+require_admin_or_marshal = require_role(UserRole.super_admin, UserRole.admin, UserRole.org_admin, UserRole.marshal)

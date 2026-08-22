@@ -36,7 +36,7 @@ export default function AttendeeFormModal({
 
   useEffect(() => {
     if (opened) {
-      getDepartments().then((res) => setDepartments(res.items));
+      getDepartments({ org_type: "college" }).then((res) => setDepartments(res.items));
     }
   }, [opened]);
 

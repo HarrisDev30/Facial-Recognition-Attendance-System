@@ -3,23 +3,25 @@ import uuid
 from datetime import datetime
 
 from app.database import Base
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 class UserRole(str, enum.Enum):
-    student = "student"
-    staff = "staff"
+    super_admin = "super_admin"
     admin = "admin"
     org_admin = "org_admin"
     marshal = "marshal"
-    STUDENT = "student"
-    STAFF = "staff"
+    staff = "staff"
+    student = "student"
+    SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
     ORG_ADMIN = "org_admin"
     MARSHAL = "marshal"
+    STAFF = "staff"
+    STUDENT = "student"
 
     @classmethod
     def _missing_(cls, value):
@@ -45,6 +47,9 @@ class User(Base):
         SAEnum(UserRole, native_enum=False, values_callable=lambda obj: [e.value for e in obj]),
         nullable=False,
     )
+    institution_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -52,4 +57,5 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    institution = relationship("Institution", back_populates="users")
     attendees = relationship("Attendee", back_populates="user")

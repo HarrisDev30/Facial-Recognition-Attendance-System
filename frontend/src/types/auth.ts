@@ -1,6 +1,7 @@
 export interface LoginRequest {
   email: string;
   password: string;
+  institution_slug?: string;
 }
 
 export interface RegisterAttendeeRequest {
@@ -11,6 +12,7 @@ export interface RegisterAttendeeRequest {
   last_name: string;
   identifier?: string;
   department_id: string;
+  institution_id?: string;
 }
 
 export interface TokenResponse {
@@ -25,6 +27,9 @@ export interface UserProfileResponse {
   first_name: string | null;
   last_name: string | null;
   role: string;
+  institution_id?: string | null;
+  institution_name?: string | null;
+  institution_code?: string | null;
   attendee_id: string | null;
   attendee_type: string | null;
   profile_photo_url: string | null;
@@ -94,9 +99,10 @@ export interface AttendanceSummary {
 export interface AdminRegisterRequest {
   email: string;
   password: string;
-  role: "marshal" | "admin" | "org_admin";
+  role: "super_admin" | "marshal" | "admin" | "org_admin";
   first_name?: string;
   last_name?: string;
+  institution_id?: string;
 }
 
 export interface AdminUserResponse {
@@ -105,6 +111,7 @@ export interface AdminUserResponse {
   first_name: string | null;
   last_name: string | null;
   role: string;
+  institution_id?: string | null;
 }
 
 export interface EventSessionAttendance {

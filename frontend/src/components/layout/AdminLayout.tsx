@@ -25,7 +25,7 @@ export default function AdminLayout() {
       to: "/admin/organizations",
     },
     { label: "Events", icon: IconCalendarEvent, to: "/admin/events" },
-    { label: "Attendees", icon: IconUsers, to: "/admin/attendees" },
+    { label: "Attendees", icon: IconUsers, to: "/admin/students" },
     { label: "Biometrics", icon: IconCameraSelfie, to: "/admin/enrollment" },
     ...(!isOrgAdmin
       ? [{ label: "Scanner Devices", icon: IconDeviceCctv, to: "/admin/scanner-devices" }]

@@ -13,4 +13,17 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          mantine: ['@mantine/core', '@mantine/hooks', '@mantine/dates', '@mantine/notifications'],
+          animation: ['gsap', '@gsap/react'],
+          icons: ['@tabler/icons-react'],
+        },
+      },
+    },
+  },
 });

@@ -8,6 +8,7 @@ EMAIL_REGEX = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 class LoginRequest(BaseModel):
     email: str = Field(..., max_length=255)
     password: str = Field(..., min_length=1)
+    institution_slug: str | None = Field(None, max_length=50)
 
 
 class TokenResponse(BaseModel):
@@ -24,6 +25,7 @@ class RegisterStudentRequest(BaseModel):
     last_name: str = Field(..., max_length=100)
     identifier: str | None = Field(None, max_length=50)
     department_id: str = Field(..., max_length=36)
+    institution_id: str | None = None
 
     @field_validator("email")
     @classmethod
@@ -41,6 +43,7 @@ class RegisterStaffRequest(BaseModel):
     last_name: str = Field(..., max_length=100)
     identifier: str | None = Field(None, max_length=50)
     department_id: str = Field(..., max_length=36)
+    institution_id: str | None = None
 
     @field_validator("email")
     @classmethod
@@ -56,6 +59,9 @@ class UserProfileResponse(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     role: str
+    institution_id: str | None = None
+    institution_name: str | None = None
+    institution_code: str | None = None
     attendee_id: str | None = None
     attendee_type: str | None = None
     profile_photo_url: str | None = None
@@ -67,9 +73,10 @@ class UserProfileResponse(BaseModel):
 class RegisterRequest(BaseModel):
     email: str = Field(..., max_length=255)
     password: str = Field(..., min_length=8)
-    role: str = Field(..., pattern=r"^(marshal|admin|org_admin)$")
+    role: str = Field(..., pattern=r"^(super_admin|marshal|admin|org_admin)$")
     first_name: str | None = Field(None, max_length=100)
     last_name: str | None = Field(None, max_length=100)
+    institution_id: str | None = None
 
     @field_validator("email")
     @classmethod
@@ -85,5 +92,6 @@ class UserResponse(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     role: str
+    institution_id: str | None = None
 
     model_config = {"from_attributes": True}

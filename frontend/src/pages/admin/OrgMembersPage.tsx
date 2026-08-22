@@ -40,7 +40,8 @@ import { getAttendees, AttendeeResponse } from '../../api/attendees';
 import { Organization, OrgMember, MemberType, OrgStaff, OrgRole } from '../../types/organization';
 
 export const OrgMembersPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: paramId, orgId } = useParams<{ id?: string; orgId?: string }>();
+  const id = orgId || paramId;
   const navigate = useNavigate();
 
   const [org, setOrg] = useState<Organization | null>(null);
@@ -65,7 +66,10 @@ export const OrgMembersPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const fetchData = async () => {
-    if (!id) return;
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const [orgData, membersData, staffData, attendeesData] = await Promise.all([

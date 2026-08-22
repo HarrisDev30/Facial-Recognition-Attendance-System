@@ -17,6 +17,7 @@ import { useReactToPrint } from "react-to-print";
 import * as sessionsApi from "../api/sessions";
 import * as attendanceApi from "../api/attendance";
 import * as attendeesApi from "../api/attendees";
+import { downloadSessionCsv, downloadSessionPdf } from "../api/reports";
 import type { SessionResponse } from "../types/session";
 import type { AttendanceLogResponse, AttendanceSummary } from "../api/attendance";
 import type { AttendeeResponse } from "../api/attendees";
@@ -345,7 +346,28 @@ export default function AdminSessionAttendancePage() {
           },
           { label: session?.name ?? "Attendance" },
         ]}
-      />
+      >
+        <Group gap="xs">
+          <Button
+            size="sm"
+            variant="default"
+            leftSection={<IconDownload size={16} />}
+            onClick={() => sessionId && downloadSessionCsv(sessionId)}
+            disabled={!sessionId}
+          >
+            Export CSV
+          </Button>
+          <Button
+            size="sm"
+            color="blue"
+            leftSection={<IconPrinter size={16} />}
+            onClick={() => sessionId && downloadSessionPdf(sessionId)}
+            disabled={!sessionId}
+          >
+            Official PDF Roster
+          </Button>
+        </Group>
+      </PageHeader>
 
       {summary && (
         <StatsRow

@@ -38,7 +38,7 @@ import { useAuthStore } from '../../store/authStore';
 export const OrganizationsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const isSuperAdmin = user?.role === 'admin';
+  const isSuperAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
@@ -193,7 +193,7 @@ export const OrganizationsPage: React.FC = () => {
               radius="md"
               withBorder
               style={{ cursor: 'pointer' }}
-              onClick={() => navigate(`/admin/organizations/${org.id}`)}
+              onClick={() => navigate(`/admin/organizations/${org.id}/members`)}
             >
               <Group justify="space-between" mb="xs">
                 <Badge color={getBadgeColor(org.org_type)} variant="filled">
@@ -230,7 +230,15 @@ export const OrganizationsPage: React.FC = () => {
                     {org.member_count} Members
                   </Text>
                 </Group>
-                <Button size="xs" variant="light" color="blue">
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="blue"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/admin/organizations/${org.id}/members`);
+                  }}
+                >
                   Manage Roster &rarr;
                 </Button>
               </Group>
@@ -248,6 +256,11 @@ export const OrganizationsPage: React.FC = () => {
       >
         <form onSubmit={handleCreate}>
           <Stack gap="md">
+            {error && (
+              <Alert icon={<IconAlertCircle size={16} />} color="red">
+                {error}
+              </Alert>
+            )}
             <TextInput
               label="Organization Name"
               placeholder="e.g. Math Club, Chess Club, College of Science"

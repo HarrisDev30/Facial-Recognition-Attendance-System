@@ -1,6 +1,7 @@
 import time
 import uuid
 from collections import defaultdict
+from datetime import UTC, datetime
 
 from app.config import settings
 from app.models.attendance_log import AttendanceLog, VerificationMethod
@@ -11,8 +12,11 @@ from app.models.membership import Membership
 from app.services import face_recognition
 from app.services.attendance_service import has_existing_log, log_attendance
 from app.services.attendee_service import get_attendee_by_identifier
-from app.services.faiss_index import batch_search as faiss_batch_search
-from app.services.faiss_index import is_ready as faiss_is_ready
+from app.services.faiss_index import (
+    batch_search_institution as faiss_batch_search_institution,
+    ensure_institution_index_loaded,
+    is_institution_ready as faiss_is_institution_ready,
+)
 from app.services.websocket_manager import broadcast_to_session
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -111,29 +115,67 @@ async def process_frame(
     session_id: uuid.UUID,
     image_bytes: bytes,
 ) -> dict:
-    face_data = await face_recognition.extract_embeddings(
-        image_bytes, min_det_score=settings.insightface_min_det_score
-    )
-
     result = {
-        "face_count": len(face_data),
+        "face_count": 0,
         "identified": False,
         "new_checkin_count": 0,
         "identifications": [],
     }
 
-    if not face_data:
-        return result
-
     att_session = await session.get(AttendanceSession, session_id)
     if att_session is None or att_session.status != SessionStatus.active:
         return result
 
+    # Strict Time-Gated Window Enforcement (UTC)
+    now_dt = datetime.now(UTC)
+    if att_session.end_time:
+        end_time_utc = att_session.end_time if att_session.end_time.tzinfo else att_session.end_time.replace(tzinfo=UTC)
+        if now_dt > end_time_utc:
+            # Auto-close expired session
+            att_session.status = SessionStatus.completed
+            att_session.deactivated_at = now_dt
+            await session.commit()
+            try:
+                await broadcast_to_session(
+                    session_id,
+                    {
+                        "type": "session_expired",
+                        "session_id": str(session_id),
+                        "message": "Attendance session has concluded.",
+                    },
+                )
+            except Exception:
+                pass
+            result["session_expired"] = True
+            result["message"] = "Attendance session has ended."
+            return result
+
+    if att_session.start_time:
+        start_time_utc = att_session.start_time if att_session.start_time.tzinfo else att_session.start_time.replace(tzinfo=UTC)
+        if now_dt < start_time_utc:
+            result["session_not_started"] = True
+            result["message"] = "Attendance session has not started yet."
+            return result
+
     event = await session.get(Event, att_session.event_id)
-    event_org_id = event.organization_id if event else None
+    if not event or not event.institution_id:
+        return result
+    institution_id = event.institution_id
+    event_org_id = event.organization_id
+
+    face_data = await face_recognition.extract_embeddings(
+        image_bytes, min_det_score=settings.insightface_min_det_score
+    )
+
+    result["face_count"] = len(face_data)
+    if not face_data:
+        return result
 
     threshold = att_session.confidence_threshold or settings.default_confidence_threshold
-    if not faiss_is_ready():
+    if not faiss_is_institution_ready(institution_id):
+        await ensure_institution_index_loaded(session, institution_id)
+
+    if not faiss_is_institution_ready(institution_id):
         return result
 
     session_key = str(session_id)
@@ -174,8 +216,8 @@ async def process_frame(
 
     if needs_faiss:
         embeddings = [emb for _, emb, _, _ in needs_faiss]
-        batch_results = faiss_batch_search(
-            embeddings, threshold, min_margin=settings.min_match_margin
+        batch_results = faiss_batch_search_institution(
+            institution_id, embeddings, threshold, min_margin=settings.min_match_margin
         )
 
         for (orig_idx, emb_bytes, det_score, face_info), (match_score, matched_attendee_id) in zip(

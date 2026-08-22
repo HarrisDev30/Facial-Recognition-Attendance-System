@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from app.database import Base
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -26,9 +26,15 @@ class AttendeeType(str, enum.Enum):
 
 class Attendee(Base):
     __tablename__ = "attendees"
+    __table_args__ = (
+        UniqueConstraint("institution_id", "identifier", name="uq_attendee_institution_identifier"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True
     )
     user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
@@ -41,7 +47,7 @@ class Attendee(Base):
         default=AttendeeType.student,
         nullable=False,
     )
-    identifier: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    identifier: Mapped[str] = mapped_column(String(50), nullable=False)
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
@@ -54,6 +60,7 @@ class Attendee(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
+    institution = relationship("Institution", back_populates="attendees")
     user = relationship("User", back_populates="attendees")
     organization = relationship("Organization", back_populates="attendees")
     memberships = relationship("Membership", back_populates="attendee", cascade="all, delete-orphan")

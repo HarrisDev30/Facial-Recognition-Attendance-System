@@ -3,6 +3,7 @@ import uuid
 from app.database import get_session
 from app.middleware.auth import get_current_user, require_admin
 from app.models.attendee import Attendee, AttendeeType
+from app.models.institution import Institution
 from app.models.organization import Organization
 from app.models.organization_staff import OrganizationStaff
 from app.models.user import User, UserRole
@@ -47,14 +48,31 @@ async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)
     if user is None or not verify_password(body.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail="Invalid email, password, or institution portal.",
         )
+
+    # Tenant portal scope validation for non-super admins
+    if body.institution_slug and user.role != UserRole.super_admin:
+        clean_slug = body.institution_slug.strip().lower()
+        inst_res = await session.execute(
+            select(Institution).where(Institution.code == clean_slug)
+        )
+        target_inst = inst_res.scalar_one_or_none()
+        if target_inst and user.institution_id and user.institution_id != target_inst.id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email, password, or institution portal.",
+            )
 
     attendee_result = await session.execute(
         select(Attendee).where(Attendee.user_id == user.id)
     )
     attendee = attendee_result.scalar_one_or_none()
     assigned_orgs = await _get_assigned_org_ids(session, user.id)
+
+    institution = None
+    if user.institution_id:
+        institution = await session.get(Institution, user.institution_id)
 
     role_val = user.role.value if hasattr(user.role, "value") else str(user.role)
 
@@ -63,6 +81,8 @@ async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)
             "sub": str(user.id),
             "email": user.email,
             "role": role_val,
+            "institution_id": str(user.institution_id) if user.institution_id else None,
+            "institution_code": institution.code if institution else None,
             "attendee_id": str(attendee.id) if attendee else None,
             "assigned_org_ids": assigned_orgs,
         }
@@ -75,6 +95,9 @@ async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)
             first_name=user.first_name or (attendee.first_name if attendee else None),
             last_name=user.last_name or (attendee.last_name if attendee else None),
             role=role_val,
+            institution_id=str(user.institution_id) if user.institution_id else None,
+            institution_name=institution.name if institution else None,
+            institution_code=institution.code if institution else None,
             attendee_id=str(attendee.id) if attendee else None,
             attendee_type=attendee.attendee_type.value if attendee and hasattr(attendee.attendee_type, 'value') else str(attendee.attendee_type) if attendee else None,
             profile_photo_url=attendee.profile_photo_url if attendee else None,
@@ -128,14 +151,19 @@ async def _register_attendee(
     if org is None:
         raise HTTPException(status_code=404, detail="Department or organization not found")
 
+    institution_id = org.institution_id
+
     if body.identifier:
         existing_id = await session.execute(
-            select(Attendee).where(Attendee.identifier == body.identifier)
+            select(Attendee).where(
+                Attendee.identifier == body.identifier,
+                Attendee.institution_id == institution_id,
+            )
         )
         if existing_id.scalar_one_or_none() is not None:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"{identifier_label} already registered",
+                detail=f"{identifier_label} already registered in this institution",
             )
 
     user = User(
@@ -144,6 +172,7 @@ async def _register_attendee(
         first_name=body.first_name,
         last_name=body.last_name,
         role=role,
+        institution_id=institution_id,
     )
     session.add(user)
     try:
@@ -156,6 +185,7 @@ async def _register_attendee(
         )
 
     attendee = Attendee(
+        institution_id=institution_id,
         user_id=user.id,
         identifier=body.identifier or str(user.id),
         first_name=body.first_name,
@@ -168,11 +198,15 @@ async def _register_attendee(
     assigned_orgs = await _get_assigned_org_ids(session, user.id)
     role_val = user.role.value if hasattr(user.role, "value") else str(user.role)
 
+    institution = await session.get(Institution, institution_id)
+
     token = create_access_token(
         {
             "sub": str(user.id),
             "email": user.email,
             "role": role_val,
+            "institution_id": str(institution_id),
+            "institution_code": institution.code if institution else None,
             "attendee_id": str(attendee.id),
             "assigned_org_ids": assigned_orgs,
         }
@@ -186,6 +220,9 @@ async def _register_attendee(
             first_name=user.first_name,
             last_name=user.last_name,
             role=role_val,
+            institution_id=str(institution_id),
+            institution_name=institution.name if institution else None,
+            institution_code=institution.code if institution else None,
             attendee_id=str(attendee.id),
             attendee_type=attendee.attendee_type.value if hasattr(attendee.attendee_type, "value") else str(attendee.attendee_type),
             profile_photo_url=attendee.profile_photo_url,
@@ -198,7 +235,7 @@ async def _register_attendee(
 async def register(
     body: RegisterRequest,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin),
+    current_admin: User = Depends(require_admin),
 ):
     result = await session.execute(select(User).where(User.email == body.email))
     if result.scalar_one_or_none() is not None:
@@ -206,12 +243,19 @@ async def register(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already registered",
         )
+
+    # Super admin can assign any institution or none; regular admin assigns their own institution
+    target_institution_id = current_admin.institution_id
+    if current_admin.role == UserRole.super_admin and body.institution_id:
+        target_institution_id = uuid.UUID(body.institution_id)
+
     user = User(
         email=body.email,
         password_hash=hash_password(body.password),
         first_name=body.first_name,
         last_name=body.last_name,
         role=UserRole(body.role),
+        institution_id=target_institution_id,
     )
     session.add(user)
     try:
@@ -228,6 +272,7 @@ async def register(
         first_name=user.first_name,
         last_name=user.last_name,
         role=user.role.value if hasattr(user.role, "value") else str(user.role),
+        institution_id=str(user.institution_id) if user.institution_id else None,
     )
 
 
@@ -240,6 +285,10 @@ async def me(
     attendee = await _get_attendee_for_user(session, current_user)
     assigned_orgs = await _get_assigned_org_ids(session, current_user.id)
 
+    institution = None
+    if current_user.institution_id:
+        institution = await session.get(Institution, current_user.institution_id)
+
     role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
 
     return UserProfileResponse(
@@ -248,6 +297,9 @@ async def me(
         first_name=current_user.first_name or (attendee.first_name if attendee else None),
         last_name=current_user.last_name or (attendee.last_name if attendee else None),
         role=role_val,
+        institution_id=str(current_user.institution_id) if current_user.institution_id else None,
+        institution_name=institution.name if institution else None,
+        institution_code=institution.code if institution else None,
         attendee_id=str(attendee.id) if attendee else None,
         attendee_type=attendee.attendee_type.value if attendee and hasattr(attendee.attendee_type, 'value') else str(attendee.attendee_type) if attendee else None,
         profile_photo_url=attendee.profile_photo_url if attendee else None,

@@ -1,12 +1,16 @@
 import { useEffect } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { LoadingOverlay, Container, Title, Text, Button } from "@mantine/core";
+import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
+import { LoadingOverlay } from "@mantine/core";
 import { useAuthStore } from "./store/authStore";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/layout/AdminLayout";
+import SuperAdminLayout from "./components/layout/SuperAdminLayout";
 import MarshalLayout from "./components/layout/MarshalLayout";
 import StudentLayout from "./components/layout/StudentLayout";
 import ScannerLayout from "./components/scanner/ScannerLayout";
+import MaintenanceBanner from "./components/shared/MaintenanceBanner";
+import LandingPage from "./pages/LandingPage";
+import CampusPortalPage from "./pages/CampusPortalPage";
 import StudentLoginPage from "./pages/StudentLoginPage";
 import StudentSignUpPage from "./pages/StudentSignUpPage";
 import StudentProfilePage from "./pages/StudentProfilePage";
@@ -25,18 +29,23 @@ import ScannerDisplay from "./pages/ScannerDisplay";
 import MobileScannerMode from "./pages/MobileScannerMode";
 import DetectionZoneConfig from "./pages/DetectionZoneConfig";
 import AdminScannerDevicesPage from "./pages/AdminScannerDevicesPage";
+import SuperAdminDashboardPage from "./pages/super-admin/SuperAdminDashboardPage";
+import SuperAdminInstitutionsPage from "./pages/super-admin/SuperAdminInstitutionsPage";
+import SuperAdminDevicesPage from "./pages/super-admin/SuperAdminDevicesPage";
 import MarshalDashboardPage from "./pages/MarshalDashboardPage";
 import MarshalEventsPage from "./pages/MarshalEventsPage";
 import MarshalEventDetailPage from "./pages/MarshalEventDetailPage";
 import ScannerMultiFace from "./pages/ScannerMultiFace";
 import QRCodeCheckInPage from "./pages/QRCodeCheckInPage";
+import ScannerPairingPage from "./pages/ScannerPairingPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import DataRemovalRequestPage from "./pages/DataRemovalRequestPage";
 import { OrganizationsPage } from "./pages/admin/OrganizationsPage";
 import { OrgMembersPage } from "./pages/admin/OrgMembersPage";
 import { roleHome } from "./utils/routes";
+import { getTenantSlugFromHostname, isReservedSlug } from "./utils/tenant";
 
-function RootRedirect() {
+function RootHandler() {
   const { token, user, loading } = useAuthStore();
   const location = useLocation();
 
@@ -44,24 +53,30 @@ function RootRedirect() {
     return <LoadingOverlay visible />;
   }
 
-  if (!token) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // If user is already authenticated, take them to their role home
+  if (token && user) {
+    const home = roleHome(user.role);
+    if (home !== location.pathname) {
+      return <Navigate to={home} replace />;
+    }
   }
 
-  const home = roleHome(user!.role);
-  if (home !== location.pathname) {
-    return <Navigate to={home} replace />;
+  // If on a campus subdomain (e.g. cjc.attendify.app or cjc.localhost), route to campus portal
+  const tenantSlug = getTenantSlugFromHostname();
+  if (tenantSlug) {
+    return <Navigate to={`/${tenantSlug}`} replace />;
   }
 
-  return (
-    <Container py="xl" ta="center">
-      <Title order={3}>Welcome</Title>
-      <Text c="dimmed" my="md">
-        No dashboard available for your role yet.
-      </Text>
-      <Button onClick={() => { useAuthStore.getState().logout(); }}>Sign out</Button>
-    </Container>
-  );
+  // Default: Show public Attendify Landing Page
+  return <LandingPage />;
+}
+
+function CampusRouteWrapper() {
+  const { slug } = useParams<{ slug: string }>();
+  if (!slug || isReservedSlug(slug)) {
+    return <Navigate to="/" replace />;
+  }
+  return <CampusPortalPage />;
 }
 
 export default function App() {
@@ -72,64 +87,87 @@ export default function App() {
   }, [restoreSession]);
 
   return (
-    <Routes>
-      <Route path="/login" element={<StudentLoginPage />} />
-      <Route path="/register" element={<StudentSignUpPage />} />
-      <Route path="/" element={<RootRedirect />} />
+    <>
+      <MaintenanceBanner />
+      <Routes>
+        <Route path="/" element={<RootHandler />} />
+        <Route path="/login" element={<StudentLoginPage />} />
+        <Route path="/register" element={<StudentSignUpPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/scanner/pair" element={<ScannerPairingPage />} />
 
-      {/* Student + Staff (shared attendee routes) */}
-      <Route element={<ProtectedRoute roles={["student", "staff"]} />}>
-        <Route element={<StudentLayout />}>
-          <Route path="/student/dashboard" element={<StudentDashboardPage />} />
-          <Route path="/student/attendance" element={<AttendanceHistoryPage />} />
-          <Route path="/student/events" element={<UpcomingEventsPage />} />
-          <Route path="/student/events/:eventId" element={<EventAttendanceDetailPage />} />
-          <Route path="/student/profile" element={<StudentProfilePage />} />
-          <Route path="/profile" element={<StudentProfilePage />} />
-          <Route path="/register-biometrics" element={<StudentBiometricRegistration />} />
-          <Route path="/privacy/data-removal" element={<DataRemovalRequestPage />} />
+        {/* Super Admin Command Center */}
+        <Route element={<ProtectedRoute roles={["super_admin"]} />}>
+          <Route element={<SuperAdminLayout />}>
+            <Route path="/super-admin" element={<Navigate to="/super-admin/dashboard" replace />} />
+            <Route path="/super-admin/dashboard" element={<SuperAdminDashboardPage />} />
+            <Route path="/super-admin/institutions" element={<SuperAdminInstitutionsPage />} />
+            <Route path="/super-admin/devices" element={<SuperAdminDevicesPage />} />
+            <Route path="/super-admin/profile" element={<StudentProfilePage />} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* Marshal */}
-      <Route element={<ProtectedRoute roles={["marshal"]} />}>
-        <Route element={<MarshalLayout />}>
-          <Route path="/marshal/dashboard" element={<MarshalDashboardPage />} />
-          <Route path="/marshal/events" element={<MarshalEventsPage />} />
-          <Route path="/marshal/events/:eventId/sessions" element={<MarshalEventDetailPage />} />
-          <Route path="/marshal/profile" element={<StudentProfilePage />} />
+        {/* Student + Staff (shared attendee routes) */}
+        <Route element={<ProtectedRoute roles={["student", "staff"]} />}>
+          <Route element={<StudentLayout />}>
+            <Route path="/student/dashboard" element={<StudentDashboardPage />} />
+            <Route path="/student/attendance" element={<AttendanceHistoryPage />} />
+            <Route path="/student/events" element={<UpcomingEventsPage />} />
+            <Route path="/student/events/:eventId" element={<EventAttendanceDetailPage />} />
+            <Route path="/student/profile" element={<StudentProfilePage />} />
+            <Route path="/profile" element={<StudentProfilePage />} />
+            <Route path="/register-biometrics" element={<StudentBiometricRegistration />} />
+            <Route path="/privacy/data-removal" element={<DataRemovalRequestPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* Admin & Org Admin */}
-      <Route element={<ProtectedRoute roles={["admin", "org_admin"]} />}>
-        <Route element={<AdminLayout />}>
-          <Route path="/admin/organizations" element={<OrganizationsPage />} />
-          <Route path="/admin/organizations/:id" element={<OrgMembersPage />} />
-          <Route path="/admin/events" element={<AdminEventsPage />} />
-          <Route path="/admin/events/:eventId/sessions" element={<AdminEventSessionsPage />} />
-          <Route path="/admin/attendees" element={<AdminAttendeesPage />} />
-          <Route path="/admin/sessions/:sessionId/attendance" element={<AdminSessionAttendancePage />} />
-          <Route path="/admin/enrollment" element={<AdminEnrollmentPage />} />
-          <Route path="/admin/scanner-devices" element={<AdminScannerDevicesPage />} />
-          <Route path="/admin/scanner-config/:deviceId" element={<DetectionZoneConfig />} />
-          <Route path="/admin/profile" element={<StudentProfilePage />} />
-          <Route index element={<AdminDashboardPage />} />
+        {/* Marshal */}
+        <Route element={<ProtectedRoute roles={["marshal"]} />}>
+          <Route element={<MarshalLayout />}>
+            <Route path="/marshal/dashboard" element={<MarshalDashboardPage />} />
+            <Route path="/marshal/events" element={<MarshalEventsPage />} />
+            <Route path="/marshal/events/:eventId/sessions" element={<MarshalEventDetailPage />} />
+            <Route path="/marshal/profile" element={<StudentProfilePage />} />
+            <Route path="/marshal/scanner/:sessionId" element={<ScannerDisplay />} />
+            <Route path="/marshal/scanner/mobile/:sessionId" element={<MobileScannerMode />} />
+            <Route path="/marshal/scanner/qr-checkin/:sessionId" element={<QRCodeCheckInPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* Scanner */}
-      <Route element={<ProtectedRoute roles={["admin", "org_admin", "marshal"]} />}>
+        {/* Admin */}
+        <Route element={<ProtectedRoute roles={["admin", "org_admin", "super_admin"]} />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+            <Route path="/admin/organizations" element={<OrganizationsPage />} />
+            <Route path="/admin/organizations/:orgId" element={<OrgMembersPage />} />
+            <Route path="/admin/organizations/:orgId/members" element={<OrgMembersPage />} />
+            <Route path="/admin/events" element={<AdminEventsPage />} />
+            <Route path="/admin/events/:eventId/sessions" element={<AdminEventSessionsPage />} />
+            <Route path="/admin/students" element={<AdminAttendeesPage />} />
+            <Route path="/admin/enrollment" element={<AdminEnrollmentPage />} />
+            <Route path="/admin/scanner-devices" element={<AdminScannerDevicesPage />} />
+            <Route path="/admin/scanner-devices/:deviceId/zone" element={<DetectionZoneConfig />} />
+            <Route path="/admin/sessions/:sessionId/attendance" element={<AdminSessionAttendancePage />} />
+            <Route path="/admin/profile" element={<StudentProfilePage />} />
+          </Route>
+        </Route>
+
+        {/* Scanner kiosk display */}
         <Route element={<ScannerLayout />}>
           <Route path="/scanner/:sessionId" element={<ScannerDisplay />} />
-          <Route path="/scanner/qr-checkin/:sessionId" element={<QRCodeCheckInPage />} />
           <Route path="/scanner/mobile/:sessionId" element={<MobileScannerMode />} />
-          <Route path="/scanner/multi-face/:sessionId" element={<ScannerMultiFace />} />
+          <Route path="/scanner/multi/:sessionId" element={<ScannerMultiFace />} />
+          <Route path="/scanner/qr-checkin/:sessionId" element={<QRCodeCheckInPage />} />
         </Route>
-      </Route>
 
-      <Route path="/privacy" element={<PrivacyPolicyPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Dynamic Campus Portal & Locked Registration Routes (e.g. /cjc, /cjc/register) */}
+        <Route path="/:slug/register" element={<StudentSignUpPage />} />
+        <Route path="/:slug" element={<CampusRouteWrapper />} />
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }

@@ -54,6 +54,24 @@ async def get_my_profile(
 ):
     attendee = await _get_attendee_for_user(session, current_user)
     if attendee is None:
+        if current_user.role in (UserRole.admin, UserRole.super_admin, UserRole.org_admin, UserRole.marshal):
+            return AttendeeProfileResponse(
+                id=str(current_user.id),
+                email=current_user.email,
+                first_name=current_user.first_name or "Campus",
+                last_name=current_user.last_name or "Administrator",
+                identifier=current_user.email.split("@")[0],
+                attendee_type="staff",
+                organization_id=None,
+                department_id=None,
+                department_code="ADMIN",
+                department_name="Campus Administration",
+                created_at=current_user.created_at or datetime.now(UTC),
+                registration_status="exempt",
+                num_embeddings=0,
+                consent_given=True,
+                profile_photo_url=None,
+            )
         raise HTTPException(status_code=404, detail="Attendee profile not found")
 
     num_emb = await registration_service.count_embeddings(session, attendee.id)
@@ -386,9 +404,15 @@ async def get_profile_photo(
 @router.get("", response_model=list[AttendeeResponse])
 async def list_attendees(
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    result = await session.execute(select(Attendee).order_by(Attendee.last_name, Attendee.first_name))
+    query = select(Attendee).order_by(Attendee.last_name, Attendee.first_name)
+    if current_user.role != UserRole.super_admin:
+        if not current_user.institution_id:
+            return []
+        query = query.where(Attendee.institution_id == current_user.institution_id)
+
+    result = await session.execute(query)
     attendees = result.scalars().all()
     res = []
     for a in attendees:
@@ -417,30 +441,39 @@ async def list_attendees(
 async def create_attendee(
     body: AttendeeCreate,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
-    existing = await attendee_service.get_attendee_by_identifier(session, body.identifier)
-    if existing is not None:
+    existing = await session.execute(
+        select(Attendee).where(
+            Attendee.identifier == body.identifier,
+            Attendee.institution_id == current_user.institution_id,
+        )
+    )
+    if existing.scalar_one_or_none() is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Attendee with identifier '{body.identifier}' already exists",
+            detail=f"Attendee with identifier '{body.identifier}' already exists in this campus",
         )
     if body.email:
         existing_email = await session.execute(
-            select(Attendee).where(Attendee.email == body.email)
+            select(Attendee).where(
+                Attendee.email == body.email,
+                Attendee.institution_id == current_user.institution_id,
+            )
         )
         if existing_email.scalar_one_or_none() is not None:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Attendee with email '{body.email}' already exists",
+                detail=f"Attendee with email '{body.email}' already exists in this campus",
             )
     dept_id = uuid.UUID(body.department_id)
     org = await session.get(Organization, dept_id)
-    if org is None:
-        raise HTTPException(status_code=404, detail="Organization not found")
+    if org is None or (current_user.role != UserRole.super_admin and org.institution_id != current_user.institution_id):
+        raise HTTPException(status_code=404, detail="Department not found for this campus")
 
     data = body.model_dump()
     data["organization_id"] = dept_id
+    data["institution_id"] = current_user.institution_id
     if "department_id" in data:
         del data["department_id"]
     data["attendee_type"] = AttendeeType(body.attendee_type)
@@ -466,11 +499,14 @@ async def create_attendee(
 async def get_attendee(
     attendee_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     attendee = await attendee_service.get_attendee(session, attendee_id)
     if attendee is None:
         raise HTTPException(status_code=404, detail="Attendee not found")
+    if current_user.role != UserRole.super_admin and attendee.institution_id != current_user.institution_id:
+        raise HTTPException(status_code=404, detail="Attendee not found")
+
     org = await session.get(Organization, attendee.organization_id)
     att_type_val = attendee.attendee_type.value if hasattr(attendee.attendee_type, "value") else str(attendee.attendee_type)
     return AttendeeResponse(
@@ -494,8 +530,14 @@ async def update_attendee(
     attendee_id: uuid.UUID,
     body: AttendeeCreate,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
+    attendee_check = await attendee_service.get_attendee(session, attendee_id)
+    if attendee_check is None:
+        raise HTTPException(status_code=404, detail="Attendee not found")
+    if current_user.role != UserRole.super_admin and attendee_check.institution_id != current_user.institution_id:
+        raise HTTPException(status_code=404, detail="Attendee not found")
+
     data = body.model_dump()
     if "department_id" in data and data["department_id"]:
         data["organization_id"] = uuid.UUID(data.pop("department_id"))
@@ -525,8 +567,14 @@ async def update_attendee(
 async def delete_attendee(
     attendee_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
+    attendee_check = await attendee_service.get_attendee(session, attendee_id)
+    if attendee_check is None:
+        raise HTTPException(status_code=404, detail="Attendee not found")
+    if current_user.role != UserRole.super_admin and attendee_check.institution_id != current_user.institution_id:
+        raise HTTPException(status_code=404, detail="Attendee not found")
+
     ok = await attendee_service.delete_attendee(session, attendee_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Attendee not found")
@@ -541,37 +589,4 @@ async def _get_attendee_for_user(session: AsyncSession, user: User) -> Attendee 
     result = await session.execute(
         select(Attendee).where(Attendee.user_id == user.id)
     )
-    attendee = result.scalar_one_or_none()
-    if attendee is not None:
-        return attendee
-
-    # Auto-create an Attendee profile for this user if missing
-    org_id = None
-    staff_res = await session.execute(
-        select(OrganizationStaff.organization_id).where(OrganizationStaff.user_id == user.id)
-    )
-    org_id = staff_res.scalar_one_or_none()
-
-    if not org_id:
-        org_res = await session.execute(select(Organization.id).limit(1))
-        org_id = org_res.scalar_one_or_none()
-
-    if not org_id:
-        return None
-
-    att_type = AttendeeType.faculty if user.role in (UserRole.admin, UserRole.org_admin, UserRole.ADMIN, UserRole.ORG_ADMIN) else AttendeeType.student
-
-    new_attendee = Attendee(
-        user_id=user.id,
-        organization_id=org_id,
-        identifier=user.email.split("@")[0],
-        first_name=user.first_name or "User",
-        last_name=user.last_name or "Account",
-        email=user.email,
-        attendee_type=att_type,
-        consent_given=True,
-    )
-    session.add(new_attendee)
-    await session.commit()
-    await session.refresh(new_attendee)
-    return new_attendee
+    return result.scalar_one_or_none()

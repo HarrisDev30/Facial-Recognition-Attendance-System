@@ -49,7 +49,7 @@ export default function DetectionZoneConfig() {
     () => sessionStorage.getItem("scanner_config_camera_id"),
   );
   const { devices: cameraDevices } = useCameraDevices();
-  const { videoRef, cameraActive, startCamera, stopCamera } = useCamera(
+  const { videoRef, streamRef, cameraActive, startCamera, stopCamera } = useCamera(
     selectedCameraId ? { deviceId: selectedCameraId } : undefined,
   );
 
@@ -74,6 +74,12 @@ export default function DetectionZoneConfig() {
     setFaceSizeMin(device.face_size_min ?? 100);
     setConfidenceThreshold(device.confidence_threshold ?? 0.6);
   }, [device]);
+
+  useEffect(() => {
+    if (cameraActive && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [cameraActive, videoRef, streamRef]);
 
   useEffect(() => {
     return () => stopCamera();
