@@ -17,6 +17,7 @@ import { useGSAP } from "@gsap/react";
 import { getInstitutions } from "../api/institutions";
 import type { InstitutionPublicResponse } from "../types/institution";
 import { AnimatedBackground } from "../components/landing/AnimatedBackground";
+import { InteractiveCampusCarousel } from "../components/landing/InteractiveCampusCarousel";
 import { HeroProductWindow } from "../components/landing/HeroProductWindow";
 import { ScrollPipelineSection } from "../components/landing/ScrollPipelineSection";
 import { MultiDeviceMeshSection } from "../components/landing/MultiDeviceMeshSection";
@@ -48,6 +49,13 @@ export default function LandingPage() {
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
     localStorage.setItem("attendify_landing_theme", nextTheme);
+
+    // Smooth GSAP spin & pop on the theme toggle icon
+    gsap.fromTo(
+      ".theme-toggle-btn svg",
+      { rotate: -90, scale: 0.6, opacity: 0 },
+      { rotate: 0, scale: 1, opacity: 1, duration: 0.35, ease: "back.out(1.6)" },
+    );
   };
 
   useEffect(() => {
@@ -55,9 +63,6 @@ export default function LandingPage() {
       try {
         const data = await getInstitutions(true);
         setInstitutions(data);
-        if (data.length > 0) {
-          setSelectedSlug(data[0].code);
-        }
       } catch (err) {
         console.error("Failed to load institutions", err);
       }
@@ -65,35 +70,80 @@ export default function LandingPage() {
     loadData();
   }, []);
 
-  // GSAP Entrance Timeline and Scroll Animations
+  // GSAP Entrance Timeline (Optimized with hardware-accelerated transforms)
   useGSAP(
     () => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-      tl.from(".landing-nav", { y: -20, opacity: 0, duration: 0.6, clearProps: "all" })
-        .from(".hero-badge", { y: 20, opacity: 0, duration: 0.5, clearProps: "all" }, "-=0.3")
-        .from(".hero-title", { y: 30, opacity: 0, duration: 0.7, clearProps: "all" }, "-=0.3")
-        .from(".hero-subtitle", { y: 20, opacity: 0, duration: 0.6, clearProps: "all" }, "-=0.4")
-        .from(".hero-cta-group", { y: 20, opacity: 0, duration: 0.5, clearProps: "all" }, "-=0.3")
-        .from(".hero-fast-campus-bar", { y: 15, opacity: 0, duration: 0.5, clearProps: "all" }, "-=0.3")
-        .from(".hero-product-window-container", { y: 35, opacity: 0, duration: 0.8, clearProps: "all" }, "-=0.4");
-
-      // Staggered reveal for campus directory cards on scroll
-      gsap.from(".campus-directory-card", {
-        y: 40,
+      // 1. Seamless Navbar Micro-Elements (Navbar, Version badge, links, and unified action cluster)
+      tl.from(".landing-sticky-nav", {
+        y: -14,
         opacity: 0,
-        duration: 0.7,
-        stagger: 0.15,
+        duration: 0.5,
         ease: "power2.out",
-        scrollTrigger: {
-          trigger: "#campuses",
-          start: "top 75%",
-          toggleActions: "play none none reverse",
-        },
-      });
+        clearProps: "all",
+      })
+        .from(
+          ".brand-version-badge",
+          {
+            scale: 0.8,
+            opacity: 0,
+            duration: 0.35,
+            ease: "back.out(1.4)",
+            clearProps: "all",
+          },
+          "-=0.3",
+        )
+        .from(
+          ".nav-link-item",
+          {
+            y: -6,
+            opacity: 0,
+            duration: 0.35,
+            stagger: 0.03,
+            ease: "power2.out",
+            clearProps: "all",
+          },
+          "-=0.25",
+        )
+        .from(
+          ".nav-actions-cluster",
+          {
+            y: -6,
+            opacity: 0,
+            duration: 0.38,
+            ease: "power2.out",
+            clearProps: "all",
+          },
+          "<",
+        )
+        // 2. Hero Section Cascading Stagger (Hardware Accelerated)
+        .from(".hero-badge", { y: 16, opacity: 0, duration: 0.5, clearProps: "all" }, "-=0.25")
+        .from(".hero-title", { y: 22, opacity: 0, duration: 0.6, clearProps: "all" }, "-=0.35")
+        .from(".hero-subtitle", { y: 16, opacity: 0, duration: 0.5, clearProps: "all" }, "-=0.4")
+        .from(".hero-cta-group", { y: 16, opacity: 0, duration: 0.5, clearProps: "all" }, "-=0.35")
+        .from(
+          ".hero-fast-campus-bar",
+          {
+            y: 16,
+            scale: 0.98,
+            opacity: 0,
+            duration: 0.5,
+            ease: "power2.out",
+            clearProps: "all",
+          },
+          "-=0.3",
+        );
     },
-    { scope: pageRef }
+    { scope: pageRef },
   );
+
+  const scrollToCampuses = () => {
+    const el = document.getElementById("campuses");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   const handleLaunchCampus = (slugToLaunch?: string) => {
     const target = slugToLaunch || selectedSlug || "cjc";
@@ -120,7 +170,7 @@ export default function LandingPage() {
           <nav className="nav-center-links">
             <a href="#pipeline" className="nav-link-item">Pipeline</a>
             <a href="#hardware" className="nav-link-item">Scanners</a>
-            <a href="#privacy" className="nav-link-item">Privacy (DPA)</a>
+            <a href="#privacy" className="nav-link-item">Privacy</a>
             <a href="#campuses" className="nav-link-item">Campuses</a>
           </nav>
 
@@ -137,26 +187,21 @@ export default function LandingPage() {
             </button>
 
             <Button
-              className="nav-btn-onboard"
-              variant="subtle"
-              color="gray"
+              component={Link}
+              to="/login"
               size="xs"
-              onClick={() => setModalOpened(true)}
-              styles={{
-                root: {
-                  color: theme === "dark" ? "#a1a1a1" : "#4d4d4d",
-                  fontWeight: 500,
-                },
-              }}
+              className="nav-btn-signin"
             >
-              + Onboard Campus
+              Sign In
             </Button>
+
             <Button
-              className="nav-cta-primary"
-              onClick={() => handleLaunchCampus("cjc")}
-              rightSection={<IconArrowRight size={14} />}
+              className="nav-cta-find-campus"
+              size="xs"
+              onClick={scrollToCampuses}
+              rightSection={<IconBuildingArch size={14} />}
             >
-              Enter Campus
+              <span className="nav-btn-find-campus-text">Find Campus</span>
             </Button>
           </div>
         </div>
@@ -197,37 +242,43 @@ export default function LandingPage() {
           </div>
 
           {/* Instant Campus Jump Selector */}
-          {institutions.length > 0 && (
-            <div className="hero-fast-campus-bar">
-              <div className="campus-jump-capsule">
-                <div className="campus-jump-label">
-                  <IconBuildingArch size={15} className="jump-icon" />
-                  <span>Portal Jump:</span>
-                </div>
-                <Select
-                  size="xs"
-                  placeholder="Search university or campus..."
-                  searchable
-                  clearable
-                  data={institutions.map((inst) => ({
-                    value: inst.code,
-                    label: `${inst.name} (${inst.code.toUpperCase()})`,
-                  }))}
-                  value={selectedSlug}
-                  onChange={(val) => {
-                    setSelectedSlug(val);
-                    if (val) handleLaunchCampus(val);
-                  }}
-                  className="campus-jump-select"
-                />
-              </div>
+          <div className="hero-fast-campus-bar">
+            <div className="campus-jump-select-wrapper">
+              <Select
+                size="sm"
+                leftSection={<IconBuildingArch size={16} className="jump-select-icon" />}
+                placeholder="Jump directly to campus portal (e.g. CJC)..."
+                searchable
+                clearable
+                data={institutions.map((inst) => ({
+                  value: inst.code,
+                  label: `${inst.name} (${inst.code.toUpperCase()})`,
+                }))}
+                value={selectedSlug}
+                onChange={(val) => {
+                  setSelectedSlug(val);
+                  if (val) handleLaunchCampus(val);
+                }}
+                className="campus-jump-select"
+              />
             </div>
-          )}
-
-          {/* Hero Centerpiece: Interactive Telemetry Window */}
-          <div className="hero-product-window-container">
-            <HeroProductWindow />
           </div>
+        </div>
+      </section>
+
+      {/* 🏛️ Interactive Campus Showcase (Gliding tactile passes below Hero) */}
+      <InteractiveCampusCarousel
+        institutions={institutions}
+        onOnboardClick={() => setModalOpened(true)}
+      />
+
+      {/* Luminous Section Divider */}
+      <div className="section-luminous-divider" />
+
+      {/* 🖥️ Live Telemetry & Scanner Gateway Showcase (Solid Hardware Console) */}
+      <section className="product-gateway-showcase-section">
+        <div className="hero-product-window-container">
+          <HeroProductWindow />
         </div>
       </section>
 
@@ -248,109 +299,6 @@ export default function LandingPage() {
 
       {/* Privacy Vault Section */}
       <PrivacyVaultSection />
-
-      {/* Luminous Section Divider */}
-      <div className="section-luminous-divider" />
-
-      {/* Participating Campuses Directory Section */}
-      <section id="campuses" className="campuses-directory-section">
-        <div className="section-header-center">
-          <div className="section-eyebrow">
-            <IconBuildingArch size={14} />
-            <span>CAMPUS DIRECTORY</span>
-          </div>
-          <h2 className="section-title">Connected Campus Portals</h2>
-          <p className="section-subtitle">
-            Select your university to access your official student attendance portal, enroll your biometric profile, or launch entrance scanning gates.
-          </p>
-        </div>
-
-        <div className="campuses-cards-grid">
-          {/* Featured Pilot Campus: Cor Jesu College */}
-          <div
-            className="campus-directory-card featured"
-            role="button"
-            tabIndex={0}
-            onClick={() => handleLaunchCampus("cjc")}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") handleLaunchCampus("cjc");
-            }}
-          >
-            <div className="campus-card-top">
-              <div className="campus-avatar-box">
-                <IconBuildingArch size={26} color="#0070f3" />
-              </div>
-              <Badge color="blue" variant="filled" size="sm" radius="sm">
-                PILOT INSTITUTION
-              </Badge>
-            </div>
-
-            <h3 className="campus-card-name">Cor Jesu College</h3>
-            <span className="campus-card-slug">attendify.edu/cjc</span>
-            <p className="campus-card-desc">
-              Active production pilot deployment featuring automated gate scanners, multi-device marshal scanning, and real-time student check-in records.
-            </p>
-
-            <div className="campus-card-footer">
-              <span className="footer-status text-emerald">&bull; System Online</span>
-              <Button
-                size="xs"
-                variant="subtle"
-                color="blue"
-                rightSection={<IconArrowRight size={14} />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleLaunchCampus("cjc");
-                }}
-              >
-                Launch Portal
-              </Button>
-            </div>
-          </div>
-
-          {/* Sandbox Campus Card: Self-Service Registration */}
-          <div
-            className="campus-directory-card sandbox"
-            role="button"
-            tabIndex={0}
-            onClick={() => setModalOpened(true)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") setModalOpened(true);
-            }}
-          >
-            <div className="campus-card-top">
-              <div className="campus-avatar-box sandbox">
-                <IconSparkles size={26} color="#9333ea" />
-              </div>
-              <Badge color="grape" variant="light" size="sm" radius="sm">
-                SELF-SERVICE SETUP
-              </Badge>
-            </div>
-
-            <h3 className="campus-card-name">Register Your University</h3>
-            <span className="campus-card-slug purple">attendify.edu/[your-code]</span>
-            <p className="campus-card-desc">
-              Create an isolated attendance partition for your institution in under 2 minutes with automated database setup and custom branding.
-            </p>
-
-            <div className="campus-card-footer">
-              <span className="footer-status text-purple">&bull; Instant Setup</span>
-              <Button
-                size="xs"
-                variant="outline"
-                color="grape"
-                rightSection={<IconArrowRight size={14} />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setModalOpened(true);
-                }}
-              >
-                Get Started
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Global Landing Footer */}
       <footer className="landing-global-footer">

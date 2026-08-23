@@ -45,12 +45,12 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ theme = 
 
         let lastX = 0;
         let lastY = 0;
-        let hasMoved = false;
+        let isVisible = false;
 
         const handleMouseMove = (e: MouseEvent) => {
-          if (!hasMoved && spotlightRef.current) {
-            hasMoved = true;
-            gsap.to(spotlightRef.current, { opacity: 1, duration: 0.3 });
+          if (!isVisible && spotlightRef.current) {
+            isVisible = true;
+            gsap.to(spotlightRef.current, { opacity: 1, duration: 0.3, overwrite: "auto" });
           }
 
           const currentX = e.clientX;
@@ -93,14 +93,16 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ theme = 
         };
 
         const handleMouseLeave = () => {
+          isVisible = false;
           if (spotlightRef.current) {
-            gsap.to(spotlightRef.current, { opacity: 0, duration: 0.5 });
+            gsap.to(spotlightRef.current, { opacity: 0, duration: 0.4, overwrite: "auto" });
           }
         };
 
         const handleMouseEnter = () => {
-          if (spotlightRef.current && hasMoved) {
-            gsap.to(spotlightRef.current, { opacity: 1, duration: 0.3 });
+          isVisible = true;
+          if (spotlightRef.current) {
+            gsap.to(spotlightRef.current, { opacity: 1, duration: 0.3, overwrite: "auto" });
           }
         };
 
@@ -230,13 +232,13 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ theme = 
           });
       }
 
-      // 5. Campuses Atmosphere: In-Out Timeline
+      // 5. Campuses Atmosphere: Smooth In & Sustain Timeline
       if (campusesLayerRef.current && campuses) {
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: campuses,
-            start: "top 85%",
-            end: "bottom 90%",
+            start: "top bottom",
+            end: "bottom top",
             scrub: 0.5,
             invalidateOnRefresh: true,
           },
@@ -247,26 +249,26 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ theme = 
           { opacity: 0, y: 30 },
           { opacity: 1, y: 0, duration: 0.4, ease: "power1.inOut", force3D: true }
         )
-          .to(campusesLayerRef.current, { opacity: 1, duration: 0.3 })
+          .to(campusesLayerRef.current, { opacity: 1, duration: 0.4 })
           .to(campusesLayerRef.current, {
-            opacity: 0,
+            opacity: 0.2,
             y: -20,
-            duration: 0.3,
+            duration: 0.4,
             ease: "power1.inOut",
             force3D: true,
           });
       }
 
-      // 6. Global Background Fade Out at Footer
-      if (containerRef.current && footer) {
-        gsap.to(containerRef.current, {
-          opacity: 0,
+      // 6. Subtle Parallax Orbs Dim at Footer (Keeps cursor spotlight & grid fully active)
+      if (parallaxOrbsRef.current && footer) {
+        gsap.to(parallaxOrbsRef.current, {
+          opacity: 0.15,
           ease: "none",
           force3D: true,
           scrollTrigger: {
             trigger: footer,
             start: "top 95%",
-            end: "top 70%",
+            end: "top 60%",
             scrub: 0.5,
             invalidateOnRefresh: true,
           },

@@ -63,6 +63,7 @@ class InstitutionOnboardRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=200)
     code: str = Field(..., min_length=2, max_length=50)
     logo_url: str | None = None
+    brand_color: str | None = None
     contact_email: str | None = None
     admin_email: str = Field(..., min_length=3, max_length=255)
     admin_password: str = Field(..., min_length=6)
@@ -75,6 +76,7 @@ class InstitutionListItem(BaseModel):
     name: str
     code: str
     logo_url: str | None
+    brand_color: str | None = "#0070f3"
     is_active: bool
     created_at: str
     attendee_count: int
@@ -100,6 +102,7 @@ class InstitutionUpdateRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=200)
     code: str = Field(..., min_length=2, max_length=50)
     logo_url: str | None = None
+    brand_color: str | None = None
     is_active: bool = True
 
 
@@ -303,6 +306,7 @@ async def list_all_institutions(db: AsyncSession = Depends(get_session)):
                 name=inst.name,
                 code=inst.code,
                 logo_url=inst.logo_url,
+                brand_color=getattr(inst, "brand_color", None) or "#0070f3",
                 is_active=inst.is_active,
                 created_at=inst.created_at.isoformat() if inst.created_at else datetime.now(UTC).isoformat(),
                 attendee_count=att_cnt,
@@ -336,6 +340,7 @@ async def onboard_institution(
         name=body.name.strip(),
         code=clean_code,
         logo_url=body.logo_url.strip() if body.logo_url else None,
+        brand_color=body.brand_color.strip() if body.brand_color else "#0070f3",
         is_active=True,
     )
     db.add(inst)
@@ -405,6 +410,8 @@ async def update_institution(
     inst.name = body.name.strip()
     inst.code = clean_code
     inst.logo_url = body.logo_url.strip() if body.logo_url else None
+    if body.brand_color:
+        inst.brand_color = body.brand_color.strip()
     inst.is_active = body.is_active
 
     await db.commit()
@@ -415,6 +422,7 @@ async def update_institution(
         "name": inst.name,
         "code": inst.code,
         "logo_url": inst.logo_url,
+        "brand_color": getattr(inst, "brand_color", None) or "#0070f3",
         "is_active": inst.is_active,
     }
 

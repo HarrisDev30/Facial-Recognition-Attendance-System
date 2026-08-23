@@ -34,8 +34,13 @@ export default function AdminLayout() {
   ];
 
   const handleLogout = () => {
+    const campusSlug = user?.institution_code?.toLowerCase();
     logout();
-    navigate("/login", { replace: true });
+    if (campusSlug) {
+      navigate(`/${campusSlug}`, { replace: true });
+    } else {
+      navigate("/login", { replace: true });
+    }
   };
 
   return (

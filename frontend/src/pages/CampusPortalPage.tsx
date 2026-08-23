@@ -1,13 +1,11 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Button,
   TextInput,
   PasswordInput,
-  Tabs,
   Title,
   Text,
-  Badge,
   Group,
   Stack,
   Loader,
@@ -22,10 +20,9 @@ import {
   IconSun,
   IconMoon,
   IconScan,
-  IconShieldCheck,
-  IconCpu,
   IconArrowRight,
   IconRosetteDiscountCheckFilled,
+  IconShieldCheck,
 } from "@tabler/icons-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -37,14 +34,39 @@ import "./CampusPortalPage.css";
 
 gsap.registerPlugin(useGSAP);
 
+function hexToRgba(hex: string, alpha: number): string {
+  let c = (hex || "#0070f3").replace("#", "");
+  if (c.length === 3) c = c.split("").map((x) => x + x).join("");
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return `rgba(0, 112, 243, ${alpha})`;
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export default function CampusPortalPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { login, logout, user } = useAuthStore();
   const pageRef = useRef<HTMLDivElement>(null);
 
-  const [institution, setInstitution] = useState<InstitutionPublicResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Synchronous initial cache (eliminates blank loader flash)
+  const initialInstitution: InstitutionPublicResponse | null = useMemo(() => {
+    if (!slug) return null;
+    const cached = sessionStorage.getItem(`attendify_tenant_${slug.toLowerCase()}`);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch {
+        // ignore parse error
+      }
+    }
+    return null;
+  }, [slug]);
+
+  const [institution, setInstitution] = useState<InstitutionPublicResponse | null>(initialInstitution);
+  const [loading, setLoading] = useState(!initialInstitution);
   const [notFound, setNotFound] = useState(false);
 
   // Dual Theme Engine
@@ -60,10 +82,16 @@ export default function CampusPortalPage() {
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
     localStorage.setItem("attendify_landing_theme", nextTheme);
+
+    // Smooth GSAP spin & pop on the theme toggle icon
+    gsap.fromTo(
+      ".portal-theme-toggle-btn svg",
+      { rotate: -90, scale: 0.6, opacity: 0 },
+      { rotate: 0, scale: 1, opacity: 1, duration: 0.35, ease: "back.out(1.6)" },
+    );
   };
 
   // Form State
-  const [activeTab, setActiveTab] = useState<string | null>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -72,19 +100,24 @@ export default function CampusPortalPage() {
   useEffect(() => {
     async function loadInstitution() {
       if (!slug) return;
-      setLoading(true);
+      if (!initialInstitution) {
+        setLoading(true);
+      }
       setNotFound(false);
       try {
         const data = await getInstitutionBySlug(slug);
         setInstitution(data);
+        sessionStorage.setItem(`attendify_tenant_${slug.toLowerCase()}`, JSON.stringify(data));
       } catch {
-        setNotFound(true);
+        if (!initialInstitution) {
+          setNotFound(true);
+        }
       } finally {
         setLoading(false);
       }
     }
     loadInstitution();
-  }, [slug]);
+  }, [slug, initialInstitution]);
 
   // If user is already logged in for THIS campus (or super_admin), route to home
   useEffect(() => {
@@ -97,39 +130,121 @@ export default function CampusPortalPage() {
     }
   }, [user, slug, navigate]);
 
-  // GSAP Entrance Motion
+  // Fluid GSAP Entrance Choreography (Seamless Header Transition)
   useGSAP(
     () => {
       if (!loading && institution) {
         const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-        tl.from(".campus-portal-nav", { y: -20, opacity: 0, duration: 0.6, clearProps: "all" })
-          .from(".campus-info-hero", { x: -30, opacity: 0, duration: 0.7, clearProps: "all" }, "-=0.3")
-          .from(".campus-auth-card", { x: 30, opacity: 0, duration: 0.7, clearProps: "all" }, "-=0.5");
+        // 1. Ambient Background Mesh
+        tl.from(".portal-mesh-orb", {
+          scale: 0.85,
+          opacity: 0,
+          duration: 0.9,
+          stagger: 0.12,
+          ease: "power2.out",
+          clearProps: "scale",
+        })
+          // 2. Seamless Header Elements (Badge & All Campuses button glide into persistent navbar)
+          .from(
+            [".portal-nav-divider", ".portal-campus-code"],
+            {
+              x: -12,
+              opacity: 0,
+              duration: 0.45,
+              ease: "power2.out",
+              clearProps: "all",
+            },
+            "-=0.7",
+          )
+          .from(
+            [".portal-theme-toggle-btn", ".btn-all-campuses"],
+            {
+              opacity: 0,
+              scale: 0.92,
+              duration: 0.38,
+              stagger: 0.05,
+              ease: "back.out(1.2)",
+              clearProps: "all",
+            },
+            "<",
+          )
+          // 3. Campus Hero Branding & Centered Card
+          .from(
+            ".campus-hero-crest",
+            {
+              scale: 0.85,
+              y: 14,
+              opacity: 0,
+              duration: 0.55,
+              ease: "back.out(1.4)",
+              clearProps: "all",
+            },
+            "-=0.3",
+          )
+          .from(
+            [".campus-hero-badge", ".campus-hero-title", ".campus-hero-subtitle"],
+            {
+              y: 16,
+              opacity: 0,
+              duration: 0.5,
+              stagger: 0.07,
+              clearProps: "all",
+            },
+            "-=0.35",
+          )
+          .from(
+            ".campus-clean-card",
+            {
+              y: 22,
+              scale: 0.98,
+              opacity: 0,
+              duration: 0.65,
+              clearProps: "all",
+            },
+            "-=0.35",
+          )
+          .from(
+            ".campus-clean-footer",
+            {
+              opacity: 0,
+              y: 8,
+              duration: 0.45,
+              clearProps: "all",
+            },
+            "-=0.25",
+          );
       }
     },
-    { scope: pageRef, dependencies: [loading, institution] }
+    { scope: pageRef, dependencies: [loading, institution?.id] },
   );
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAuthError(null);
     setSubmitting(true);
+    setAuthError(null);
+
     try {
-      await login(email, password, slug);
+      await login(email.trim(), password);
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser) {
+        navigate(roleHome(currentUser.role), { replace: true });
+      }
     } catch (err: any) {
-      setAuthError(err?.response?.data?.detail || "Invalid email, password, or institution portal credentials.");
+      setAuthError(
+        err.response?.data?.detail || "Invalid credentials. Please verify your campus email and password.",
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) {
+  if (loading && !institution) {
     return (
       <div className="campus-portal-container" data-theme={theme} style={{ justifyContent: "center", alignItems: "center" }}>
         <Loader size="lg" color="blue" />
-        <Text mt="md" c="dimmed" size="sm" ff="monospace">
-          Connecting to isolated campus portal partition...
+        <Text mt="md" c="dimmed" size="sm">
+          Loading campus gateway...
         </Text>
       </div>
     );
@@ -138,214 +253,209 @@ export default function CampusPortalPage() {
   if (notFound || !institution) {
     return (
       <div className="campus-portal-container" data-theme={theme} style={{ justifyContent: "center", alignItems: "center", padding: "2rem" }}>
-        <Stack align="center" gap="md" style={{ maxWidth: 460, textAlign: "center" }}>
-          <IconAlertCircle size={48} color="#ef4444" />
-          <Title order={3} style={{ color: "var(--text-heading)" }}>
-            Campus Portal Not Found
+        <Stack align="center" gap="md" style={{ maxWidth: 440, textAlign: "center" }}>
+          <IconAlertCircle size={44} color="#ef4444" />
+          <Title order={3} style={{ color: "var(--portal-text-heading)" }}>
+            Campus Gateway Not Found
           </Title>
           <Text c="dimmed" size="sm">
-            We couldn't find an active institutional partition registered under the code <code style={{ color: "#0070f3" }}>{slug}</code>.
+            No institutional partition is active for code <code style={{ color: "#0070f3" }}>{slug}</code>.
           </Text>
           <Button component={Link} to="/" variant="light" leftSection={<IconArrowLeft size={16} />}>
-            Back to Attendify Platform
+            Return to Attendify Platform
           </Button>
         </Stack>
       </div>
     );
   }
 
+  const brandColor = institution.brand_color || "#0070f3";
+  const glow = hexToRgba(brandColor, 0.28);
+  const subtle = hexToRgba(brandColor, 0.08);
+
   return (
-    <div ref={pageRef} className="campus-portal-container" data-theme={theme}>
-      {/* Background Atmosphere Orbs */}
+    <div
+      ref={pageRef}
+      className="campus-portal-container"
+      data-theme={theme}
+      style={
+        {
+          "--campus-brand": brandColor,
+          "--campus-brand-glow": glow,
+          "--campus-brand-subtle": subtle,
+        } as React.CSSProperties
+      }
+    >
+      {/* Ambient Atmosphere Orbs */}
       <div className="portal-bg-atmosphere" aria-hidden="true">
         <div className="portal-mesh-orb orb-1" />
         <div className="portal-mesh-orb orb-2" />
         <div className="portal-grid-overlay" />
       </div>
 
-      {/* Sticky Navbar */}
+      {/* Sticky Top Navbar (1:1 Pixel-Aligned with Landing Page) */}
       <header className="campus-portal-nav">
-        <div className="nav-left">
-          <Link to="/" className="portal-brand-link">
-            <div className="portal-logo-mark">
-              <IconScan size={18} color="#ffffff" stroke={2.5} />
-            </div>
-            <span className="portal-brand-text">Attendify</span>
-          </Link>
-          <span className="portal-nav-divider">/</span>
-          <span className="portal-campus-code">{institution.code.toUpperCase()}</span>
-        </div>
+        <div className="campus-nav-inner">
+          <div className="nav-left">
+            <Link to="/" className="portal-landing-brand">
+              <div className="portal-brand-logo-mark">
+                <IconScan size={20} color="#ffffff" stroke={2.5} />
+              </div>
+              <span className="portal-brand-title">Attendify</span>
+            </Link>
+            <span className="portal-nav-divider">/</span>
+            <span className="portal-campus-code">{institution.code.toUpperCase()}</span>
+          </div>
 
-        <div className="nav-right">
-          <button
-            className="portal-theme-toggle"
-            onClick={toggleTheme}
-            title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
-            aria-label="Toggle theme mode"
-          >
-            {theme === "dark" ? <IconSun size={16} /> : <IconMoon size={16} />}
-          </button>
+          <div className="nav-actions-cluster">
+            <button
+              className="portal-theme-toggle-btn"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+              aria-label="Toggle theme mode"
+            >
+              {theme === "dark" ? <IconSun size={17} /> : <IconMoon size={17} />}
+            </button>
 
-          <Button
-            component={Link}
-            to="/"
-            size="xs"
-            leftSection={<IconArrowLeft size={14} />}
-            className="btn-all-campuses"
-          >
-            All Campuses
-          </Button>
+            <Button
+              component={Link}
+              to="/"
+              size="xs"
+              leftSection={<IconArrowLeft size={14} />}
+              className="btn-all-campuses"
+            >
+              <span className="btn-all-campuses-text">All Campuses</span>
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Main Content Body */}
-      <main className="campus-portal-body">
+      {/* Main Content: Clean Centered Portal */}
+      <main className="campus-portal-clean-layout">
         {user && user.role !== "super_admin" && user.institution_code?.toLowerCase() !== slug?.toLowerCase() && (
-          <div className="portal-session-alert">
-            <Alert color="orange" title="Active Session Notice" icon={<IconAlertCircle size={16} />}>
+          <div style={{ width: "100%", maxWidth: 480, marginBottom: "1rem" }}>
+            <Alert color="orange" title="Active Session Notice" icon={<IconAlertCircle size={16} />} radius="md">
               <Group justify="space-between" align="center">
-                <Text size="sm">
-                  You are currently signed in under <strong>{user.institution_name || user.institution_code?.toUpperCase()}</strong>.
+                <Text size="xs">
+                  Signed in under <strong>{user.institution_name || user.institution_code?.toUpperCase()}</strong>.
                 </Text>
                 <Button size="xs" variant="outline" color="orange" onClick={() => logout()}>
-                  Sign Out to Switch Account
+                  Sign Out
                 </Button>
               </Group>
             </Alert>
           </div>
         )}
 
-        {/* Left: Campus Info Hero */}
-        <div className="campus-info-hero">
-          <div className="campus-logo-badge">
+        {/* University Hero Branding */}
+        <div className="campus-clean-hero">
+          <div className="campus-hero-crest">
             {institution.logo_url ? (
               <img src={institution.logo_url} alt={institution.name} />
             ) : (
-              <IconBuildingArch size={34} color="#0070f3" />
+              <IconBuildingArch size={36} color="var(--campus-brand)" />
             )}
           </div>
 
-          <div>
-            <div className="campus-eyebrow">
-              <IconRosetteDiscountCheckFilled size={15} color="#10b981" />
-              <span>OFFICIAL INSTITUTIONAL GATEWAY</span>
-            </div>
-            <h1 className="campus-portal-title">{institution.name}</h1>
-            <p className="campus-portal-subtitle">
-              Dedicated server-side biometric attendance and event check-in platform.
-            </p>
+          <div className="campus-hero-badge">
+            <IconRosetteDiscountCheckFilled size={14} color="var(--campus-brand)" />
+            <span>OFFICIAL CAMPUS GATEWAY</span>
           </div>
 
-          <div className="campus-status-tags">
-            <Badge color="teal" variant="dot" size="md">
-              Partition Active
-            </Badge>
-            <Badge color="blue" variant="dot" size="md">
-              InsightFace Buffalo_L
-            </Badge>
-            <Badge color="cyan" variant="dot" size="md">
-              FAISS In-Memory
-            </Badge>
-          </div>
-
-          <div className="campus-features-box">
-            <div className="feature-item">
-              <IconCpu size={18} color="#0070f3" />
-              <div>
-                <span className="feature-title">Zero Raw Facial Storage</span>
-                <span className="feature-sub">Ephemeral 512D vector embeddings strictly compliant with RA 10173.</span>
-              </div>
-            </div>
-            <div className="feature-item">
-              <IconShieldCheck size={18} color="#10b981" />
-              <div>
-                <span className="feature-title">Isolated Database Partition</span>
-                <span className="feature-sub">Encrypted PostgreSQL tenant schema isolated for {institution.code.toUpperCase()}.</span>
-              </div>
-            </div>
-          </div>
+          <h1 className="campus-hero-title">{institution.name}</h1>
+          <p className="campus-hero-subtitle">
+            Student & Faculty Attendance Portal
+          </p>
         </div>
 
-        {/* Right: Auth Card */}
-        <div className="campus-auth-card">
-          <Tabs value={activeTab} onChange={setActiveTab} variant="pills">
-            <Tabs.List grow mb="lg">
-              <Tabs.Tab value="login">Sign In</Tabs.Tab>
-              <Tabs.Tab value="signup">Register</Tabs.Tab>
-            </Tabs.List>
+        {/* Focused Authentication Card */}
+        <div className="campus-clean-card">
+          <Stack ta="center" mb="md" gap={2}>
+            <Text fw={700} size="lg" style={{ color: "var(--portal-text-heading)", letterSpacing: "-0.4px" }}>
+              Sign In to Your Account
+            </Text>
+            <Text size="xs" c="dimmed">
+              Use your institutional credentials to access your profile
+            </Text>
+          </Stack>
 
-            <Tabs.Panel value="login">
-              {authError && (
-                <Alert icon={<IconAlertCircle size={16} />} title="Authentication Error" color="red" mb="md">
-                  {authError}
-                </Alert>
-              )}
+          {authError && (
+            <Alert icon={<IconAlertCircle size={16} />} color="red" radius="md" mb="sm">
+              {authError}
+            </Alert>
+          )}
 
-              <form onSubmit={handleLogin}>
-                <Stack gap="md">
-                  <TextInput
-                    label="Institutional Email"
-                    placeholder={`student@${institution.code.toLowerCase()}.edu.ph`}
-                    required
-                    leftSection={<IconMail size={16} />}
-                    leftSectionPointerEvents="none"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    styles={{
-                      input: {
-                        paddingLeft: "42px",
-                      },
-                    }}
-                  />
+          <form onSubmit={handleLogin}>
+            <Stack gap="sm">
+              <TextInput
+                label="Institutional Email"
+                placeholder={`student@${institution.code.toLowerCase()}.edu.ph`}
+                required
+                leftSection={<IconMail size={16} />}
+                leftSectionPointerEvents="none"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                styles={{
+                  input: { paddingLeft: "42px" },
+                }}
+              />
 
-                  <PasswordInput
-                    label="Password"
-                    placeholder="Enter your security password"
-                    required
-                    leftSection={<IconLock size={16} />}
-                    leftSectionPointerEvents="none"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    styles={{
-                      innerInput: {
-                        paddingLeft: "42px",
-                      },
-                    }}
-                  />
+              <PasswordInput
+                label="Password"
+                placeholder="Enter your password"
+                required
+                leftSection={<IconLock size={16} />}
+                leftSectionPointerEvents="none"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                styles={{
+                  innerInput: { paddingLeft: "42px" },
+                }}
+              />
 
-                  <Button
-                    type="submit"
-                    fullWidth
-                    loading={submitting}
-                    mt="sm"
-                    className="btn-portal-submit"
-                    rightSection={<IconArrowRight size={16} />}
-                  >
-                    Sign In to {institution.code.toUpperCase()} Portal
-                  </Button>
-                </Stack>
-              </form>
-            </Tabs.Panel>
+              <Button
+                type="submit"
+                fullWidth
+                loading={submitting}
+                mt="xs"
+                className="btn-portal-submit"
+                rightSection={<IconArrowRight size={16} />}
+              >
+                Sign In to {institution.code.toUpperCase()}
+              </Button>
+            </Stack>
+          </form>
 
-            <Tabs.Panel value="signup">
-              <Stack gap="md">
-                <Text size="sm" c="dimmed">
-                  New student or staff member at {institution.name}? Register your university account to enroll your biometric profile.
-                </Text>
-                <Button
-                  component={Link}
-                  to={`/${institution.code}/register`}
-                  variant="light"
-                  color="blue"
-                  fullWidth
-                  rightSection={<IconArrowRight size={16} />}
-                >
-                  Go to Student Registration Form
-                </Button>
-              </Stack>
-            </Tabs.Panel>
-          </Tabs>
+          <div className="campus-clean-divider">
+            <span />
+            <p>or</p>
+            <span />
+          </div>
+
+          <Button
+            component={Link}
+            to={`/${institution.code}/register`}
+            state={{ institution }}
+            variant="default"
+            fullWidth
+            className="btn-portal-register"
+          >
+            Create New Student Account
+          </Button>
         </div>
+
+        {/* Campus Identity & Support Footer */}
+        <footer className="campus-clean-footer">
+          <Group gap={6} justify="center" align="center">
+            <IconShieldCheck size={14} color="var(--campus-brand)" />
+            <Text size="xs" c="dimmed">
+              Official {institution.name} Portal
+            </Text>
+          </Group>
+          <Text size="xs" c="dimmed" ta="center" mt={4}>
+            Need help signing in? Contact your campus registrar or IT helpdesk.
+          </Text>
+        </footer>
       </main>
     </div>
   );

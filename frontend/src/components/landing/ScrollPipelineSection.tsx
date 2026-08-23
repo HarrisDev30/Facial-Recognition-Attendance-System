@@ -26,7 +26,7 @@ export const ScrollPipelineSection: React.FC = () => {
   const stages = [
     {
       number: 1,
-      tag: "STEP 01 // ENTRANCE CAPTURE",
+      tag: "ENTRANCE CAPTURE",
       title: "Doorway Focus & Crowd Filtering",
       icon: <IconScan size={22} />,
       desc: "As attendees approach the entrance kiosk, the camera focuses exclusively on individuals passing through the active doorway, automatically ignoring background passersby and distant crowd faces.",
@@ -35,7 +35,7 @@ export const ScrollPipelineSection: React.FC = () => {
     },
     {
       number: 2,
-      tag: "STEP 02 // SECURE CONVERSION",
+      tag: "SECURE CONVERSION",
       title: "Facial Geometry Verification",
       icon: <IconCpu size={22} />,
       desc: "The system instantly converts facial features into a secure, mathematical code in temporary server memory. The original camera picture is deleted immediately to protect student privacy.",
@@ -44,7 +44,7 @@ export const ScrollPipelineSection: React.FC = () => {
     },
     {
       number: 3,
-      tag: "STEP 03 // HIGH-SPEED LOOKUP",
+      tag: "HIGH-SPEED MATCH",
       title: "Instant Student Identification",
       icon: <IconServer size={22} />,
       desc: "The mathematical code is matched against the university's student roster in milliseconds, accurately confirming the student's identity even across large campus enrollments.",
@@ -53,7 +53,7 @@ export const ScrollPipelineSection: React.FC = () => {
     },
     {
       number: 4,
-      tag: "STEP 04 // ATTENDANCE RECORDED",
+      tag: "VERIFIED LOG",
       title: "Verified Log & Duplicate Prevention",
       icon: <IconDatabase size={22} />,
       desc: "Attendance is officially recorded in the institutional database while automatically preventing duplicate check-ins if a student passes by the entrance multiple times.",

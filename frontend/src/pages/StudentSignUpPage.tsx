@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate, Link, useParams, useSearchParams, useLocation, Navigate } from "react-router-dom";
+import { useNavigate, Link, useParams, useSearchParams, useLocation } from "react-router-dom";
 import {
-  Container,
-  Paper,
   Title,
   TextInput,
   PasswordInput,
@@ -11,13 +9,28 @@ import {
   Text,
   Anchor,
   Progress,
-  Box,
   Select,
   Badge,
   Group,
   Avatar,
+  Stack,
+  Loader,
 } from "@mantine/core";
-import { IconBuildingArch, IconArrowLeft, IconAlertCircle } from "@tabler/icons-react";
+import {
+  IconBuildingArch,
+  IconArrowLeft,
+  IconAlertCircle,
+  IconScan,
+  IconSun,
+  IconMoon,
+  IconCheck,
+  IconLock,
+  IconMail,
+  IconId,
+  IconSchool,
+  IconArrowRight,
+  IconRosetteDiscountCheckFilled,
+} from "@tabler/icons-react";
 import { registerStudent } from "../api/auth";
 import { getDepartments } from "../api/departments";
 import { getInstitutionBySlug, getInstitutions } from "../api/institutions";
@@ -26,6 +39,11 @@ import { useAuthStore } from "../store/authStore";
 import { getTenantSlugFromHostname, isReservedSlug } from "../utils/tenant";
 import type { DepartmentResponse, TokenResponse } from "../types/auth";
 import type { InstitutionPublicResponse } from "../types/institution";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import "./AuthPages.css";
+
+gsap.registerPlugin(useGSAP);
 
 function getPasswordStrength(password: string): number {
   let score = 0;
@@ -44,18 +62,46 @@ function getStrengthColor(score: number) {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function hexToRgba(hex: string, alpha: number): string {
+  let c = (hex || "#0070f3").replace("#", "");
+  if (c.length === 3) c = c.split("").map((x) => x + x).join("");
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return `rgba(0, 112, 243, ${alpha})`;
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export default function StudentSignUpPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams<{ slug?: string }>();
   const [searchParams] = useSearchParams();
   const mountedRef = useRef(true);
+  const pageRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  // Dual-Theme Engine (matching Landing Page)
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const saved = localStorage.getItem("attendify_landing_theme");
+    if (saved === "light" || saved === "dark") return saved;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  });
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    localStorage.setItem("attendify_landing_theme", nextTheme);
+
+    // Smooth GSAP spin & pop on the theme toggle icon
+    gsap.fromTo(
+      ".auth-theme-toggle svg",
+      { rotate: -90, scale: 0.6, opacity: 0 },
+      { rotate: 0, scale: 1, opacity: 1, duration: 0.35, ease: "back.out(1.6)" },
+    );
+  };
 
   // 1. Resolve Campus Slug from Route /:slug/register, Subdomain, query param, or state
   const rawSlug =
@@ -68,12 +114,54 @@ export default function StudentSignUpPage() {
 
   const campusSlug = rawSlug && !isReservedSlug(rawSlug) ? rawSlug.toLowerCase() : "";
 
+  // Synchronous State Handoff (Apple Design standard - 0ms instant color & zero flash)
+  const initialInstitution: InstitutionPublicResponse | null = useMemo(() => {
+    const fromState = (location.state as any)?.institution;
+    if (fromState && (!campusSlug || fromState.code?.toLowerCase() === campusSlug)) {
+      return fromState;
+    }
+    if (campusSlug) {
+      const cached = sessionStorage.getItem(`attendify_tenant_${campusSlug}`);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {
+          // ignore cache parse error
+        }
+      }
+    }
+    return null;
+  }, [campusSlug, location.state]);
+
   const [institutionList, setInstitutionList] = useState<InstitutionPublicResponse[]>([]);
-  const [selectedInstId, setSelectedInstId] = useState<string>("");
-  const [institution, setInstitution] = useState<InstitutionPublicResponse | null>(null);
+  const [selectedInstId, setSelectedInstId] = useState<string>(initialInstitution?.id || "");
+  const [institution, setInstitution] = useState<InstitutionPublicResponse | null>(initialInstitution);
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
-  const [loadingInst, setLoadingInst] = useState(true);
+  const [loadingInst, setLoadingInst] = useState(!initialInstitution);
   const [loadingDepts, setLoadingDepts] = useState(false);
+
+  useGSAP(
+    () => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      tl.from(".auth-mesh-orb", {
+        scale: 0.85,
+        opacity: 0,
+        duration: 1.0,
+        stagger: 0.15,
+        ease: "power2.out",
+        clearProps: "scale",
+      })
+        .from(".auth-top-nav", { y: -16, opacity: 0, duration: 0.5, clearProps: "all" }, "-=0.8")
+        .from(".auth-glass-card", { y: 24, scale: 0.97, opacity: 0, duration: 0.7, clearProps: "all" }, "-=0.5");
+    },
+    { scope: pageRef, dependencies: [institution?.id] },
+  );
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const [form, setForm] = useState({
     email: "",
@@ -91,11 +179,15 @@ export default function StudentSignUpPage() {
   useEffect(() => {
     let active = true;
     if (campusSlug) {
-      setLoadingInst(true);
+      if (!initialInstitution) {
+        setLoadingInst(true);
+      }
       getInstitutionBySlug(campusSlug)
         .then((inst) => {
           if (!active) return;
           setInstitution(inst);
+          setSelectedInstId(inst.id);
+          sessionStorage.setItem(`attendify_tenant_${campusSlug}`, JSON.stringify(inst));
         })
         .catch((err) => console.error("Failed to load campus", err))
         .finally(() => {
@@ -120,7 +212,7 @@ export default function StudentSignUpPage() {
     return () => {
       active = false;
     };
-  }, [campusSlug]);
+  }, [campusSlug, initialInstitution]);
 
   // 3. Fetch academic college departments strictly filtered for selected institution
   useEffect(() => {
@@ -146,7 +238,7 @@ export default function StudentSignUpPage() {
         if (items.length > 0) {
           setForm((prev) => ({
             ...prev,
-            department_id: prev.department_id || items[0].id,
+            department_id: items[0].id,
           }));
         } else {
           setForm((prev) => ({
@@ -171,7 +263,7 @@ export default function StudentSignUpPage() {
   const instOptions = useMemo(() => {
     return institutionList.map((i) => ({
       value: i.id,
-      label: i.name,
+      label: `${i.name} (${i.code.toUpperCase()})`,
     }));
   }, [institutionList]);
 
@@ -250,196 +342,318 @@ export default function StudentSignUpPage() {
     });
   };
 
-  // If accessed directly without a campus slug, redirect to landing page to pick university
-  if (!campusSlug && !loadingInst) {
-    return <Navigate to="/" replace />;
-  }
-
   const pwScore = getPasswordStrength(form.password);
 
   if (success) {
     return (
-      <Box mih="100vh">
-        <Container size="xs" py="xl">
-          <Paper radius="lg" p="xl" ta="center">
-            <Title order={3} c="teal">
-              Registration Successful!
+      <div className="auth-page-container" data-theme={theme}>
+        <div className="auth-bg-atmosphere" aria-hidden="true">
+          <div className="auth-mesh-orb orb-1" />
+          <div className="auth-mesh-orb orb-2" />
+        </div>
+        <main className="auth-main-content">
+          <div className="auth-glass-card" style={{ textAlign: "center", padding: "3rem 2rem" }}>
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                background: "rgba(16, 185, 129, 0.15)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "1rem",
+              }}
+            >
+              <IconCheck size={32} color="#10b981" stroke={3} />
+            </div>
+            <Title order={2} fw={700} style={{ letterSpacing: "-0.6px", color: "var(--auth-text-heading)" }}>
+              Registration Successful
             </Title>
-            <Text mt="md" c="dimmed">Redirecting to biometric enrollment...</Text>
-          </Paper>
-        </Container>
-      </Box>
+            <Text mt="sm" c="dimmed" size="sm">
+              Your institutional profile has been established. Redirecting to biometric face enrollment...
+            </Text>
+            <Loader size="sm" color="teal" mt="xl" />
+          </div>
+        </main>
+      </div>
     );
   }
 
+  const brandColor = institution?.brand_color || "#0070f3";
+  const glow = hexToRgba(brandColor, 0.28);
+  const subtle = hexToRgba(brandColor, 0.08);
+
   return (
-    <Box mih="100vh" py="xl">
-      <Container size="xs">
-        {/* Back to Campus Portal Link */}
-        <Group mb="md">
-          <Anchor
-            component={Link}
-            to={`/${campusSlug}`}
-            size="sm"
-            c="dimmed"
-            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-          >
-            <IconArrowLeft size={16} /> Back to {institution?.name || campusSlug.toUpperCase()} Portal
-          </Anchor>
-        </Group>
+    <div
+      ref={pageRef}
+      className="auth-page-container"
+      data-theme={theme}
+      style={
+        {
+          "--campus-brand": brandColor,
+          "--campus-brand-glow": glow,
+          "--campus-brand-subtle": subtle,
+        } as React.CSSProperties
+      }
+    >
+      {/* Background Atmosphere Orbs */}
+      <div className="auth-bg-atmosphere" aria-hidden="true">
+        <div className="auth-mesh-orb orb-1" />
+        <div className="auth-mesh-orb orb-2" />
+        <div className="auth-grid-overlay" />
+      </div>
 
-        {/* Dedicated University Header Banner */}
-        <Paper radius="lg" p="lg" withBorder mb="lg" bg="var(--surface-1)">
-          <Group gap="md">
-            {institution?.logo_url ? (
-              <Avatar src={institution.logo_url} size="lg" radius="md" />
-            ) : (
-              <Avatar color="blue" size="lg" radius="md">
-                <IconBuildingArch size={24} />
-              </Avatar>
-            )}
-            <div style={{ flex: 1 }}>
-              <Group justify="space-between" align="flex-start">
-                <Title order={4} fw={700}>
-                  {institution?.name || "Campus Registration"}
-                </Title>
-                <Badge color="teal" variant="light" size="sm">
-                  {campusSlug.toUpperCase()}
-                </Badge>
-              </Group>
-              <Text size="xs" c="dimmed" mt={2}>
-                Official Student & Staff Biometric Attendance Enrollment
-              </Text>
-            </div>
-          </Group>
-        </Paper>
+      {/* Top Navbar */}
+      <header className="auth-top-nav">
+        <Link to="/" className="auth-brand-link">
+          <div className="auth-logo-badge">
+            <IconScan size={18} color="#ffffff" stroke={2.5} />
+          </div>
+          <span className="auth-brand-name">Attendify</span>
+        </Link>
 
-        <Paper radius="lg" p="xl" withBorder>
-          <form onSubmit={handleSubmit}>
-            <TextInput
-              label="Campus Email"
-              placeholder={`student@${campusSlug}.edu.ph`}
-              type="email"
-              value={form.email}
-              onChange={handleChange("email")}
-              error={emailError}
-              required
-              mb="sm"
-            />
-            <PasswordInput
-              label="Password"
-              placeholder="Minimum 8 characters"
-              value={form.password}
-              onChange={handleChange("password")}
-              required
-              mb="xs"
-            />
-            {form.password && (
-              <Progress
-                value={pwScore}
-                color={getStrengthColor(pwScore)}
-                size="xs"
-                mb="sm"
-              />
-            )}
-            <PasswordInput
-              label="Confirm Password"
-              placeholder="Re-type password"
-              value={form.password_confirm}
-              onChange={handleChange("password_confirm")}
-              required
-              mb="sm"
-            />
-            <Group grow mb="sm">
-              <TextInput
-                label="First Name"
-                value={form.first_name}
-                onChange={handleChange("first_name")}
-                required
-              />
-              <TextInput
-                label="Last Name"
-                value={form.last_name}
-                onChange={handleChange("last_name")}
-                required
-              />
-            </Group>
-            <TextInput
-              label="Student / Employee ID"
-              placeholder="e.g. 2023-0001"
-              value={form.identifier}
-              onChange={handleChange("identifier")}
-              mb="sm"
-            />
-            {!campusSlug && instOptions.length > 0 && (
-              <Select
-                label="Institution / University"
-                placeholder="Select your institution"
-                data={instOptions}
-                value={selectedInstId}
-                onChange={(val) => {
-                  if (!val) return;
-                  setSelectedInstId(val);
-                  const chosen = institutionList.find((i) => i.id === val);
-                  if (chosen) setInstitution(chosen);
-                  setForm((prev) => ({ ...prev, department_id: "" }));
-                }}
-                required
-                searchable
-                allowDeselect={false}
-                mb="sm"
-              />
-            )}
+        <button
+          className="auth-theme-toggle"
+          onClick={toggleTheme}
+          title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+          aria-label="Toggle theme mode"
+        >
+          {theme === "dark" ? <IconSun size={16} /> : <IconMoon size={16} />}
+        </button>
+      </header>
 
-            {!loadingDepts && deptOptions.length === 0 ? (
-              <Alert icon={<IconAlertCircle size={16} />} title="No College Programs Configured" color="yellow" mb="md">
-                No academic departments or college programs are configured for {institution?.name || "this institution"} yet. Please contact your campus administrator to set up academic departments before registering.
-              </Alert>
-            ) : (
-              <Select
-                label="Department / College Program"
-                placeholder={loadingDepts ? "Loading campus college programs..." : "Select your department or program"}
-                value={form.department_id || null}
-                onChange={(val) => {
-                  setForm((prev) => ({ ...prev, department_id: val || "" }));
-                  if (error) setError(null);
-                }}
-                data={deptOptions}
-                required
-                searchable
-                clearable={false}
-                allowDeselect={false}
-                maxDropdownHeight={280}
-                nothingFoundMessage="No matching department found"
-                comboboxProps={{ transitionProps: { transition: "pop", duration: 150 }, shadow: "md", withinPortal: true, zIndex: 1000 }}
-                checkIconPosition="right"
-                mb="md"
-              />
-            )}
-
-            {(error || apiError) && (
-              <Alert color="red" mb="md">
-                {error || apiError}
-              </Alert>
-            )}
-            <Button
-              type="submit"
-              fullWidth
-              loading={submitting}
-              disabled={submitting || (!loadingDepts && deptOptions.length === 0)}
+      {/* Main Glassmorphic Card with Progressive Flow */}
+      <main className="auth-main-content">
+        <div className="auth-glass-card card-wide">
+          {/* Back Navigation */}
+          <Group mb="md">
+            <Anchor
+              component={Link}
+              to={campusSlug ? `/${campusSlug}` : "/login"}
+              size="xs"
+              c="dimmed"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 500 }}
             >
-              Register for {institution?.name || campusSlug.toUpperCase()}
-            </Button>
+              <IconArrowLeft size={14} /> {campusSlug ? `Back to ${institution?.name || campusSlug.toUpperCase()} Portal` : "Back to Sign In"}
+            </Anchor>
+          </Group>
+
+          {/* Form Header */}
+          <Stack gap={2} mb="lg">
+            <Title order={3} fw={700} style={{ letterSpacing: "-0.6px", color: "var(--auth-text-heading)" }}>
+              {campusSlug ? `${institution?.name || campusSlug.toUpperCase()} Enrollment` : "Create University Account"}
+            </Title>
+            <Text size="xs" c="dimmed">
+              Biometric attendance profile registration and partition enrollment
+            </Text>
+          </Stack>
+
+          {/* Branded Institution Status Card (when locked or chosen) */}
+          {institution && (
+            <div className="campus-header-card">
+              {institution.logo_url ? (
+                <Avatar src={institution.logo_url} size="md" radius="md" />
+              ) : (
+                <Avatar color="blue" size="md" radius="md">
+                  <IconBuildingArch size={20} />
+                </Avatar>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <span className="campus-info-title">{institution.name}</span>
+                  <Badge color="teal" variant="light" size="xs">
+                    {institution.code.toUpperCase()}
+                  </Badge>
+                </div>
+                <div className="campus-info-sub">
+                  <IconRosetteDiscountCheckFilled size={13} color="#10b981" />
+                  <span>Verified Institutional Partition</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            {/* STEP 1: Academic Partition */}
+            <div className="auth-step-divider">
+              <span className="auth-step-number">1</span>
+              <span className="auth-step-label">Academic Partition</span>
+              <div className="auth-step-line" />
+            </div>
+
+            <Stack gap="sm">
+              {/* Institution Selector (if accessed globally) */}
+              {!campusSlug && (
+                <Select
+                  label="Institution / Campus"
+                  placeholder={loadingInst ? "Loading universities..." : "Select your university"}
+                  disabled={loadingInst}
+                  leftSection={<IconSchool size={16} />}
+                  leftSectionPointerEvents="none"
+                  data={instOptions}
+                  value={selectedInstId}
+                  onChange={(val) => {
+                    if (!val) return;
+                    setSelectedInstId(val);
+                    const chosen = institutionList.find((i) => i.id === val);
+                    if (chosen) setInstitution(chosen);
+                    setForm((prev) => ({ ...prev, department_id: "" }));
+                  }}
+                  required
+                  searchable
+                  allowDeselect={false}
+                  styles={{
+                    input: { paddingLeft: "42px" },
+                  }}
+                />
+              )}
+
+              {/* Department Selector */}
+              {!loadingDepts && deptOptions.length === 0 ? (
+                <Alert icon={<IconAlertCircle size={16} />} title="No College Programs Configured" color="yellow" radius="md">
+                  No departments found for {institution?.name || "this university"}. Contact campus admin.
+                </Alert>
+              ) : (
+                <Select
+                  label="College Department / Program"
+                  placeholder={loadingDepts ? "Loading programs..." : "Select your academic college program"}
+                  disabled={loadingDepts}
+                  leftSection={<IconBuildingArch size={16} />}
+                  leftSectionPointerEvents="none"
+                  rightSection={loadingDepts ? <Loader size={14} color="gray" /> : undefined}
+                  value={form.department_id || null}
+                  onChange={(val) => {
+                    setForm((prev) => ({ ...prev, department_id: val || "" }));
+                    if (error) setError(null);
+                  }}
+                  data={deptOptions}
+                  required
+                  searchable
+                  clearable={false}
+                  allowDeselect={false}
+                  styles={{
+                    input: { paddingLeft: "42px" },
+                  }}
+                />
+              )}
+
+              {/* Student/Staff ID */}
+              <TextInput
+                label="Student / Employee ID"
+                placeholder="e.g. 2024-0192 or EMP-104"
+                leftSection={<IconId size={16} />}
+                leftSectionPointerEvents="none"
+                value={form.identifier}
+                onChange={handleChange("identifier")}
+                styles={{
+                  input: { paddingLeft: "42px" },
+                }}
+              />
+            </Stack>
+
+            {/* STEP 2: Identity & Security Credentials */}
+            <div className="auth-step-divider" style={{ marginTop: "1.75rem" }}>
+              <span className="auth-step-number">2</span>
+              <span className="auth-step-label">Account & Security</span>
+              <div className="auth-step-line" />
+            </div>
+
+            <Stack gap="sm">
+              <Group grow>
+                <TextInput
+                  label="First Name"
+                  placeholder="First name"
+                  value={form.first_name}
+                  onChange={handleChange("first_name")}
+                  required
+                />
+                <TextInput
+                  label="Last Name"
+                  placeholder="Last name"
+                  value={form.last_name}
+                  onChange={handleChange("last_name")}
+                  required
+                />
+              </Group>
+
+              <TextInput
+                label="Campus Email"
+                placeholder={institution ? `student@${institution.code.toLowerCase()}.edu.ph` : "student@university.edu.ph"}
+                type="email"
+                leftSection={<IconMail size={16} />}
+                leftSectionPointerEvents="none"
+                value={form.email}
+                onChange={handleChange("email")}
+                error={emailError}
+                required
+                styles={{
+                  input: { paddingLeft: "42px" },
+                }}
+              />
+
+              <PasswordInput
+                label="Password"
+                placeholder="Minimum 8 characters with mixed case & numbers"
+                leftSection={<IconLock size={16} />}
+                leftSectionPointerEvents="none"
+                value={form.password}
+                onChange={handleChange("password")}
+                required
+                styles={{
+                  innerInput: { paddingLeft: "42px" },
+                }}
+              />
+              {form.password && (
+                <Progress
+                  value={pwScore}
+                  color={getStrengthColor(pwScore)}
+                  size="xs"
+                  radius="xl"
+                  animated={pwScore < 100}
+                />
+              )}
+
+              <PasswordInput
+                label="Confirm Password"
+                placeholder="Re-type your password"
+                leftSection={<IconLock size={16} />}
+                leftSectionPointerEvents="none"
+                value={form.password_confirm}
+                onChange={handleChange("password_confirm")}
+                required
+                styles={{
+                  innerInput: { paddingLeft: "42px" },
+                }}
+              />
+
+              {(error || apiError) && (
+                <Alert icon={<IconAlertCircle size={16} />} color="red" radius="md" mt="xs">
+                  {error || apiError}
+                </Alert>
+              )}
+
+              <Button
+                type="submit"
+                fullWidth
+                loading={submitting}
+                mt="md"
+                className="auth-btn-submit"
+                rightSection={<IconArrowRight size={16} />}
+              >
+                Complete Registration & Enroll
+              </Button>
+            </Stack>
           </form>
 
-          <Text ta="center" mt="md" size="sm" c="dimmed">
-            Already registered?{" "}
-            <Anchor component={Link} to={`/${campusSlug}`}>
-              Sign in at Campus Portal
+          <Text ta="center" mt="xl" size="xs" c="dimmed">
+            Already have an account?{" "}
+            <Anchor component={Link} to={campusSlug ? `/${campusSlug}` : "/login"} fw={600} td="underline" style={{ color: "#0070f3" }}>
+              Sign in
             </Anchor>
           </Text>
-        </Paper>
-      </Container>
-    </Box>
+        </div>
+      </main>
+    </div>
   );
 }

@@ -3,6 +3,7 @@ export interface InstitutionPublicResponse {
   name: string;
   code: string;
   logo_url: string | null;
+  brand_color?: string | null;
   is_active: boolean;
 }
 

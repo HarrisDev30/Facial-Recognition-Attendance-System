@@ -11,7 +11,7 @@ import ScannerLayout from "./components/scanner/ScannerLayout";
 import MaintenanceBanner from "./components/shared/MaintenanceBanner";
 import LandingPage from "./pages/LandingPage";
 import CampusPortalPage from "./pages/CampusPortalPage";
-import StudentLoginPage from "./pages/StudentLoginPage";
+import LoginPage from "./pages/LoginPage";
 import StudentSignUpPage from "./pages/StudentSignUpPage";
 import StudentProfilePage from "./pages/StudentProfilePage";
 import StudentDashboardPage from "./pages/StudentDashboardPage";
@@ -91,7 +91,7 @@ export default function App() {
       <MaintenanceBanner />
       <Routes>
         <Route path="/" element={<RootHandler />} />
-        <Route path="/login" element={<StudentLoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<StudentSignUpPage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/scanner/pair" element={<ScannerPairingPage />} />

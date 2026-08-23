@@ -1,0 +1,546 @@
+/* ==========================================================================
+   Interactive Campus Carousel Styles
+   Tactile Biometric Cards with Custom Brand Lighting & Search Toolbar
+   ========================================================================== */
+
+.campus-showcase-section {
+  position: relative;
+  z-index: 10;
+  padding: 56px 0 80px;
+  overflow: visible;
+}
+
+/* ─── Section Header ─── */
+.campus-showcase-section .section-header-center {
+  text-align: center;
+  max-width: 820px;
+  margin: 0 auto 32px;
+  padding: 0 24px;
+}
+
+/* ─── Search Toolbar ─── */
+.campus-search-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.campus-search-capsule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 9999px;
+  padding: 6px 10px 6px 16px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.campus-search-capsule:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.landing-root-container[data-theme="dark"] .campus-search-capsule:focus-within {
+  box-shadow: 0 4px 24px rgba(255, 255, 255, 0.08);
+}
+
+.campus-search-capsule .search-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.campus-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  color: var(--text-heading);
+  font-family: inherit;
+}
+
+.campus-search-input::placeholder {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.search-clear-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface-card-subtle);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.search-clear-btn:hover {
+  background: var(--surface-card-hover);
+  color: var(--text-heading);
+}
+
+.campus-count-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface-card-subtle);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* ─── Chevrons ─── */
+.campus-nav-chevrons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chevron-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-body);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--card-shadow);
+}
+
+.chevron-btn:hover {
+  background: var(--surface-card-hover);
+  color: var(--text-heading);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.chevron-btn:active {
+  transform: scale(0.94);
+}
+
+/* ─── Marquee Track & Mask Wrapper ─── */
+.carousel-marquee-wrapper {
+  position: relative;
+  width: 100%;
+  overflow-x: clip;
+  overflow-y: visible;
+  padding: 32px 0 64px;
+  margin: 0;
+  touch-action: pan-y pinch-zoom;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0, 0, 0, 1) 6%,
+    rgba(0, 0, 0, 1) 94%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0, 0, 0, 1) 6%,
+    rgba(0, 0, 0, 1) 94%,
+    transparent 100%
+  );
+}
+
+.carousel-marquee-track {
+  display: flex;
+  gap: 20px;
+  width: max-content;
+  will-change: transform;
+  cursor: grab;
+}
+
+.marquee-set {
+  display: flex;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.carousel-marquee-track.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.carousel-marquee-track.is-dragging .campus-pass-card {
+  transition: none !important;
+  cursor: grabbing;
+}
+
+.carousel-marquee-track.is-dragging .campus-pass-card * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  pointer-events: none;
+}
+
+/* ─── Tactile Biometric Pass Card (Quiet, High-Craft Aesthetics) ─── */
+.campus-pass-card {
+  position: relative;
+  width: 320px;
+  height: 220px;
+  background: var(--surface-card) !important;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--card-shadow);
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.campus-pass-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-strong);
+  box-shadow: var(--card-hover-shadow);
+}
+
+.campus-pass-card:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+.landing-root-container[data-theme="light"] .campus-pass-card:hover {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+.landing-root-container[data-theme="dark"] .campus-pass-card:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* ─── Card Header Row (Solid Crisp Isolation) ─── */
+.pass-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 3;
+}
+
+.pass-crest-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--surface-card-subtle);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.campus-pass-card:hover .pass-crest-box {
+  border-color: var(--pass-brand, #0070f3);
+  transform: scale(1.05);
+}
+
+.pass-crest-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.pass-monogram {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--pass-brand, #0070f3);
+  letter-spacing: 0.5px;
+}
+
+.pass-crest-box.onboard {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.25);
+}
+
+/* Status Pill (Protected Solid Background) */
+.pass-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #10b981;
+  background: var(--surface-card);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  padding: 3px 9px;
+  border-radius: 100px;
+  position: relative;
+  z-index: 4;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-emerald 2s infinite ease-in-out;
+}
+
+@keyframes pulse-emerald {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+}
+
+/* ─── Card Body (Protected Crisp Isolation) ─── */
+.pass-body {
+  position: relative;
+  z-index: 3;
+  margin: 10px 0 6px;
+}
+
+.pass-verified-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--pass-brand, #0070f3);
+  margin-bottom: 4px;
+}
+
+.pass-verified-tag.purple {
+  color: #a855f7;
+}
+
+.pass-univ-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--text-heading);
+  margin: 0 0 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pass-univ-slug {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.pass-univ-slug strong {
+  color: var(--pass-brand, #0070f3);
+  font-weight: 700;
+}
+
+/* ─── Card Footer Action ─── */
+.pass-footer-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+  position: relative;
+  z-index: 2;
+}
+
+.pass-cta-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-body);
+  transition: color 0.2s ease;
+}
+
+.campus-pass-card:hover .pass-cta-label {
+  color: var(--text-heading);
+}
+
+.pass-arrow-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-card-subtle);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-heading);
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.campus-pass-card:hover .pass-arrow-icon {
+  transform: translateX(4px);
+  background: var(--pass-brand, #0070f3);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.pass-footer-action.onboard .campus-pass-card:hover .pass-arrow-icon {
+  background: #a855f7;
+}
+
+/* ─── Search Results Grid ─── */
+.campus-search-results-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  max-width: 1080px;
+  margin: 16px auto 0;
+  padding: 0 24px;
+}
+
+.campus-pass-card.is-search-result {
+  flex-shrink: initial;
+}
+
+.campus-empty-search-card {
+  text-align: center;
+  background: var(--surface-card);
+  border: 1px dashed var(--border-strong);
+  border-radius: 20px;
+  padding: 36px 24px;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.empty-icon-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(168, 85, 247, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.empty-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: 6px;
+}
+
+.empty-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+.empty-action-btn {
+  background: #a855f7;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.empty-action-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+/* ─── Mobile Responsiveness ─── */
+@media (max-width: 640px) {
+  .campus-showcase-section {
+    padding: 40px 0 48px;
+  }
+  .campus-showcase-section .section-header-center {
+    padding: 0 16px;
+    margin-bottom: 24px;
+  }
+  .campus-search-toolbar {
+    width: 100%;
+    margin-top: 18px;
+    padding: 0;
+  }
+  .campus-search-capsule {
+    width: 100%;
+    max-width: 100%;
+    padding: 6px 12px;
+    height: 42px;
+    box-sizing: border-box;
+  }
+  .campus-search-input {
+    font-size: 0.82rem;
+    min-width: 0;
+  }
+  .campus-nav-chevrons {
+    display: none;
+  }
+  .campus-pass-card {
+    width: 270px;
+    height: 200px;
+    padding: 16px;
+    border-radius: 16px;
+  }
+  .pass-univ-name {
+    font-size: 1.05rem;
+  }
+  .carousel-marquee-wrapper {
+    mask-image: none;
+    -webkit-mask-image: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 16px 24px;
+  }
+  .carousel-marquee-track {
+    gap: 14px;
+  }
+  .campus-pass-card {
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 440px) {
+  .campus-search-capsule {
+    padding: 5px 8px 5px 12px;
+    gap: 8px;
+  }
+  .campus-search-input::placeholder {
+    font-size: 0.78rem;
+  }
+  .campus-count-badge {
+    padding: 3px 8px;
+    font-size: 0.7rem;
+  }
+  .campus-count-badge .count-label {
+    display: none;
+  }
+  .campus-pass-card {
+    width: 250px;
+    height: 190px;
+    padding: 14px;
+  }
+  .pass-crest-box {
+    width: 38px;
+    height: 38px;
+  }
+}

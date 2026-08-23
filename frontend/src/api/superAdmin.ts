@@ -42,6 +42,7 @@ export interface InstitutionItem {
   name: string;
   code: string;
   logo_url: string | null;
+  brand_color?: string | null;
   is_active: boolean;
   created_at: string;
   attendee_count: number;
@@ -54,6 +55,7 @@ export interface InstitutionOnboardRequest {
   name: string;
   code: string;
   logo_url?: string;
+  brand_color?: string;
   contact_email?: string;
   admin_email: string;
   admin_password: string;
@@ -118,6 +120,7 @@ export interface InstitutionUpdateRequest {
   name: string;
   code: string;
   logo_url?: string | null;
+  brand_color?: string | null;
   is_active: boolean;
 }
 

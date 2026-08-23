@@ -36,6 +36,17 @@ import { useAsync } from "../../hooks";
 import DataTable from "../../components/shared/DataTable";
 import PageHeader from "../../components/layout/PageHeader";
 
+const UNIVERSITY_COLOR_PALETTES = [
+  { name: "Attendify Blue", color: "#0070f3" },
+  { name: "Emerald Teal", color: "#0d9488" },
+  { name: "Forest Green", color: "#16a34a" },
+  { name: "Royal Navy", color: "#1e40af" },
+  { name: "Imperial Purple", color: "#7c3aed" },
+  { name: "Sunset Gold", color: "#d97706" },
+  { name: "Crimson Red", color: "#dc2626" },
+  { name: "Slate", color: "#334155" },
+];
+
 export default function SuperAdminInstitutionsPage() {
   // Onboard modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -45,6 +56,7 @@ export default function SuperAdminInstitutionsPage() {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [brandColor, setBrandColor] = useState("#0070f3");
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [adminFirstName, setAdminFirstName] = useState("University");
@@ -56,6 +68,7 @@ export default function SuperAdminInstitutionsPage() {
   const [editName, setEditName] = useState("");
   const [editCode, setEditCode] = useState("");
   const [editLogoUrl, setEditLogoUrl] = useState("");
+  const [editBrandColor, setEditBrandColor] = useState("#0070f3");
   const [editIsActive, setEditIsActive] = useState(true);
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -94,6 +107,7 @@ export default function SuperAdminInstitutionsPage() {
         name: name.trim(),
         code: code.trim().toLowerCase(),
         logo_url: logoUrl.trim() || undefined,
+        brand_color: brandColor.trim() || "#0070f3",
         admin_email: adminEmail.trim().toLowerCase(),
         admin_password: adminPassword,
         admin_first_name: adminFirstName.trim() || "University",
@@ -105,6 +119,7 @@ export default function SuperAdminInstitutionsPage() {
       setName("");
       setCode("");
       setLogoUrl("");
+      setBrandColor("#0070f3");
       setAdminEmail("");
       setAdminPassword("");
       refetchInstitutions(true);
@@ -120,6 +135,7 @@ export default function SuperAdminInstitutionsPage() {
     setEditName(inst.name);
     setEditCode(inst.code);
     setEditLogoUrl(inst.logo_url || "");
+    setEditBrandColor(inst.brand_color || "#0070f3");
     setEditIsActive(inst.is_active);
     setEditError(null);
     setEditModalOpen(true);
@@ -136,6 +152,7 @@ export default function SuperAdminInstitutionsPage() {
         name: editName.trim(),
         code: editCode.trim().toLowerCase(),
         logo_url: editLogoUrl.trim() || null,
+        brand_color: editBrandColor.trim() || "#0070f3",
         is_active: editIsActive,
       });
       setEditModalOpen(false);
@@ -196,13 +213,28 @@ export default function SuperAdminInstitutionsPage() {
       label: "University Tenant",
       render: (row: InstitutionItem) => (
         <Group gap="sm">
-          <Avatar src={row.logo_url} radius="md" color="blue">
+          <Avatar
+            src={row.logo_url}
+            radius="md"
+            style={{ border: `2px solid ${row.brand_color || "#0070f3"}` }}
+          >
             {row.code.toUpperCase().slice(0, 3)}
           </Avatar>
           <div>
-            <Text size="sm" fw={600}>
-              {row.name}
-            </Text>
+            <Group gap={6} align="center">
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  backgroundColor: row.brand_color || "#0070f3",
+                  display: "inline-block",
+                }}
+              />
+              <Text size="sm" fw={600}>
+                {row.name}
+              </Text>
+            </Group>
             <Text size="xs" c="dimmed">
               attendify.app/{row.code}
             </Text>
@@ -355,6 +387,40 @@ export default function SuperAdminInstitutionsPage() {
               onChange={(e) => setLogoUrl(e.currentTarget.value)}
             />
 
+            <div>
+              <Text size="sm" fw={500} mb={6}>
+                Campus Official Brand Color
+              </Text>
+              <Group gap="xs" mb="xs">
+                {UNIVERSITY_COLOR_PALETTES.map((palette) => (
+                  <Tooltip key={palette.color} label={palette.name}>
+                    <button
+                      type="button"
+                      onClick={() => setBrandColor(palette.color)}
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: "50%",
+                        backgroundColor: palette.color,
+                        border: brandColor === palette.color ? "3px solid #ffffff" : "2px solid rgba(0,0,0,0.15)",
+                        boxShadow: brandColor === palette.color ? "0 0 0 2px #0070f3" : "none",
+                        cursor: "pointer",
+                        outline: "none",
+                        transition: "transform 0.15s ease",
+                      }}
+                    />
+                  </Tooltip>
+                ))}
+              </Group>
+              <TextInput
+                placeholder="#0070f3"
+                value={brandColor}
+                onChange={(e) => setBrandColor(e.currentTarget.value)}
+                size="xs"
+                styles={{ input: { fontFamily: "monospace" } }}
+              />
+            </div>
+
             <Text fw={600} size="sm" mt="xs">
               Primary Administrator Credentials
             </Text>
@@ -439,6 +505,40 @@ export default function SuperAdminInstitutionsPage() {
               value={editLogoUrl}
               onChange={(e) => setEditLogoUrl(e.currentTarget.value)}
             />
+
+            <div>
+              <Text size="sm" fw={500} mb={6}>
+                Campus Official Brand Color
+              </Text>
+              <Group gap="xs" mb="xs">
+                {UNIVERSITY_COLOR_PALETTES.map((palette) => (
+                  <Tooltip key={palette.color} label={palette.name}>
+                    <button
+                      type="button"
+                      onClick={() => setEditBrandColor(palette.color)}
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: "50%",
+                        backgroundColor: palette.color,
+                        border: editBrandColor === palette.color ? "3px solid #ffffff" : "2px solid rgba(0,0,0,0.15)",
+                        boxShadow: editBrandColor === palette.color ? "0 0 0 2px #0070f3" : "none",
+                        cursor: "pointer",
+                        outline: "none",
+                        transition: "transform 0.15s ease",
+                      }}
+                    />
+                  </Tooltip>
+                ))}
+              </Group>
+              <TextInput
+                placeholder="#0070f3"
+                value={editBrandColor}
+                onChange={(e) => setEditBrandColor(e.currentTarget.value)}
+                size="xs"
+                styles={{ input: { fontFamily: "monospace" } }}
+              />
+            </div>
 
             <Switch
               label="Active Status"

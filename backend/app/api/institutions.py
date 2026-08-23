@@ -19,6 +19,7 @@ class InstitutionPublicResponse(BaseModel):
     name: str
     code: str
     logo_url: str | None = None
+    brand_color: str | None = "#0070f3"
     is_active: bool
 
     model_config = {"from_attributes": True}
@@ -32,6 +33,7 @@ class InstitutionCreateRequest(BaseModel):
     name: str = Field(..., max_length=200)
     code: str = Field(..., max_length=50, pattern=r"^[a-z0-9_-]+$")
     logo_url: str | None = None
+    brand_color: str | None = None
     is_active: bool = True
 
 
@@ -39,6 +41,7 @@ class InstitutionUpdateRequest(BaseModel):
     name: str | None = Field(None, max_length=200)
     code: str | None = Field(None, max_length=50, pattern=r"^[a-z0-9_-]+$")
     logo_url: str | None = None
+    brand_color: str | None = None
     is_active: bool | None = None
 
 
@@ -61,6 +64,7 @@ async def list_institutions(
             name=inst.name,
             code=inst.code,
             logo_url=inst.logo_url,
+            brand_color=getattr(inst, "brand_color", None) or "#0070f3",
             is_active=inst.is_active,
         )
         for inst in institutions
@@ -88,6 +92,7 @@ async def get_institution_by_slug(
         name=inst.name,
         code=inst.code,
         logo_url=inst.logo_url,
+        brand_color=getattr(inst, "brand_color", None) or "#0070f3",
         is_active=inst.is_active,
     )
 
