@@ -1,17 +1,17 @@
 import type { MantineThemeOverride } from "@mantine/core";
 
-const surface0 = "#050505";
-const surface1 = "#111111";
-const surface2 = "#171717";
-const surface3 = "#1a1a1a";
-const textPrimary = "#ededed";
-const textSecondary = "#888888";
-const textMuted = "#666666";
-const borderSubtle = "#2a2a2a";
-const borderStrong = "#3a3a3a";
-const link = "#3b82f6";
-const error = "#ff4444";
-const warning = "#f5a623";
+const surface0 = "var(--surface-0)";
+const surface1 = "var(--surface-1)";
+const surface2 = "var(--surface-2)";
+const surface3 = "var(--surface-3)";
+const textPrimary = "var(--text-primary)";
+const textSecondary = "var(--text-secondary)";
+const textMuted = "var(--text-muted)";
+const borderSubtle = "var(--border-subtle)";
+const borderStrong = "var(--border-strong)";
+const link = "var(--link)";
+const error = "var(--error)";
+const warning = "var(--warning)";
 
 const shadowXs = "0 0 0 1px rgba(0,0,0,0.4)";
 const shadowSm = "0 0 0 1px rgba(0,0,0,0.4), 0px 1px 1px rgba(0,0,0,0.2), 0px 2px 2px rgba(0,0,0,0.3)";

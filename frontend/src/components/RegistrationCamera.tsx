@@ -1,8 +1,17 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { previewFrame } from "../api/registration";
-import type { FaceInfo, PreviewResult } from "../api/registration";
 import { AppleFaceIDReticle } from "./AppleFaceIDReticle";
-import { IconCheck, IconRotateClockwise, IconArrowLeft, IconAlertCircle, IconRefresh } from "@tabler/icons-react";
+import { getFaceLandmarker, estimateFaceOrientation } from "../utils/faceLandmarker";
+import type { FaceOrientation } from "../utils/faceLandmarker";
+import {
+  IconCheck,
+  IconRotateClockwise,
+  IconArrowLeft,
+  IconAlertCircle,
+  IconRefresh,
+  IconArrowRight,
+  IconArrowUp,
+  IconArrowDown,
+} from "@tabler/icons-react";
 import "./RegistrationCamera.css";
 
 const PHASES = [
@@ -21,65 +30,58 @@ interface Props {
   phases?: typeof PHASES;
 }
 
-function dataUrlToFile(dataUrl: string, filename = "frame.jpg"): File {
-  const arr = dataUrl.split(",");
-  const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-  return new File([u8arr], filename, { type: mime });
-}
-
-function poseMatchesAngle(face: FaceInfo, angle: string): boolean {
-  const yaw = face.pose[1];
+function poseMatchesAngle(orientation: FaceOrientation, angle: string): boolean {
+  const yaw = orientation.yaw;
   const absYaw = Math.abs(yaw);
-  const pitch = face.pose[0];
+  const pitch = orientation.pitch;
   switch (angle) {
-    case "frontal": return absYaw <= 15 && Math.abs(pitch) <= 15;
-    case "left": return yaw > 12 && absYaw <= 55;
-    case "right": return yaw < -12 && absYaw <= 55;
-    case "tilt_up": return pitch > 6;
-    case "tilt_down": return pitch < -6;
+    case "frontal": return absYaw <= 12 && Math.abs(pitch) <= 12;
+    case "left": return yaw > 14 && absYaw <= 55;
+    case "right": return yaw < -14 && absYaw <= 55;
+    case "tilt_up": return pitch > 8;
+    case "tilt_down": return pitch < -8;
     case "random": return true;
     default: return false;
   }
 }
 
-function guidanceForPhase(r: PreviewResult | null, phaseKey: string): {
+function guidanceForOrientation(orientation: FaceOrientation, phaseKey: string): {
   hint: string;
   state: "ok" | "warn" | "error" | "neutral";
+  icon?: "left" | "right" | "up" | "down" | "check" | "none";
 } {
-  if (!r) return { hint: "Center your face in the circle", state: "neutral" };
-  if (!r.face_detected) return { hint: "Position your face in the frame", state: "error" };
-  if (r.face_count > 1) return { hint: "Multiple faces detected — only one allowed", state: "error" };
-  const face = r.faces[0];
-  if (!face) return { hint: "Center your face in the circle", state: "error" };
+  if (!orientation.detected) {
+    return { hint: "Position your face inside the circle", state: "neutral", icon: "none" };
+  }
+  if (orientation.faceCount > 1) {
+    return { hint: "Only one face allowed in frame", state: "error", icon: "none" };
+  }
 
-  const area = (face.face_width * face.face_height) / (face.img_width * face.img_height);
-  if (area < 0.06) return { hint: "Move slightly closer", state: "warn" };
-  if (area > 0.45) return { hint: "Move slightly further back", state: "warn" };
+  if (orientation.faceCoverage < 0.05) {
+    return { hint: "Move slightly closer to the camera", state: "warn", icon: "none" };
+  }
+  if (orientation.faceCoverage > 0.48) {
+    return { hint: "Move slightly back from the camera", state: "warn", icon: "none" };
+  }
 
-  if (!poseMatchesAngle(face, phaseKey)) {
+  if (!poseMatchesAngle(orientation, phaseKey)) {
     switch (phaseKey) {
-      case "left": return { hint: "Turn your head to the left", state: "warn" };
-      case "right": return { hint: "Turn your head to the right", state: "warn" };
-      case "tilt_up": return { hint: "Tilt your head upward", state: "warn" };
-      case "tilt_down": return { hint: "Tilt your head downward", state: "warn" };
-      case "frontal": return { hint: "Look straight at the camera", state: "warn" };
-      default: return { hint: "Hold steady...", state: "warn" };
+      case "left": return { hint: "Turn your head slowly to the left", state: "warn", icon: "left" };
+      case "right": return { hint: "Turn your head slowly to the right", state: "warn", icon: "right" };
+      case "tilt_up": return { hint: "Tilt your chin upward", state: "warn", icon: "up" };
+      case "tilt_down": return { hint: "Tilt your chin downward", state: "warn", icon: "down" };
+      case "frontal": return { hint: "Look straight at the camera", state: "warn", icon: "none" };
+      default: return { hint: "Hold steady...", state: "warn", icon: "none" };
     }
   }
-  return { hint: "Perfect! Hold still...", state: "ok" };
+  return { hint: "Perfect! Hold still...", state: "ok", icon: "check" };
 }
 
 export default function RegistrationCamera({ onCapture, onBack, onDone, phases }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mountedRef = useRef(false);
+  const animFrameRef = useRef<number | null>(null);
+  const landmarkerRef = useRef<any>(null);
   const uploadingRef = useRef(false);
   const goodFramesRef = useRef(0);
 
@@ -87,19 +89,42 @@ export default function RegistrationCamera({ onCapture, onBack, onDone, phases }
 
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState(false);
-  const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
   const [flash, setFlash] = useState(false);
   const [capturedThumbnails, setCapturedThumbnails] = useState<Record<string, string>>({});
   const [completedKeys, setCompletedKeys] = useState<string[]>([]);
+  const [reticleSize, setReticleSize] = useState(340);
+
+  const [orientation, setOrientation] = useState<FaceOrientation>({
+    detected: false,
+    faceCount: 0,
+    yaw: 0,
+    pitch: 0,
+    roll: 0,
+    faceCoverage: 0,
+  });
+
+  // Responsive reticle sizing
+  useEffect(() => {
+    function updateSize() {
+      const w = window.innerWidth;
+      if (w <= 480) {
+        setReticleSize(280);
+      } else if (w <= 640) {
+        setReticleSize(310);
+      } else {
+        setReticleSize(340);
+      }
+    }
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
 
   const currentPhase = activePhases[currentPhaseIdx];
   const allDone = currentPhaseIdx >= activePhases.length;
 
-  const face = preview?.faces?.[0] ?? null;
-  const yaw = face?.pose?.[1] ?? 0;
-  const pitch = face?.pose?.[0] ?? 0;
-  const guidance = guidanceForPhase(preview, currentPhase?.key ?? "");
+  const guidance = guidanceForOrientation(orientation, currentPhase?.key ?? "");
   const isGoodPose = guidance.state === "ok";
 
   const grabFrame = useCallback((): string | null => {
@@ -133,47 +158,62 @@ export default function RegistrationCamera({ onCapture, onBack, onDone, phases }
     }
   }, [onCapture]);
 
+  // Initialize MediaPipe FaceLandmarker
+  useEffect(() => {
+    let active = true;
+    getFaceLandmarker()
+      .then((lm) => {
+        if (active) landmarkerRef.current = lm;
+      })
+      .catch((err) => {
+        console.warn("MediaPipe initialization warning (fallback active):", err);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // 60 FPS Real-Time Client-Side Tracking Loop
   useEffect(() => {
     if (!cameraReady || allDone) return;
 
-    let isPolling = true;
+    let isRunning = true;
 
-    async function poll() {
-      if (!isPolling || uploadingRef.current) return;
+    function trackLoop(timestamp: number) {
+      if (!isRunning) return;
 
-      const frame = grabFrame();
-      if (frame) {
-        try {
-          const fileObj = dataUrlToFile(frame, "frame.jpg");
-          const res = await previewFrame(fileObj);
-          if (isPolling) {
-            setPreview(res);
-            const guide = guidanceForPhase(res, currentPhase?.key ?? "");
+      const video = videoRef.current;
+      const landmarker = landmarkerRef.current;
 
-            if (guide.state === "ok") {
-              goodFramesRef.current += 1;
-              if (goodFramesRef.current >= 2 && !uploadingRef.current) {
-                await triggerCapture(frame, currentPhase.key);
-              }
-            } else {
-              goodFramesRef.current = 0;
+      if (video && video.readyState >= 2 && landmarker && !uploadingRef.current) {
+        const est = estimateFaceOrientation(landmarker, video, timestamp);
+        setOrientation(est);
+
+        const currentGuide = guidanceForOrientation(est, currentPhase?.key ?? "");
+        if (currentGuide.state === "ok") {
+          goodFramesRef.current += 1;
+          // After holding good pose for 15 frames (~250ms at 60fps), trigger capture
+          if (goodFramesRef.current >= 15 && !uploadingRef.current) {
+            const frame = grabFrame();
+            if (frame) {
+              triggerCapture(frame, currentPhase.key);
             }
           }
-        } catch {
-          // ignore transient frame preview errors
+        } else {
+          goodFramesRef.current = 0;
         }
       }
 
-      if (isPolling) {
-        timerRef.current = setTimeout(poll, 200);
+      if (isRunning && !uploadingRef.current) {
+        animFrameRef.current = requestAnimationFrame(trackLoop);
       }
     }
 
-    poll();
+    animFrameRef.current = requestAnimationFrame(trackLoop);
 
     return () => {
-      isPolling = false;
-      if (timerRef.current) clearTimeout(timerRef.current);
+      isRunning = false;
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
   }, [cameraReady, allDone, currentPhase, grabFrame, triggerCapture]);
 
@@ -185,15 +225,13 @@ export default function RegistrationCamera({ onCapture, onBack, onDone, phases }
   };
 
   useEffect(() => {
-    mountedRef.current = true;
     if (!streamRef.current) startCamera();
     return () => {
-      mountedRef.current = false;
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
       }
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
   }, []);
 
@@ -219,14 +257,16 @@ export default function RegistrationCamera({ onCapture, onBack, onDone, phases }
   if (cameraError) {
     return (
       <div className="faceid-root" style={{ justifyContent: "center", alignItems: "center", padding: "2rem" }}>
-        <div style={{ textAlign: "center", maxWidth: 400 }}>
-          <IconAlertCircle size={56} color="#ef4444" style={{ marginBottom: "1rem" }} />
-          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Camera Access Required</h2>
-          <p style={{ color: "#94a3b8", fontSize: "0.95rem", marginBottom: "1.5rem", lineHeight: 1.5 }}>
-            Please grant camera permissions in your browser settings to complete biometric facial registration.
+        <div style={{ textAlign: "center", maxWidth: 380 }}>
+          <IconAlertCircle size={52} color="#ff453a" style={{ marginBottom: "1rem" }} />
+          <h2 style={{ fontSize: "1.4rem", fontWeight: 700, marginBottom: "0.5rem", color: "#ffffff" }}>
+            Camera Access Required
+          </h2>
+          <p style={{ color: "rgba(255, 255, 255, 0.6)", fontSize: "0.9rem", marginBottom: "1.5rem", lineHeight: 1.5 }}>
+            Please allow camera access in your browser settings to set up Face ID.
           </p>
-          <button className="faceid-done-btn" onClick={startCamera}>
-            <IconRefresh size={16} style={{ marginRight: 6 }} /> Try Again
+          <button className="faceid-apple-btn-primary" onClick={startCamera} style={{ width: "100%" }}>
+            <IconRefresh size={18} style={{ marginRight: 8 }} /> Try Again
           </button>
         </div>
       </div>
@@ -237,16 +277,16 @@ export default function RegistrationCamera({ onCapture, onBack, onDone, phases }
     <div className="faceid-root">
       {flash && <div className="faceid-flash" />}
 
-      {/* Top Navbar */}
+      {/* Apple Top Navigation Bar */}
       <div className="faceid-topbar">
         {onBack ? (
-          <button className="faceid-back-btn" onClick={onBack} title="Back">
-            <IconArrowLeft size={20} />
+          <button className="faceid-back-btn" onClick={onBack} title="Exit Camera" type="button">
+            <IconArrowLeft size={18} />
           </button>
         ) : <div />}
 
         <div className="faceid-status-badge">
-          <span>{allDone ? "All Poses Complete" : currentPhase?.label}</span>
+          <span>{allDone ? "All Angles Captured" : `${currentPhase?.label}`}</span>
         </div>
 
         <div className="faceid-counter">
@@ -254,15 +294,17 @@ export default function RegistrationCamera({ onCapture, onBack, onDone, phases }
         </div>
       </div>
 
-      {/* Stage Viewport with Apple Face ID Circular Reticle */}
+      {/* Stage Viewport with 60 FPS Apple Face ID Circular Reticle */}
       <div className="faceid-stage">
         <div className="faceid-reticle-container">
           <AppleFaceIDReticle
-            size={360}
-            yaw={yaw}
-            pitch={pitch}
+            size={reticleSize}
+            yaw={orientation.yaw}
+            pitch={orientation.pitch}
             completedPhases={completedKeys}
+            currentPhase={currentPhase?.key}
             isGoodPose={isGoodPose}
+            hasFace={orientation.detected}
           />
 
           <div className="faceid-circle-mask">
@@ -275,19 +317,24 @@ export default function RegistrationCamera({ onCapture, onBack, onDone, phases }
           </div>
         </div>
 
-        {/* Guidance Instruction Pill */}
+        {/* Dynamic Island Floating Guidance Pill */}
         <div className={`faceid-instruction-pill ${guidance.state}`}>
+          {guidance.icon === "left" && <IconArrowLeft size={16} />}
+          {guidance.icon === "right" && <IconArrowRight size={16} />}
+          {guidance.icon === "up" && <IconArrowUp size={16} />}
+          {guidance.icon === "down" && <IconArrowDown size={16} />}
+          {guidance.icon === "check" && <IconCheck size={16} stroke={3} />}
           <span>{guidance.hint}</span>
         </div>
       </div>
 
-      {/* Interactive Bottom Tray of 6 Thumbnails & Retake Actions */}
+      {/* Interactive Bottom Tray of 6 Thumbnails & Completion Action */}
       <div className="faceid-bottom-tray">
         <div className="faceid-tray-header">
-          <span>Captured Biometric Angles</span>
+          <span>Face Angles ({completedKeys.length}/6)</span>
           {allDone && (
-            <button className="faceid-done-btn" onClick={onDone}>
-              Complete Enrollment
+            <button className="faceid-done-btn" onClick={onDone} type="button">
+              Review Captures →
             </button>
           )}
         </div>
@@ -303,6 +350,8 @@ export default function RegistrationCamera({ onCapture, onBack, onDone, phases }
                 key={phase.key}
                 className={`faceid-thumb-card ${isCompleted ? "completed" : ""} ${isCurrent ? "current" : ""}`}
                 onClick={() => handleRetakeAngle(idx)}
+                role="button"
+                tabIndex={0}
               >
                 <div className="faceid-thumb-preview">
                   {thumbUrl ? (
@@ -313,7 +362,7 @@ export default function RegistrationCamera({ onCapture, onBack, onDone, phases }
 
                   {isCompleted && (
                     <div className="faceid-thumb-check">
-                      <IconCheck size={14} stroke={3} />
+                      <IconCheck size={12} stroke={3} />
                     </div>
                   )}
                 </div>
@@ -322,7 +371,7 @@ export default function RegistrationCamera({ onCapture, onBack, onDone, phases }
                   <span className="faceid-thumb-label">{phase.label}</span>
                   {isCompleted && (
                     <span className="faceid-thumb-retake">
-                      <IconRotateClockwise size={11} /> Retake
+                      <IconRotateClockwise size={10} /> Retake
                     </span>
                   )}
                 </div>

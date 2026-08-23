@@ -5,6 +5,8 @@ import { notifications } from "@mantine/notifications";
 import {
   IconCheck,
   IconX,
+  IconLock,
+  IconRefresh,
 } from "@tabler/icons-react";
 import {
   getRegistrationStatus,
@@ -14,17 +16,18 @@ import {
 import { giveConsent, getConsentStatus } from "../api/attendees";
 import { getApiError } from "../utils/error";
 import { useAsync } from "../hooks";
+import { useInstitutionTheme } from "../theme/InstitutionThemeProvider";
 import type { RegistrationStatus } from "../api/registration";
 import RegistrationCamera from "../components/RegistrationCamera";
 import ConsentForm from "../components/ConsentForm";
 import "./StudentBiometricRegistration.css";
 
 const ANGLE_LABELS: Record<string, string> = {
-  frontal: "Front",
-  left: "Left",
-  right: "Right",
-  tilt_up: "Up",
-  tilt_down: "Down",
+  frontal: "Straight Ahead",
+  left: "Left Angle",
+  right: "Right Angle",
+  tilt_up: "Tilt Up",
+  tilt_down: "Tilt Down",
   random: "Natural",
 };
 
@@ -38,8 +41,21 @@ const ALL_PHASES = PHASE_KEYS.map((key) => ({
 
 type Step = "intro" | "capture" | "review" | "done";
 
+function dataUrlToFile(dataUrl: string, filename = "frame.jpg"): File {
+  const arr = dataUrl.split(",");
+  const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+}
+
 export default function StudentBiometricRegistration() {
   const navigate = useNavigate();
+  const { institution } = useInstitutionTheme();
   const [step, setStep] = useState<Step>("intro");
   const [, setStatus] = useState<RegistrationStatus | null>(null);
   const [consentModalOpen, setConsentModalOpen] = useState(false);
@@ -47,8 +63,6 @@ export default function StudentBiometricRegistration() {
   const [images, setImages] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [capturePhases, setCapturePhases] = useState<typeof ALL_PHASES | undefined>();
-
-  const capturedCount = Object.keys(images).length;
 
   const { loading } = useAsync(
     async () => {
@@ -99,17 +113,11 @@ export default function StudentBiometricRegistration() {
     try {
       await giveConsent({ consent_given: true, acknowledge_data_privacy: true });
       setConsentModalOpen(false);
-      const missing = PHASE_KEYS.filter((k) => !images[k]);
-      setCapturePhases(
-        missing.length > 0 && missing.length < 6
-          ? ALL_PHASES.filter((p) => missing.includes(p.key))
-          : undefined,
-      );
       setStep("capture");
-    } catch (err) {
+    } catch {
       notifications.show({
-        title: "Consent failed",
-        message: getApiError(err),
+        title: "Error",
+        message: "Failed to save consent",
         color: "red",
         icon: <IconX size={16} />,
       });
@@ -122,45 +130,39 @@ export default function StudentBiometricRegistration() {
     setImages((prev) => ({ ...prev, [angle]: dataUrl }));
   };
 
-  const handleRecapture = (angle: string) => {
-    const remaining = { ...images };
-    delete remaining[angle];
-    setImages(remaining);
-    const missing = PHASE_KEYS.filter((k) => !remaining[k]);
-    setCapturePhases(
-      missing.length > 0 && missing.length < 6
-        ? ALL_PHASES.filter((p) => missing.includes(p.key))
-        : undefined,
-    );
-    setStep("capture");
+  const handleCameraDone = () => {
+    setStep("review");
   };
 
   const handleCameraBack = () => {
-    if (capturedCount > 0) {
+    if (Object.keys(images).length > 0) {
       setStep("review");
     } else {
-      setCapturePhases(undefined);
       setStep("intro");
     }
   };
 
-  const handleCameraDone = () => {
-    setCapturePhases(undefined);
-    setStep("review");
+  const handleRecapture = (angle: string) => {
+    setCapturePhases(ALL_PHASES.filter((p) => p.key === angle));
+    setStep("capture");
   };
 
   const handleComplete = async () => {
     setSubmitting(true);
     try {
       for (const [angle, dataUrl] of Object.entries(images)) {
-        const blob = await (await fetch(dataUrl)).blob();
-        const file = new File([blob], `face_${angle}.jpg`, { type: "image/jpeg" });
-        await uploadMyEmbedding(file, angle);
+        await uploadMyEmbedding(dataUrlToFile(dataUrl, `${angle}.jpg`), angle);
       }
+      notifications.show({
+        title: "Face ID Set Up",
+        message: "Your biometric profile is active for event check-in.",
+        color: "green",
+        icon: <IconCheck size={16} />,
+      });
       setStep("done");
     } catch (err) {
       notifications.show({
-        title: "Upload failed",
+        title: "Upload Failed",
         message: getApiError(err),
         color: "red",
         icon: <IconX size={16} />,
@@ -174,18 +176,16 @@ export default function StudentBiometricRegistration() {
     try {
       await resetMyRegistration();
       setImages({});
-      setCapturePhases(undefined);
-      setStatus((prev) => (prev ? { ...prev, num_embeddings: 0, is_registered: false } : prev));
       setStep("intro");
       notifications.show({
-        title: "Reset complete",
-        message: "You can start enrollment again.",
+        title: "Reset Complete",
+        message: "You can start Face ID setup again.",
         color: "green",
         icon: <IconCheck size={16} />,
       });
     } catch (err) {
       notifications.show({
-        title: "Reset failed",
+        title: "Reset Failed",
         message: getApiError(err),
         color: "red",
         icon: <IconX size={16} />,
@@ -195,235 +195,194 @@ export default function StudentBiometricRegistration() {
 
   if (loading) {
     return (
-      <div className="faceid-loading-overlay">
+      <div className="faceid-apple-root" style={{ justifyContent: "center", alignItems: "center" }}>
         <LoadingOverlay visible />
       </div>
     );
   }
 
-  if (step === "intro") {
-    return (
-      <>
-        <ConsentForm
-          opened={consentModalOpen}
-          onClose={() => setConsentModalOpen(false)}
-          onConfirm={handleConsent}
-          loading={consentLoading}
-        />
-        <IntroStep onStart={handleStart} />
-      </>
-    );
-  }
-
+  // Camera capture step runs full-screen with its own dedicated Apple topbar & controls
   if (step === "capture") {
     return (
-      <div className="faceid-camera-wrap">
-        <RegistrationCamera
-          onCapture={handleCapture}
-          onBack={handleCameraBack}
-          onDone={handleCameraDone}
-          phases={capturePhases}
-        />
-      </div>
-    );
-  }
-
-  if (step === "review") {
-    return (
-      <ReviewStep
-        images={images}
-        onRecapture={handleRecapture}
-        onComplete={handleComplete}
-        onReset={handleReset}
-        submitting={submitting}
+      <RegistrationCamera
+        onCapture={handleCapture}
+        onBack={handleCameraBack}
+        onDone={handleCameraDone}
+        phases={capturePhases}
       />
     );
   }
 
-  return <DoneStep onDashboard={() => navigate("/student/dashboard")} />;
-}
-
-function IntroStep({ onStart }: { onStart: () => void }) {
-  const navigate = useNavigate();
+  const campusName = institution?.name || "Campus Security";
 
   return (
-    <div className="faceid-page">
-      <div className="faceid-page-nav">
-        <button className="faceid-back" onClick={() => navigate("/profile")} aria-label="Back" type="button">
-          <svg width="14" height="20" viewBox="0 0 14 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M11 2L3 10L11 18" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+    <div className="faceid-apple-root">
+      {/* ─── Apple Navigation Bar ─── */}
+      <header className="faceid-apple-nav">
+        <button
+          type="button"
+          className="faceid-apple-close-btn"
+          onClick={() => navigate("/student/profile")}
+          aria-label="Exit Setup"
+        >
+          <IconX size={18} />
         </button>
-      </div>
 
-      <div className="faceid-content">
-        <div className="faceid-hero-glyph">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="32" />
-            <circle cx="50" cy="42" r="10" />
-            <path d="M30 76 C 30 62, 42 56, 50 56 C 58 56, 70 62, 70 76" />
-          </svg>
+        <div className="faceid-apple-institution-pill">
+          <span className="faceid-apple-dot" />
+          <span>{campusName}</span>
         </div>
+      </header>
 
-        <h1 className="faceid-title">Enroll Your Face</h1>
-        <p className="faceid-subtitle">
-          We'll guide you through capturing 6 angles so we can recognize you at events.
-        </p>
+      {/* ─── Main Center Focus Stage ─── */}
+      <main className="faceid-apple-stage">
+        {step === "intro" && (
+          <>
+            <ConsentForm
+              opened={consentModalOpen}
+              onClose={() => setConsentModalOpen(false)}
+              onConfirm={handleConsent}
+              loading={consentLoading}
+            />
 
-        <div className="faceid-bullet-list">
-          <div className="faceid-bullet">
-            <div className="num">1</div>
-            <div>Find a well-lit area and hold your face about 10–20 inches from the camera.</div>
-          </div>
-          <div className="faceid-bullet">
-            <div className="num">2</div>
-            <div>Center your face inside the circle and follow the on-screen prompts.</div>
-          </div>
-          <div className="faceid-bullet">
-            <div className="num">3</div>
-            <div>Slowly turn your head as instructed — straight, left, right, up, down, natural.</div>
-          </div>
-          <div className="faceid-bullet">
-            <div className="num">4</div>
-            <div>Remove sunglasses, masks, or anything covering your face.</div>
-          </div>
-        </div>
+            {/* Apple Face ID Line-Art Glyph */}
+            <div className="faceid-apple-glyph">
+              <svg viewBox="0 0 48 48">
+                <rect x="6" y="6" width="36" height="36" rx="10" />
+                <circle cx="18" cy="20" r="1.8" fill="#ffffff" stroke="none" />
+                <circle cx="30" cy="20" r="1.8" fill="#ffffff" stroke="none" />
+                <path d="M24 22 V27 H22" strokeWidth="2" strokeLinecap="round" />
+                <path d="M17 32 C19 35, 29 35, 31 32" strokeWidth="2.2" strokeLinecap="round" />
+              </svg>
+            </div>
 
-        <div style={{ width: "100%" }}>
-          <button className="faceid-primary-btn" onClick={onStart}>
-            Get Started
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+            <h1 className="faceid-apple-title">How to Set Up Face ID</h1>
+            <p className="faceid-apple-desc">
+              First, position your face in the camera frame. Then slowly turn your head to complete all 6 angles.
+            </p>
 
-function ReviewStep({
-  images,
-  onRecapture,
-  onComplete,
-  onReset,
-  submitting,
-}: {
-  images: Record<string, string>;
-  onRecapture: (angle: string) => void;
-  onComplete: () => void;
-  onReset: () => void;
-  submitting: boolean;
-}) {
-  const navigate = useNavigate();
-  const capturedCount = Object.keys(images).length;
-  const allCaptured = capturedCount >= PHASE_KEYS.length;
+            <div className="faceid-apple-privacy">
+              <IconLock size={13} />
+              <span>Encrypted mathematical vectors only • No raw photos stored</span>
+            </div>
+          </>
+        )}
 
-  return (
-    <div className="faceid-page">
-      <div className="faceid-page-nav">
-        <button className="faceid-back" onClick={() => navigate("/profile")} aria-label="Back" type="button">
-          <svg width="14" height="20" viewBox="0 0 14 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M11 2L3 10L11 18" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-      </div>
+        {step === "review" && (
+          <>
+            <h1 className="faceid-apple-title" style={{ fontSize: "1.5rem", marginBottom: 6 }}>
+              Review Face Angles
+            </h1>
+            <p className="faceid-apple-desc" style={{ marginBottom: 12 }}>
+              {Object.keys(images).length} of {PHASE_KEYS.length} angles captured
+            </p>
 
-      <div className="faceid-content" style={{ justifyContent: "flex-start", paddingTop: 16 }}>
-        <h1 className="faceid-title" style={{ fontSize: 22, marginBottom: 8 }}>Review Captures</h1>
-        <p className="faceid-subtitle" style={{ marginBottom: 24 }}>
-          {capturedCount}/{PHASE_KEYS.length} angles captured
-        </p>
-
-        <div className="faceid-photo-grid">
-          {PHASE_KEYS.map((key) => {
-            const dataUrl = images[key];
-            return (
-              <div
-                className={`faceid-photo-cell ${dataUrl ? "has-image" : ""}`}
-                key={key}
-                onClick={dataUrl ? () => onRecapture(key) : () => onRecapture(key)}
-              >
-                {dataUrl ? (
-                  <>
-                    <img src={dataUrl} alt={ANGLE_LABELS[key]} />
-                    <div className="faceid-recapture-overlay">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-                        <path d="M16 21h5v-5" />
-                      </svg>
-                    </div>
-                    <div className="label">{ANGLE_LABELS[key]}</div>
-                  </>
-                ) : (
-                  <div className="pending">
-                    <div className="faceid-pending-content">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                      </svg>
-                      <span>Tap to capture</span>
-                    </div>
+            <div className="faceid-apple-review-grid">
+              {PHASE_KEYS.map((key) => {
+                const dataUrl = images[key];
+                return (
+                  <div
+                    className="faceid-apple-photo-cell"
+                    key={key}
+                    onClick={() => handleRecapture(key)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleRecapture(key);
+                    }}
+                  >
+                    {dataUrl ? (
+                      <>
+                        <img src={dataUrl} alt={ANGLE_LABELS[key]} />
+                        <div className="faceid-apple-cell-badge">
+                          <IconCheck size={12} stroke={3} />
+                        </div>
+                        <div className="faceid-apple-cell-label">{ANGLE_LABELS[key]}</div>
+                      </>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, color: "#6b7280" }}>
+                        <IconRefresh size={18} />
+                        <span style={{ fontSize: "0.65rem" }}>Recapture</span>
+                      </div>
+                    )}
                   </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {step === "done" && (
+          <>
+            <div className="faceid-apple-success-glyph">
+              <IconCheck size={48} stroke={3} />
+            </div>
+
+            <h1 className="faceid-apple-title">Face ID is Now Set Up</h1>
+            <p className="faceid-apple-desc">
+              Your biometric profile is active. You can now use Face ID for contactless check-in across campus kiosks.
+            </p>
+          </>
+        )}
+      </main>
+
+      {/* ─── Apple Bottom Safe-Area Fixed Actions ─── */}
+      <footer className="faceid-apple-bottom-bar">
+        <div className="faceid-apple-actions-inner">
+          {step === "intro" && (
+            <>
+              <button type="button" className="faceid-apple-btn-primary" onClick={handleStart}>
+                Get Started
+              </button>
+              <button
+                type="button"
+                className="faceid-apple-btn-secondary"
+                onClick={() => navigate("/student/profile")}
+              >
+                Set Up Later
+              </button>
+            </>
+          )}
+
+          {step === "review" && (
+            <>
+              <button
+                type="button"
+                className="faceid-apple-btn-primary"
+                onClick={handleComplete}
+                disabled={Object.keys(images).length < PHASE_KEYS.length || submitting}
+              >
+                {submitting ? (
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    <Loader size="sm" color="white" />
+                    Saving Profile…
+                  </span>
+                ) : (
+                  "Save & Activate Face ID"
                 )}
-              </div>
-            );
-          })}
-        </div>
+              </button>
+              <button
+                type="button"
+                className="faceid-apple-btn-secondary"
+                onClick={handleReset}
+                disabled={submitting}
+              >
+                Start Over
+              </button>
+            </>
+          )}
 
-        <div style={{ width: "100%", marginTop: 8 }}>
-          <button
-            className="faceid-primary-btn"
-            onClick={onComplete}
-            disabled={!allCaptured || submitting}
-          >
-            {submitting ? (
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <Loader size="sm" color="dark" />
-                Uploading…
-              </span>
-            ) : (
-              "Complete Enrollment"
-            )}
-          </button>
-          <button className="faceid-secondary-btn faceid-danger-btn" onClick={onReset} disabled={submitting}>
-            Start Over
-          </button>
+          {step === "done" && (
+            <button
+              type="button"
+              className="faceid-apple-btn-primary"
+              onClick={() => navigate("/student/dashboard")}
+            >
+              Done
+            </button>
+          )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function DoneStep({ onDashboard }: { onDashboard: () => void }) {
-  const navigate = useNavigate();
-
-  return (
-    <div className="faceid-page">
-      <div className="faceid-page-nav">
-        <button className="faceid-back" onClick={() => navigate("/student/dashboard")} aria-label="Back" type="button">
-          <svg width="14" height="20" viewBox="0 0 14 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M11 2L3 10L11 18" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-      </div>
-
-      <div className="faceid-content">
-        <div className="faceid-done-big">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <path d="M25 52 L43 70 L75 35" />
-          </svg>
-        </div>
-        <h1 className="faceid-title">Enrollment Complete</h1>
-        <p className="faceid-subtitle">
-          Your face has been registered. You can now use face recognition for
-          attendance check-in at events.
-        </p>
-        <div style={{ width: "100%" }}>
-          <button className="faceid-primary-btn" onClick={onDashboard}>
-            Go to Dashboard
-          </button>
-        </div>
-      </div>
+      </footer>
     </div>
   );
 }

@@ -3,21 +3,18 @@ import { useNavigate } from "react-router-dom";
 import {
   Container,
   Text,
-  Group,
   Badge,
-  Button,
   Alert,
   SimpleGrid,
-  Paper,
   Box,
-  Center,
-  SegmentedControl,
-  Select,
+  Skeleton,
 } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
 import {
   IconCalendarEvent,
   IconMapPin,
+  IconClock,
+  IconArrowRight,
+  IconAlertCircle,
 } from "@tabler/icons-react";
 import { getAllEvents } from "../api/events";
 import type { UpcomingEvent } from "../types/event";
@@ -25,7 +22,16 @@ import PageHeader from "../components/layout/PageHeader";
 import EmptyState from "../components/EmptyState";
 import { useAsync } from "../hooks";
 import { EVENT_TYPE_COLORS } from "../utils/constants";
-import { formatDate } from "../utils/formatters";
+import "./UpcomingEventsPage.css";
+
+const EVENT_GRADIENTS: Record<string, string> = {
+  intramurals: "linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)",
+  seminar: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)",
+  workshop: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
+  conference: "linear-gradient(135deg, #581c87 0%, #9333ea 100%)",
+  campus_activity: "linear-gradient(135deg, #065f46 0%, #059669 100%)",
+  assembly: "linear-gradient(135deg, #7c2d12 0%, #ea580c 100%)",
+};
 
 const formatEventType = (type: string) => type.replace(/_/g, " ");
 
@@ -33,8 +39,6 @@ type EventFilter = "all" | "active" | "upcoming" | "past";
 
 export default function UpcomingEventsPage() {
   const navigate = useNavigate();
-  const isMobile = useMediaQuery("(max-width: 48em)");
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<EventFilter>("all");
 
@@ -81,164 +85,172 @@ export default function UpcomingEventsPage() {
   );
 
   return (
-    <Container size="lg" pt={0} pb="4xl">
-      <PageHeader title="Events" />
+    <Container size="lg" pt={0} pb="4xl" px={{ base: "xs", sm: "md" }}>
+      <PageHeader title="Events Directory" />
 
       {error && (
-        <Alert color="red" mb="md" withCloseButton onClose={() => setError(null)}>
+        <Alert icon={<IconAlertCircle size={16} />} color="red" mb="md" withCloseButton onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
+      {/* ─── Frictionless Horizontal Filter Track ─── */}
       {list.length > 0 && (
-        <>
-          {isMobile ? (
-            <Select
-              size="sm"
-              mb="lg"
-              data={[
-                { value: "all", label: `All events (${counts.all})` },
-                { value: "active", label: `Active now (${counts.active})` },
-                { value: "upcoming", label: `Upcoming (${counts.upcoming})` },
-                { value: "past", label: `Past (${counts.past})` },
-              ]}
-              value={filter}
-              onChange={(v) => setFilter((v ?? "all") as EventFilter)}
-            />
-          ) : (
-            <SegmentedControl
-              size="sm"
-              mb="lg"
-              data={[
-                { label: `All (${counts.all})`, value: "all" },
-                { label: `Active (${counts.active})`, value: "active" },
-                { label: `Upcoming (${counts.upcoming})`, value: "upcoming" },
-                { label: `Past (${counts.past})`, value: "past" },
-              ]}
-              value={filter}
-              onChange={(v) => setFilter(v as EventFilter)}
-            />
-          )}
-        </>
+        <div className="events-filter-track">
+          <button
+            type="button"
+            className={`events-filter-chip ${filter === "all" ? "is-active" : ""}`}
+            onClick={() => setFilter("all")}
+          >
+            All Events ({counts.all})
+          </button>
+          <button
+            type="button"
+            className={`events-filter-chip ${filter === "active" ? "is-active" : ""}`}
+            onClick={() => setFilter("active")}
+          >
+            🔴 Active Now ({counts.active})
+          </button>
+          <button
+            type="button"
+            className={`events-filter-chip ${filter === "upcoming" ? "is-active" : ""}`}
+            onClick={() => setFilter("upcoming")}
+          >
+            Upcoming ({counts.upcoming})
+          </button>
+          <button
+            type="button"
+            className={`events-filter-chip ${filter === "past" ? "is-active" : ""}`}
+            onClick={() => setFilter("past")}
+          >
+            Past Sessions ({counts.past})
+          </button>
+        </div>
       )}
 
-      {filtered.length === 0 && !loading ? (
+      {loading && (
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+          <Skeleton height={260} radius="md" />
+          <Skeleton height={260} radius="md" />
+          <Skeleton height={260} radius="md" />
+        </SimpleGrid>
+      )}
+
+      {!loading && filtered.length === 0 ? (
         <EmptyState
-          title={filter === "all" ? "No events" : `No ${filter} events`}
-          description="Check back later."
-          icon={<IconCalendarEvent size={24} />}
+          title={filter === "all" ? "No campus events" : `No ${filter} events found`}
+          description="Check back later or browse other categories."
+          icon={<IconCalendarEvent size={28} />}
         />
       ) : (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
           {filtered.map((ev) => {
-            const accentColor = EVENT_TYPE_COLORS[ev.event_type] || "gray";
+            const accentColor = EVENT_TYPE_COLORS[ev.event_type] || "blue";
+            const bannerBg = ev.photo_url
+              ? `url(${ev.photo_url}) center / cover no-repeat`
+              : (EVENT_GRADIENTS[ev.event_type] ?? "linear-gradient(135deg, var(--surface-2) 0%, var(--surface-3) 100%)");
+
+            // Parse date for Apple Calendar Badge
+            const eventDate = new Date(ev.date);
+            const monthStr = isNaN(eventDate.getTime())
+              ? "EVT"
+              : eventDate.toLocaleString("default", { month: "short" });
+            const dayNum = isNaN(eventDate.getTime())
+              ? "01"
+              : String(eventDate.getDate()).padStart(2, "0");
 
             return (
-              <Paper
+              <div
                 key={ev.id}
-                p={0}
-                radius="md"
-                  onClick={() => navigate(`/student/events/${ev.id}`)}
-                onMouseEnter={() => setHoveredCard(ev.id)}
-                onMouseLeave={() => setHoveredCard(null)}
-                style={{
-                  overflow: "hidden",
-                  cursor: "pointer",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  transform:
-                    hoveredCard === ev.id
-                      ? "translateY(-4px) scale(1.01)"
-                      : undefined,
-                  boxShadow:
-                    hoveredCard === ev.id
-                      ? "0px 8px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.4)"
-                      : undefined,
+                className="event-grid-card"
+                onClick={() => navigate(`/student/events/${ev.id}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    navigate(`/student/events/${ev.id}`);
+                  }
                 }}
               >
-                <Box
-                  style={{
-                    position: "relative",
-                    aspectRatio: "16 / 9",
-                    background: ev.photo_url
-                      ? `url(${ev.photo_url}) center / cover no-repeat`
-                      : `linear-gradient(135deg, var(--mantine-color-${accentColor}-9) 0%, var(--mantine-color-${accentColor}-7) 100%)`,
-                  }}
+                {/* Header Banner with Apple Calendar Badge & Status Pills */}
+                <div
+                  className="event-card-header"
+                  style={{ "--card-banner-bg": bannerBg } as React.CSSProperties}
                 >
-                  {!ev.photo_url && (
-                    <Center style={{ position: "absolute", inset: 0 }}>
-                      <IconCalendarEvent
-                        size={48}
-                        style={{ opacity: 0.25, color: "#fff" }}
-                      />
-                    </Center>
-                  )}
-                  <Badge
-                    color={accentColor}
-                    variant="filled"
-                    style={{ position: "absolute", top: 12, left: 12 }}
-                  >
-                    {formatEventType(ev.event_type)}
-                  </Badge>
-                  {ev.active_sessions_count > 0 && (
+                  <div className="event-calendar-badge">
+                    <span className="event-cal-month">{monthStr}</span>
+                    <span className="event-cal-day">{dayNum}</span>
+                  </div>
+
+                  <Box style={{ display: "flex", gap: 6, alignItems: "center" }}>
                     <Badge
-                      color="green"
+                      color={accentColor}
                       variant="filled"
-                      style={{ position: "absolute", top: 12, right: 12 }}
-                      leftSection={<span className="pulse-dot" />}
+                      size="xs"
+                      styles={{
+                        root: {
+                          backdropFilter: "blur(8px)",
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                        },
+                      }}
                     >
-                      {ev.active_sessions_count} active
+                      {formatEventType(ev.event_type)}
                     </Badge>
-                  )}
-                </Box>
 
-                <Box p="md">
-                  <Text fw={600} size="sm" truncate="end" mb={4}>
-                    {ev.name}
-                  </Text>
+                    {ev.active_sessions_count > 0 && (
+                      <Badge
+                        color="red"
+                        variant="filled"
+                        size="xs"
+                        leftSection={<span className="live-indicator-dot" style={{ width: 6, height: 6 }} />}
+                        styles={{ root: { fontWeight: 700 } }}
+                      >
+                        LIVE
+                      </Badge>
+                    )}
+                  </Box>
+                </div>
 
-                  {ev.description && (
-                    <Text size="xs" c="dimmed" lineClamp={2} mb={6}>
-                      {ev.description}
+                {/* Card Content & Metadata Cluster */}
+                <div className="event-card-body">
+                  <div>
+                    <Text className="event-card-title" lineClamp={2}>
+                      {ev.name}
                     </Text>
-                  )}
 
-                  <Group gap="xs" mt={4}>
-                    <IconMapPin size={14} style={{ opacity: 0.5 }} />
-                    <Text size="xs" c="dimmed">
-                      {ev.venue || "No venue"}
-                    </Text>
-                  </Group>
+                    {ev.description && (
+                      <Text className="event-card-desc" lineClamp={2}>
+                        {ev.description}
+                      </Text>
+                    )}
+                  </div>
 
-                  <Group gap="xs" mt={2}>
-                    <IconCalendarEvent size={14} style={{ opacity: 0.5 }} />
-                    <Text size="xs" c="dimmed">
-                      {formatDate(ev.date)}
-                    </Text>
-                  </Group>
+                  {/* Metadata Cluster */}
+                  <div className="event-meta-cluster">
+                    <div className="event-meta-row">
+                      <IconMapPin size={14} />
+                      <Text fz="0.75rem" c="var(--text-secondary)" lineClamp={1}>
+                        {ev.venue || "Campus Venue TBD"}
+                      </Text>
+                    </div>
 
-                  <Text size="xs" c="dimmed" mt={2}>
-                    {ev.sessions_count} session
-                    {ev.sessions_count !== 1 ? "s" : ""}
-                  </Text>
+                    <div className="event-meta-row">
+                      <IconClock size={14} />
+                      <Text fz="0.75rem" c="var(--text-secondary)">
+                        {ev.sessions_count} Session{ev.sessions_count !== 1 ? "s" : ""} Required
+                      </Text>
+                    </div>
+                  </div>
 
-                  <Button
-                    variant={ev.active_sessions_count > 0 ? "filled" : "subtle"}
-                    color={ev.active_sessions_count > 0 ? "green" : undefined}
-                    size="xs"
-                    fullWidth
-                    mt="md"
-                    leftSection={ev.active_sessions_count > 0 ? <span className="pulse-dot" /> : undefined}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/student/events/${ev.id}`);
-                    }}
-                    >
-                      {ev.active_sessions_count > 0
-                        ? "View Active Sessions"
-                        : "View Sessions"}
-                    </Button>
-                </Box>
-              </Paper>
+                  {/* Card Footer Action */}
+                  <div className="event-card-footer">
+                    <span>View Schedule & Clearance</span>
+                    <IconArrowRight size={14} className="event-card-footer-arrow" />
+                  </div>
+                </div>
+              </div>
             );
           })}
         </SimpleGrid>

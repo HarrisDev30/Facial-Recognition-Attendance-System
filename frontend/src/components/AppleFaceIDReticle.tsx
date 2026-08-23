@@ -1,25 +1,27 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 
 interface Props {
   size?: number;
-  yaw: number; // -90 to +90 (head turn left/right)
-  pitch: number; // -90 to +90 (head tilt up/down)
+  yaw: number; // -60 to +60 (head turn left/right)
+  pitch: number; // -50 to +50 (head tilt up/down)
   completedPhases: string[]; // e.g. ["frontal", "left"]
   currentPhase?: string;
   isGoodPose: boolean;
+  hasFace?: boolean;
 }
 
 const TOTAL_TICKS = 48;
 const RADIUS = 145; // inner radius for circle in 360x360 SVG viewBox
 
-// Map phases to angular sectors (in degrees 0-360)
-const PHASE_SECTORS: Record<string, { start: number; end: number }> = {
-  tilt_up: { start: 225, end: 315 },    // Top (270 deg)
-  right: { start: 315, end: 45 },       // Right (0/360 deg)
-  tilt_down: { start: 45, end: 135 },    // Bottom (90 deg)
-  left: { start: 135, end: 225 },       // Left (180 deg)
-  frontal: { start: 0, end: 360 },      // Full ring base
-  random: { start: 0, end: 360 },       // Full ring base
+// Exact 8-tick symmetric clock partitioning (48 ticks total, 6 phases x 8 ticks)
+// 0 deg = 3 o'clock (Right), 90 deg = 6 o'clock (Bottom), 180 deg = 9 o'clock (Left), 270 deg = 12 o'clock (Top)
+const PHASE_TICK_RANGES: Record<string, number[]> = {
+  frontal: [33, 34, 35, 36, 37, 38, 39, 32],      // 12 o'clock (Top - Straight Ahead)
+  left: [21, 22, 23, 24, 25, 26, 27, 20],         // 9 o'clock (Left Side)
+  right: [45, 46, 47, 0, 1, 2, 3, 44],            // 3 o'clock (Right Side)
+  tilt_up: [28, 29, 30, 31, 40, 41, 42, 43],      // Top-Left and Top-Right shoulders
+  tilt_down: [9, 10, 11, 12, 13, 14, 15, 8],       // 6 o'clock (Bottom Chin)
+  random: [4, 5, 6, 7, 16, 17, 18, 19],           // Bottom-Left and Bottom-Right flanks
 };
 
 export const AppleFaceIDReticle: React.FC<Props> = ({
@@ -27,53 +29,88 @@ export const AppleFaceIDReticle: React.FC<Props> = ({
   yaw,
   pitch,
   completedPhases,
+  currentPhase,
   isGoodPose,
+  hasFace = false,
 }) => {
+  const [wavePhase, setWavePhase] = useState(0);
+
+  // Smooth idle wave when no face is in frame
+  useEffect(() => {
+    if (hasFace) return;
+    let animId: number;
+    function loop() {
+      setWavePhase((prev) => (prev + 0.035) % (Math.PI * 2));
+      animId = requestAnimationFrame(loop);
+    }
+    animId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animId);
+  }, [hasFace]);
+
   // Compute user head direction angle in degrees [0, 360)
-  const currentAngle = useMemo(() => {
-    if (Math.abs(yaw) < 5 && Math.abs(pitch) < 5) return null;
-    // Yaw: positive = left (180 deg), negative = right (0 deg)
-    // Pitch: positive = up (270 deg), negative = down (90 deg)
+  const faceAngle = useMemo(() => {
+    if (!hasFace) return null;
+    const mag = Math.hypot(yaw, pitch);
+    if (mag < 1.5) return null; // Dead center looking straight
     let deg = (Math.atan2(-pitch, -yaw) * 180) / Math.PI;
     if (deg < 0) deg += 360;
     return deg;
-  }, [yaw, pitch]);
+  }, [hasFace, yaw, pitch]);
+
+  const activeTargetTicks = currentPhase ? (PHASE_TICK_RANGES[currentPhase] || []) : [];
 
   const ticks = useMemo(() => {
+    const headMagnitude = Math.min(1.5, Math.hypot(yaw, pitch) / 16);
+
+    // Collect all tick indices that are completed
+    const completedTickSet = new Set<number>();
+    for (const p of completedPhases) {
+      const range = PHASE_TICK_RANGES[p];
+      if (range) {
+        range.forEach((idx) => completedTickSet.add(idx));
+      }
+    }
+
     return Array.from({ length: TOTAL_TICKS }).map((_, i) => {
       const angleDeg = (i * 360) / TOTAL_TICKS;
       const angleRad = (angleDeg * Math.PI) / 180;
 
-      // Check if this tick belongs to a completed phase
-      let isCompleted = false;
-      for (const p of completedPhases) {
-        const sector = PHASE_SECTORS[p];
-        if (sector) {
-          if (sector.start === 0 && sector.end === 360) {
-            isCompleted = true;
-          } else if (sector.start > sector.end) {
-            if (angleDeg >= sector.start || angleDeg <= sector.end) isCompleted = true;
-          } else {
-            if (angleDeg >= sector.start && angleDeg <= sector.end) isCompleted = true;
-          }
-        }
-      }
+      // 1. Is this specific tick completed?
+      const isCompleted = completedTickSet.has(i);
 
-      // Check proximity to current head angle
+      // 2. Is this tick in the active target guidance sector?
+      const isTargetSector = !isCompleted && activeTargetTicks.includes(i);
+
+      // 3. Dynamic proximity to user's live gaze direction (only on uncompleted ticks)
       let proximity = 0;
-      if (currentAngle !== null) {
-        let diff = Math.abs(angleDeg - currentAngle);
+      if (!isCompleted && hasFace && faceAngle !== null) {
+        let diff = Math.abs(angleDeg - faceAngle);
         if (diff > 180) diff = 360 - diff;
-        if (diff < 45) {
-          proximity = 1 - diff / 45; // 0.0 to 1.0
+        if (diff < 55) {
+          proximity = (1 - diff / 55) * headMagnitude;
         }
       }
 
-      // Dynamic length and color
+      // 4. Idle wave (only when no face is detected)
+      let idleWave = 0;
+      if (!isCompleted && !hasFace) {
+        idleWave = Math.sin((i / TOTAL_TICKS) * Math.PI * 2 - wavePhase) * 0.5 + 0.5;
+      }
+
+      // Calculate Length & Thickness
       const baseLength = 10;
-      const extraLength = isCompleted ? 14 : proximity * 16;
+      const extraLength = isCompleted
+        ? 15
+        : hasFace
+        ? proximity * 22 + (isTargetSector ? 4 : 0)
+        : idleWave * 6;
       const length = baseLength + extraLength;
-      const strokeWidth = isCompleted ? 3.5 : 2 + proximity * 2;
+
+      const strokeWidth = isCompleted
+        ? 3.6
+        : hasFace
+        ? (proximity > 0.3 ? 3.2 : isTargetSector ? 2.4 : 1.8)
+        : (1.5 + idleWave * 1.2);
 
       // Coordinates
       const x1 = 180 + RADIUS * Math.cos(angleRad);
@@ -81,16 +118,20 @@ export const AppleFaceIDReticle: React.FC<Props> = ({
       const x2 = 180 + (RADIUS + length) * Math.cos(angleRad);
       const y2 = 180 + (RADIUS + length) * Math.sin(angleRad);
 
-      let stroke = "rgba(148, 163, 184, 0.25)"; // idle slate
+      let stroke = "rgba(255, 255, 255, 0.2)"; // idle translucent white
       if (isCompleted) {
-        stroke = "#10b981"; // completed emerald
-      } else if (proximity > 0.1) {
-        stroke = isGoodPose ? "#06b6d4" : "#3b82f6"; // electric cyan/blue on active rotation
+        stroke = "#34c759"; // completed Apple green
+      } else if (hasFace && proximity > 0.25) {
+        stroke = isGoodPose ? "#34c759" : "var(--brand-primary, #0071e3)";
+      } else if (isTargetSector) {
+        stroke = "rgba(255, 255, 255, 0.55)"; // target sector hint
+      } else if (!hasFace) {
+        stroke = `rgba(255, 255, 255, ${0.15 + idleWave * 0.25})`;
       }
 
       return { i, x1, y1, x2, y2, stroke, strokeWidth, isCompleted, proximity };
     });
-  }, [completedPhases, currentAngle, isGoodPose]);
+  }, [completedPhases, activeTargetTicks, faceAngle, hasFace, isGoodPose, wavePhase, yaw, pitch]);
 
   return (
     <svg
@@ -108,24 +149,34 @@ export const AppleFaceIDReticle: React.FC<Props> = ({
       }}
     >
       <defs>
-        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="2" result="blur" />
+        <filter id="reticleGlow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="3.5" result="blur" />
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
       </defs>
 
-      {/* Inner guide ring */}
+      {/* Outer Guide Ring */}
       <circle
         cx="180"
         cy="180"
-        r={RADIUS - 4}
+        r={RADIUS}
         fill="none"
-        stroke={isGoodPose ? "rgba(16, 185, 129, 0.4)" : "rgba(255, 255, 255, 0.1)"}
+        stroke={isGoodPose ? "rgba(52, 199, 89, 0.5)" : "rgba(255, 255, 255, 0.12)"}
         strokeWidth="1.5"
         strokeDasharray={isGoodPose ? "none" : "4 4"}
       />
 
-      {/* 48 Dynamic Radial Ticks */}
+      {/* Inner Mask Guide Ring */}
+      <circle
+        cx="180"
+        cy="180"
+        r={RADIUS - 8}
+        fill="none"
+        stroke={isGoodPose ? "#34c759" : "rgba(255, 255, 255, 0.2)"}
+        strokeWidth={isGoodPose ? "2" : "1"}
+      />
+
+      {/* 48 Dynamic Apple Radial Ticks */}
       {ticks.map((t) => (
         <line
           key={t.i}
@@ -136,9 +187,9 @@ export const AppleFaceIDReticle: React.FC<Props> = ({
           stroke={t.stroke}
           strokeWidth={t.strokeWidth}
           strokeLinecap="round"
-          filter={t.isCompleted || t.proximity > 0.4 ? "url(#glow)" : undefined}
+          filter={t.isCompleted || t.proximity > 0.4 ? "url(#reticleGlow)" : undefined}
           style={{
-            transition: "all 0.12s ease-out",
+            transition: "stroke 0.08s ease, stroke-width 0.08s ease",
           }}
         />
       ))}

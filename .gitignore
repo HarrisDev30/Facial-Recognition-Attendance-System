@@ -66,3 +66,6 @@ graphify-out/
 # Face recognition model binaries (auto-downloaded on first run)
 backend/models/insightface/models/buffalo_l/
 backend/models/insightface/models/buffalo_l.zip
+
+# Uploads
+backend/uploads/

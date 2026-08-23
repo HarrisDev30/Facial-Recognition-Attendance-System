@@ -1,37 +1,59 @@
-import { useCallback, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useCallback } from "react";
+import { useParams, Link } from "react-router-dom";
 import {
   Container,
-  Paper,
   Text,
   Group,
   Badge,
   Box,
   Progress,
-  Center,
-  SimpleGrid,
-  Stack,
+  Skeleton,
+  Button,
 } from "@mantine/core";
 import {
   IconCalendarEvent,
   IconClock,
   IconMapPin,
   IconCheck,
-  IconCircleOff,
+  IconShieldCheck,
+  IconQrcode,
+  IconUserCheck,
+  IconArrowLeft,
 } from "@tabler/icons-react";
 import { getAllEvents } from "../api/events";
 import { getMyEventAttendance } from "../api/attendees";
 import type { UpcomingEvent } from "../types/event";
-import type { EventSessionAttendance } from "../types/auth";
 import { useAsync } from "../hooks";
 import { EVENT_TYPE_COLORS, EVENT_TYPE_LABELS } from "../utils/constants";
 import { formatDate, formatTime, formatDateTime, formatConfidence } from "../utils/formatters";
 import PageHeader from "../components/layout/PageHeader";
+import "./EventAttendanceDetailPage.css";
 
-const TYPE_LABELS: Record<string, string> = {
-  face_recognition: "Face Recognition",
-  qr_code: "QR Code",
-  marshal_override: "Manual Override",
+const EVENT_GRADIENTS: Record<string, string> = {
+  intramurals: "linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)",
+  seminar: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)",
+  workshop: "linear-gradient(135deg, #0e7490 0%, #06b6d4 100%)",
+  conference: "linear-gradient(135deg, #581c87 0%, #9333ea 100%)",
+  campus_activity: "linear-gradient(135deg, #065f46 0%, #059669 100%)",
+  assembly: "linear-gradient(135deg, #7c2d12 0%, #ea580c 100%)",
+};
+
+const VERIFICATION_ICONS: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  face_recognition: {
+    label: "Face ID Verified",
+    icon: <IconShieldCheck size={14} />,
+    color: "teal",
+  },
+  qr_code: {
+    label: "QR Code Scan",
+    icon: <IconQrcode size={14} />,
+    color: "blue",
+  },
+  marshal_override: {
+    label: "Marshal Verified",
+    icon: <IconUserCheck size={14} />,
+    color: "amber",
+  },
 };
 
 export default function EventAttendanceDetailPage() {
@@ -58,26 +80,31 @@ export default function EventAttendanceDetailPage() {
   const totalSessions = sessions.length;
   const progressPercent =
     totalSessions > 0 ? Math.round((checkedCount / totalSessions) * 100) : 0;
-
-  const grouped = useMemo(() => {
-    const active: EventSessionAttendance[] = [];
-    const upcoming: EventSessionAttendance[] = [];
-    const completed: EventSessionAttendance[] = [];
-    for (const s of sessions) {
-      if (s.status === "active") active.push(s);
-      else if (s.status === "completed") completed.push(s);
-      else upcoming.push(s);
-    }
-    return { active, upcoming, completed };
-  }, [sessions]);
+  const isFullyCleared = totalSessions > 0 && checkedCount >= totalSessions;
+  const hasLiveSession = sessions.some((s) => s.status === "active");
 
   const accentColor = event ? EVENT_TYPE_COLORS[event.event_type] || "blue" : "blue";
   const eventTypeLabel = event
     ? EVENT_TYPE_LABELS[event.event_type] || event.event_type
     : "";
 
+  const bannerBg = event?.photo_url
+    ? `url(${event.photo_url}) center / cover no-repeat`
+    : event
+    ? (EVENT_GRADIENTS[event.event_type] ?? "linear-gradient(135deg, var(--surface-2) 0%, var(--surface-3) 100%)")
+    : "var(--surface-2)";
+
+  // Parse date for Apple Calendar Badge
+  const eventDate = event ? new Date(event.date) : new Date();
+  const monthStr = isNaN(eventDate.getTime())
+    ? "EVT"
+    : eventDate.toLocaleString("default", { month: "short" });
+  const dayNum = isNaN(eventDate.getTime())
+    ? "01"
+    : String(eventDate.getDate()).padStart(2, "0");
+
   return (
-    <Container size="lg" pt={0} pb="4xl">
+    <Container size="lg" pt={0} pb="4xl" px={{ base: "xs", sm: "md" }}>
       <PageHeader
         title={event?.name ?? "Event Details"}
         breadcrumbs={[
@@ -87,221 +114,250 @@ export default function EventAttendanceDetailPage() {
         ]}
       />
 
-      {event && (
+      <Button
+        variant="subtle"
+        size="xs"
+        component={Link}
+        to="/student/events"
+        leftSection={<IconArrowLeft size={14} />}
+        mb="md"
+        styles={{ root: { color: "var(--text-secondary)" } }}
+      >
+        Back to Events Directory
+      </Button>
+
+      {loading && (
+        <Box>
+          <Skeleton height={200} radius="md" mb="md" />
+          <Skeleton height={90} radius="md" mb="md" />
+          <Skeleton height={140} radius="md" />
+        </Box>
+      )}
+
+      {!loading && event && (
         <>
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg" mb="lg">
-            <Paper p={0} radius="md" style={{ overflow: "hidden" }}>
-              <Box
-                style={{
-                  position: "relative",
-                  aspectRatio: "16 / 9",
-                  background: event.photo_url
-                    ? `url(${event.photo_url}) center / cover no-repeat`
-                    : `linear-gradient(135deg, var(--mantine-color-${accentColor}-9) 0%, var(--mantine-color-${accentColor}-7) 100%)`,
-                }}
-              >
-                {!event.photo_url && (
-                  <Center style={{ position: "absolute", inset: 0 }}>
-                    <IconCalendarEvent
-                      size={48}
-                      style={{ opacity: 0.2, color: "#fff" }}
-                    />
-                  </Center>
-                )}
+          {/* ─── Editorial Campus Event Hero ─── */}
+          <div className="event-hero-card">
+            <div
+              className="event-hero-banner"
+              style={{ "--hero-banner-bg": bannerBg } as React.CSSProperties}
+            >
+              <div className="event-calendar-badge">
+                <span className="event-cal-month">{monthStr}</span>
+                <span className="event-cal-day">{dayNum}</span>
+              </div>
+
+              <Group gap="xs">
                 <Badge
                   color={accentColor}
                   variant="filled"
-                  size="md"
-                  style={{ position: "absolute", top: 12, left: 12 }}
+                  size="sm"
+                  styles={{
+                    root: {
+                      backdropFilter: "blur(8px)",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
+                    },
+                  }}
                 >
                   {eventTypeLabel}
                 </Badge>
-                {event.active_sessions_count > 0 && (
+
+                {hasLiveSession && (
                   <Badge
-                    color="green"
+                    color="red"
                     variant="filled"
-                    size="md"
-                    style={{ position: "absolute", top: 12, right: 12 }}
+                    size="sm"
+                    leftSection={<span className="live-indicator-dot" style={{ width: 6, height: 6 }} />}
+                    styles={{ root: { fontWeight: 700 } }}
                   >
-                    {event.active_sessions_count} active
+                    LIVE SCANNER ACTIVE
                   </Badge>
                 )}
-              </Box>
-            </Paper>
-
-            <Stack gap="sm" justify="center">
-              <Group gap="lg" wrap="wrap">
-                {event.venue && (
-                  <Group gap={4}>
-                    <IconMapPin size={16} style={{ opacity: 0.6 }} />
-                    <Text size="sm" c="dimmed">
-                      {event.venue}
-                    </Text>
-                  </Group>
-                )}
-                <Group gap={4}>
-                  <IconCalendarEvent size={16} style={{ opacity: 0.6 }} />
-                  <Text size="sm" c="dimmed">
-                    {formatDate(event.date)}
-                  </Text>
-                </Group>
-                <Group gap={4}>
-                  <IconClock size={16} style={{ opacity: 0.6 }} />
-                  <Text size="sm" c="dimmed">
-                    {event.sessions_count} session{event.sessions_count !== 1 ? "s" : ""}
-                  </Text>
-                </Group>
               </Group>
+            </div>
+
+            <div className="event-hero-content">
+              <Text className="event-hero-title">{event.name}</Text>
+
               {event.description && (
-                <Text size="sm" c="dimmed">
-                  {event.description}
-                </Text>
+                <Text className="event-hero-desc">{event.description}</Text>
               )}
-            </Stack>
-          </SimpleGrid>
 
-          <Paper p="md" radius="md" mb="lg" bg="var(--surface-1)">
-            <Group justify="space-between" mb="xs">
-              <Text size="sm" fw={600}>
-                Attendance Progress
-              </Text>
-              <Text size="sm" fw={600} c="green">
-                {checkedCount}/{totalSessions} ({progressPercent}%)
-              </Text>
-            </Group>
-            <Progress
-              value={progressPercent}
-              size="md"
-              color="green"
-              radius="sm"
-            />
-          </Paper>
+              <div className="event-hero-chips">
+                <div className="event-hero-chip">
+                  <IconCalendarEvent size={15} />
+                  <span>{formatDate(event.date)}</span>
+                </div>
 
-          <Stack gap="xs">
-            {grouped.active.map((s) => (
-              <SessionRow key={s.session_id} session={s} kind="active" />
-            ))}
-            {grouped.upcoming.map((s) => (
-              <SessionRow key={s.session_id} session={s} kind="upcoming" />
-            ))}
-            {grouped.completed.map((s) => (
-              <SessionRow key={s.session_id} session={s} kind="completed" />
-            ))}
-          </Stack>
+                {event.venue && (
+                  <div className="event-hero-chip">
+                    <IconMapPin size={15} />
+                    <span>{event.venue}</span>
+                  </div>
+                )}
+
+                <div className="event-hero-chip">
+                  <IconClock size={15} />
+                  <span>
+                    {event.sessions_count} Session{event.sessions_count !== 1 ? "s" : ""}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ─── Clearance Progress Telemetry Card ─── */}
+          <div
+            className={`clearance-status-card ${
+              isFullyCleared ? "is-cleared" : hasLiveSession ? "is-live" : ""
+            }`}
+          >
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <Group gap="xs" align="center" mb={4}>
+                <Text fz="0.95rem" fw={700} c="var(--text-primary)">
+                  {isFullyCleared
+                    ? "✓ Attendance Requirement Fulfilled"
+                    : hasLiveSession
+                    ? "🔴 Check-In In Progress"
+                    : "Clearance Requirement Status"}
+                </Text>
+                <Badge
+                  size="xs"
+                  variant="light"
+                  color={isFullyCleared ? "teal" : hasLiveSession ? "red" : "blue"}
+                  styles={{ root: { fontWeight: 700, fontVariantNumeric: "tabular-nums" } }}
+                >
+                  {checkedCount} / {totalSessions} Sessions ({progressPercent}%)
+                </Badge>
+              </Group>
+
+              <Text fz="0.775rem" c="var(--text-secondary)">
+                {isFullyCleared
+                  ? "You have completed all mandatory check-in sessions for this event."
+                  : hasLiveSession
+                  ? "A scanner session is currently open. Walk to the campus kiosk or scan your pass."
+                  : `Attend all ${totalSessions} sessions to earn full clearance credit.`}
+              </Text>
+            </div>
+
+            <Box style={{ width: 140, flexShrink: 0 }}>
+              <Progress
+                value={progressPercent}
+                size="md"
+                color={isFullyCleared ? "teal" : hasLiveSession ? "red" : "blue"}
+                radius="xl"
+              />
+            </Box>
+          </div>
+
+          {/* ─── Connected Timeline Session Stream ─── */}
+          <div>
+            <div className="timeline-section-title">Event Schedule & Check-In Receipts</div>
+
+            {sessions.length === 0 ? (
+              <Box py="xl" ta="center">
+                <Text fz="0.85rem" c="var(--text-secondary)">
+                  No sessions have been scheduled for this event yet.
+                </Text>
+              </Box>
+            ) : (
+              <div className="timeline-stream">
+                {sessions.map((session) => {
+                  const isAttended = Boolean(session.verified_at);
+                  const isActive = session.status === "active";
+                  const meta = session.verification_method
+                    ? (VERIFICATION_ICONS[session.verification_method] ?? {
+                        label: "Verified",
+                        icon: <IconCheck size={14} />,
+                        color: "teal",
+                      })
+                    : null;
+
+                  return (
+                    <div
+                      key={session.session_id}
+                      className={`timeline-node-card ${isActive ? "is-active" : ""} ${
+                        isAttended ? "is-attended" : ""
+                      }`}
+                    >
+                      <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
+                        <div>
+                          <Text className="timeline-session-title">
+                            {session.session_name}
+                          </Text>
+
+                          <div className="timeline-session-meta">
+                            <Group gap={4} align="center">
+                              <IconClock size={13} />
+                              <span>
+                                {formatTime(session.start_time)} – {formatTime(session.end_time)}
+                              </span>
+                            </Group>
+
+                            {session.venue && (
+                              <Group gap={4} align="center">
+                                <IconMapPin size={13} />
+                                <span>{session.venue}</span>
+                              </Group>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        {isAttended ? (
+                          <Badge size="xs" color="teal" variant="light" styles={{ root: { fontWeight: 600, flexShrink: 0 } }}>
+                            ✓ Attended
+                          </Badge>
+                        ) : isActive ? (
+                          <Badge size="xs" color="red" variant="filled" styles={{ root: { fontWeight: 700, flexShrink: 0 } }}>
+                            Live Now
+                          </Badge>
+                        ) : (
+                          <Badge size="xs" color="gray" variant="light" styles={{ root: { fontWeight: 500, flexShrink: 0 } }}>
+                            Upcoming
+                          </Badge>
+                        )}
+                      </Group>
+
+                      {/* Verified Check-In Receipt */}
+                      {isAttended && session.verified_at && (
+                        <div className="timeline-receipt-box">
+                          <Group gap={6} align="center">
+                            {meta?.icon}
+                            <Text fz="0.75rem" fw={600} c="var(--text-primary)">
+                              {meta?.label ?? "Verified Check-In"}
+                            </Text>
+                            {session.confidence_score != null && (
+                              <Badge size="xs" variant="outline" color="teal">
+                                {formatConfidence(session.confidence_score)} Match
+                              </Badge>
+                            )}
+                          </Group>
+
+                          <Text fz="0.725rem" c="var(--text-secondary)">
+                            Recorded: {formatDateTime(session.verified_at)}
+                          </Text>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </>
       )}
 
-      {loading && !event && (
-        <Text size="sm" c="dimmed" ta="center" py="xl">
-          Loading event details...
-        </Text>
-      )}
-
       {!loading && !event && (
-        <Paper p="xl" radius="md" ta="center">
-          <IconCalendarEvent size={48} style={{ opacity: 0.3 }} />
-          <Text mt="md" c="dimmed">
-            Event not found.
+        <Box py="xl" ta="center">
+          <IconCalendarEvent size={48} style={{ color: "var(--text-secondary)", opacity: 0.4 }} />
+          <Text mt="md" c="var(--text-secondary)">
+            Event not found or has been moved.
           </Text>
-        </Paper>
+        </Box>
       )}
     </Container>
-  );
-}
-
-function SessionRow({
-  session,
-  kind,
-}: {
-  session: EventSessionAttendance;
-  kind: "active" | "upcoming" | "completed";
-}) {
-  const accent =
-    kind === "active"
-      ? "var(--mantine-color-green-5)"
-      : kind === "completed"
-        ? "var(--mantine-color-gray-6)"
-        : "var(--border-subtle)";
-
-  return (
-    <Paper
-      p="md"
-      radius="md"
-      bg={kind === "active" ? "rgba(34, 197, 94, 0.06)" : "var(--surface-1)"}
-      style={{
-        borderLeft: `3px solid ${accent}`,
-        opacity: kind === "completed" && !session.verified_at ? 0.55 : 1,
-      }}
-    >
-      <Group justify="space-between" wrap="wrap">
-        <div>
-          <Group gap="xs" mb={4}>
-            <Text fw={600} size="sm">
-              {session.session_name}
-            </Text>
-            {kind === "active" && (
-              <Badge size="xs" color="green" variant="filled">
-                Active
-              </Badge>
-            )}
-            {kind === "upcoming" && (
-              <Badge size="xs" color="gray" variant="light">
-                Upcoming
-              </Badge>
-            )}
-            {kind === "completed" && (
-              <Badge
-                size="xs"
-                color={session.verified_at ? "teal" : "gray"}
-                variant={session.verified_at ? "filled" : "light"}
-              >
-                {session.verified_at ? "Attended" : "Missed"}
-              </Badge>
-            )}
-          </Group>
-          <Group gap="sm">
-            <Group gap={4}>
-              <IconClock size={14} style={{ opacity: 0.5 }} />
-              <Text size="xs" c="dimmed">
-                {formatTime(session.start_time)} – {formatTime(session.end_time)}
-              </Text>
-            </Group>
-            {session.venue && (
-              <Group gap={4}>
-                <IconMapPin size={14} style={{ opacity: 0.5 }} />
-                <Text size="xs" c="dimmed">
-                  {session.venue}
-                </Text>
-              </Group>
-            )}
-          </Group>
-        </div>
-
-        {session.verified_at && (
-          <Group gap="xs">
-            <IconCheck size={16} style={{ color: "var(--mantine-color-teal-4)" }} />
-            <div style={{ textAlign: "right" }}>
-              <Text size="xs" c="teal" fw={500}>
-                {formatDateTime(session.verified_at)}
-              </Text>
-              <Text size="xs" c="dimmed">
-                {TYPE_LABELS[session.verification_method ?? ""] ?? session.verification_method}
-                {session.confidence_score != null &&
-                  ` · ${formatConfidence(session.confidence_score)}`}
-              </Text>
-            </div>
-          </Group>
-        )}
-
-        {kind === "completed" && !session.verified_at && (
-          <Group gap={4}>
-            <IconCircleOff size={16} style={{ opacity: 0.4 }} />
-            <Text size="xs" c="dimmed">
-              Not attended
-            </Text>
-          </Group>
-        )}
-      </Group>
-    </Paper>
   );
 }

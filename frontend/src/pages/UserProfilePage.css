@@ -1,0 +1,297 @@
+/* ==========================================================================
+   User Profile & Settings Styles — Emil Kowalski / Linear / Apple Design
+   Responsive Identity Header, Momentum Scroll TabList, & Inset Row Architecture
+   ========================================================================== */
+
+/* ─── Entrance Fade Up ─── */
+@keyframes settingsFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settings-fade-in {
+  animation: settingsFadeIn 200ms var(--ease-out) forwards;
+}
+
+/* ─── Profile Summary Card (Desktop & Mobile Calibrated) ─── */
+.profile-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  margin-bottom: 24px;
+}
+
+.profile-identity-cluster {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* 72px Mathematically Aligned Avatar Container */
+.profile-avatar-box {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  padding: 2px;
+  background: var(--surface-1);
+  border: 2px solid var(--brand-primary);
+  box-shadow: 0 0 16px -2px var(--brand-glow);
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .profile-avatar-box:hover {
+    transform: scale(1.04);
+    box-shadow: 0 0 24px var(--brand-glow);
+  }
+}
+
+.profile-avatar-box:active {
+  transform: scale(0.96) !important;
+}
+
+.profile-avatar-hover-icon {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  color: #ffffff;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.profile-avatar-box:hover .profile-avatar-hover-icon {
+  opacity: 1;
+}
+
+.profile-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-meta-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-header-cta {
+  flex-shrink: 0;
+}
+
+/* ─── Mobile Profile Summary Card Collapse ─── */
+@media (max-width: 640px) {
+  .profile-summary-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .profile-identity-cluster {
+    align-items: center;
+    gap: 14px;
+  }
+
+  .profile-avatar-box {
+    width: 64px;
+    height: 64px;
+  }
+
+  .profile-header-cta {
+    width: 100%;
+  }
+
+  .profile-header-cta button {
+    width: 100%;
+  }
+}
+
+/* ─── Horizontal Momentum Scroll Segmented TabList ─── */
+.settings-tab-list {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  gap: 6px;
+  padding: 5px;
+  border-radius: 12px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+}
+
+.settings-tab-list::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.settings-tab-list button {
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 36px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 6px 14px;
+  transition: background-color var(--duration-fast) ease,
+              color var(--duration-fast) ease,
+              transform var(--duration-fast) var(--ease-out);
+}
+
+.settings-tab-list button:active {
+  transform: scale(0.97) !important;
+}
+
+@media (max-width: 640px) {
+  .settings-tab-list {
+    margin-left: -4px;
+    margin-right: -4px;
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .settings-tab-list button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* ─── Settings Grouped Card System ─── */
+.settings-group-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 24px;
+  transition: border-color var(--duration-fast) ease;
+}
+
+.settings-group-card.accent-border {
+  border-color: var(--brand-border);
+  box-shadow: 0 0 20px -4px var(--brand-glow), var(--shadow-card);
+}
+
+.settings-group-header {
+  padding: 16px 20px;
+  background: var(--surface-0);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ─── Apple / Linear Inset Settings Row ─── */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  gap: 16px;
+  background: transparent;
+  transition: background-color var(--duration-fast) ease;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .settings-row:hover {
+    background: var(--surface-2);
+  }
+}
+
+.settings-row-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.settings-row-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings-row-description {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.settings-row-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Mobile Settings Row Adaptations ─── */
+@media (max-width: 640px) {
+  .settings-group-card {
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  .settings-group-header {
+    padding: 14px 16px;
+  }
+
+  .settings-row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px;
+    gap: 10px;
+  }
+
+  .settings-row-action {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .settings-row-action button {
+    width: 100%;
+  }
+}

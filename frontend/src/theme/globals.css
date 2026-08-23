@@ -1,13 +1,67 @@
-:root {
+:root,
+[data-mantine-color-scheme="dark"] {
+  /* Dark Mode Surface Tokens */
   --surface-0: #050505;
   --surface-1: #111111;
   --surface-2: #171717;
   --surface-3: #1a1a1a;
-  --text-primary: #ededed;
-  --text-secondary: #888888;
-  --text-muted: #666666;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
   --border-subtle: #2a2a2a;
   --border-strong: #3a3a3a;
+  --selection-bg: #ededed;
+  --selection-fg: #0a0a0a;
+
+  /* Sidebar Tokens (Dark) */
+  --sidebar-bg: #050505;
+  --sidebar-text: #ededed;
+  --sidebar-text-muted: rgba(237, 237, 237, 0.45);
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-active: var(--brand-surface);
+
+  /* Card and Modal Shadows */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+[data-mantine-color-scheme="light"] {
+  /* Light Mode Surface Tokens (Authoritative, Stark Slate & Off-White) */
+  --surface-0: #f8fafc;
+  --surface-1: #ffffff;
+  --surface-2: #f1f5f9;
+  --surface-3: #e2e8f0;
+  --text-primary: #09090b;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --selection-bg: #0f172a;
+  --selection-fg: #ffffff;
+
+  /* Sidebar Tokens (Light) */
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #0f172a;
+  --sidebar-text-muted: #64748b;
+  --sidebar-hover: rgba(0, 0, 0, 0.04);
+  --sidebar-active: var(--brand-surface);
+
+  /* Card and Modal Shadows */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+:root {
+  /* Dynamic Institution Brand Tokens (Defaults to Vercel/Linear Blue) */
+  --brand-primary: #0070f3;
+  --brand-primary-rgb: 0, 112, 243;
+  --brand-surface: rgba(0, 112, 243, 0.08);
+  --brand-surface-subtle: rgba(0, 112, 243, 0.04);
+  --brand-glow: rgba(0, 112, 243, 0.22);
+  --brand-border: rgba(0, 112, 243, 0.32);
+  --brand-border-strong: rgba(0, 112, 243, 0.55);
+  --brand-gradient: linear-gradient(135deg, #0070f3 0%, #00dfd8 100%);
+  --brand-contrast-text: #ffffff;
+
+  /* Semantic Palettes */
   --link: #3b82f6;
   --link-deep: #2563eb;
   --link-bg-soft: rgba(59, 130, 246, 0.15);
@@ -25,14 +79,14 @@
   --cyan-deep: #0891b2;
   --highlight-pink: #f472b6;
   --highlight-magenta: #fb7185;
-  --selection-bg: #ededed;
-  --selection-fg: #0a0a0a;
 
-  --sidebar-bg: #050505;
-  --sidebar-text: #ededed;
-  --sidebar-text-muted: rgba(237, 237, 237, 0.45);
-  --sidebar-hover: rgba(255, 255, 255, 0.06);
-  --sidebar-active: rgba(255, 255, 255, 0.1);
+  /* Emil Kowalski Motion Tokens */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-instant: 125ms;
+  --duration-fast: 160ms;
+  --duration-normal: 240ms;
 }
 
 ::selection {
@@ -43,8 +97,73 @@
 html, body {
   background-color: var(--surface-0);
   color: var(--text-primary);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
+/* ─── Emil Design Engineering: Tactile Press & Motion Utilities ─── */
+.btn-pressable,
+.mantine-Button-root,
+.mantine-ActionIcon-root {
+  transition: transform var(--duration-fast) var(--ease-out),
+              background-color var(--duration-fast) ease,
+              border-color var(--duration-fast) ease,
+              box-shadow var(--duration-fast) ease !important;
+}
+
+.btn-pressable:active,
+.mantine-Button-root:active,
+.mantine-ActionIcon-root:active {
+  transform: scale(0.97) !important;
+}
+
+/* Brand Primary Button */
+.btn-brand {
+  background: var(--brand-primary);
+  color: var(--brand-contrast-text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 16px -2px var(--brand-glow);
+  font-weight: 600;
+  transition: transform var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.btn-brand:hover {
+  box-shadow: 0 0 24px 2px var(--brand-glow);
+}
+
+.btn-brand:active {
+  transform: scale(0.97);
+}
+
+/* Brand Card & Glow Accents */
+.brand-card-glow {
+  border: 1px solid var(--brand-border);
+  box-shadow: 0 0 32px -4px var(--brand-glow);
+}
+
+.brand-badge {
+  background-color: var(--brand-surface) !important;
+  color: var(--brand-primary) !important;
+  border: 1px solid var(--brand-border) !important;
+}
+
+.brand-text-gradient {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Active navigation item highlight */
+.mantine-NavLink-root[data-active="true"] {
+  background-color: var(--brand-surface) !important;
+  color: var(--brand-primary) !important;
+  font-weight: 600 !important;
+  border-left: 2px solid var(--brand-primary) !important;
+}
+
+/* Print Utilities */
 @media print {
   body * {
     visibility: hidden;
@@ -88,9 +207,10 @@ html, body {
   }
 }
 
+/* ─── Animated Pulse Dot ─── */
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
 }
 
 .pulse-dot {
@@ -98,22 +218,112 @@ html, body {
   height: 8px;
   border-radius: 50%;
   background-color: #22c55e;
-  animation: pulse-dot 1.8s ease-in-out infinite;
+  animation: pulse-dot 1.8s var(--ease-in-out) infinite;
   display: inline-block;
-  margin-right: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.pulse-dot-brand {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--brand-primary);
+  box-shadow: 0 0 8px var(--brand-primary);
+  animation: pulse-dot 1.8s var(--ease-in-out) infinite;
+  display: inline-block;
+  margin-right: 6px;
   vertical-align: middle;
 }
 
 .log-row {
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  transition: background-color var(--duration-fast) ease, transform var(--duration-fast) var(--ease-out);
   cursor: default;
 }
 
-.log-row:hover {
-  background-color: var(--surface-2) !important;
-  transform: scale(1.01);
+@media (hover: hover) and (pointer: fine) {
+  .log-row:hover {
+    background-color: var(--surface-2) !important;
+    transform: translateY(-1px);
+  }
 }
 
 [data-expanded="true"] .menu-chevron {
   transform: rotate(180deg);
 }
+
+/* ─── Universal Theme Switcher (Exact Natural Black/White Landing Page Palette) ─── */
+.theme-toggle-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #d4d4d4;
+  color: #171717;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color var(--duration-fast) ease,
+              border-color var(--duration-fast) ease,
+              color var(--duration-fast) ease,
+              transform var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.theme-toggle-btn svg {
+  color: #171717;
+  will-change: transform;
+}
+
+[data-mantine-color-scheme="dark"] .theme-toggle-btn {
+  background: #171717;
+  border: 1px solid #262626;
+  color: #ffffff;
+}
+
+[data-mantine-color-scheme="dark"] .theme-toggle-btn svg {
+  color: #ffffff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .theme-toggle-btn:hover {
+    background: #f5f5f5;
+    border-color: #a3a3a3;
+    color: #171717;
+    transform: translateY(-1px);
+  }
+
+  [data-mantine-color-scheme="dark"] .theme-toggle-btn:hover {
+    background: #262626;
+    border-color: #404040;
+    color: #ffffff;
+  }
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95) !important;
+}
+
+/* ─── Universal Brand Logo Mark (Crisp Stark White) ─── */
+.brand-logo-mark {
+  width: 30px;
+  height: 30px;
+  background: #09090b;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+[data-mantine-color-scheme="dark"] .brand-logo-mark {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+

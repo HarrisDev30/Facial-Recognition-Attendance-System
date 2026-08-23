@@ -1,0 +1,227 @@
+/* ==========================================================================
+   Upcoming Events Page Styles — Emil Kowalski Design Engineering
+   Apple Calendar Badges, Category Ambient Accents & Responsive Flow
+   ========================================================================== */
+
+/* ─── Filter Bar ─── */
+.events-filter-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+  margin-bottom: 20px;
+}
+
+.events-filter-track::-webkit-scrollbar {
+  display: none;
+}
+
+.events-filter-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--duration-fast) ease,
+              border-color var(--duration-fast) ease,
+              color var(--duration-fast) ease,
+              transform var(--duration-fast) var(--ease-out);
+  user-select: none;
+}
+
+.events-filter-chip:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+.events-filter-chip:active {
+  transform: scale(0.96);
+}
+
+.events-filter-chip.is-active {
+  background: var(--brand-primary);
+  color: var(--brand-contrast-text);
+  border-color: var(--brand-primary);
+  font-weight: 600;
+  box-shadow: 0 0 14px -2px var(--brand-glow);
+}
+
+/* ─── Event Grid Card ─── */
+.event-grid-card {
+  position: relative;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) ease,
+              border-color var(--duration-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .event-grid-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.12);
+    border-color: var(--card-border-hover, var(--brand-border));
+  }
+}
+
+.event-grid-card:active {
+  transform: scale(0.985) !important;
+}
+
+/* ─── Event Card Header Banner ─── */
+.event-card-header {
+  position: relative;
+  height: 120px;
+  background: var(--card-banner-bg, linear-gradient(135deg, var(--surface-2) 0%, var(--surface-3) 100%));
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px 14px;
+  overflow: hidden;
+}
+
+.event-card-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ─── Apple Calendar Micro-Badge ─── */
+.event-calendar-badge {
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  width: 44px;
+  height: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+}
+
+.event-cal-month {
+  font-size: 0.575rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #ef4444;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.event-cal-day {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Card Body ─── */
+.event-card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.event-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+
+.event-card-desc {
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+/* ─── Metadata Chips Cluster ─── */
+.event-meta-cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.event-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.725rem;
+  color: var(--text-secondary);
+}
+
+.event-meta-row svg {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+/* ─── Card Footer Action ─── */
+.event-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-subtle);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--brand-primary);
+}
+
+.event-card-footer-arrow {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .event-grid-card:hover .event-card-footer-arrow {
+    transform: translateX(3px);
+  }
+}
+
+/* ─── Mobile Responsiveness (≤640px) ─── */
+@media (max-width: 640px) {
+  .event-card-header {
+    height: 100px;
+    padding: 10px 12px;
+  }
+
+  .event-card-body {
+    padding: 12px 14px;
+  }
+
+  .event-card-title {
+    font-size: 0.9rem;
+  }
+}

@@ -35,17 +35,7 @@ import type { InstitutionItem, InstitutionOnboardRequest } from "../../api/super
 import { useAsync } from "../../hooks";
 import DataTable from "../../components/shared/DataTable";
 import PageHeader from "../../components/layout/PageHeader";
-
-const UNIVERSITY_COLOR_PALETTES = [
-  { name: "Attendify Blue", color: "#0070f3" },
-  { name: "Emerald Teal", color: "#0d9488" },
-  { name: "Forest Green", color: "#16a34a" },
-  { name: "Royal Navy", color: "#1e40af" },
-  { name: "Imperial Purple", color: "#7c3aed" },
-  { name: "Sunset Gold", color: "#d97706" },
-  { name: "Crimson Red", color: "#dc2626" },
-  { name: "Slate", color: "#334155" },
-];
+import BrandCustomizerWithPreview from "../../components/super-admin/BrandCustomizerWithPreview";
 
 export default function SuperAdminInstitutionsPage() {
   // Onboard modal state
@@ -387,39 +377,12 @@ export default function SuperAdminInstitutionsPage() {
               onChange={(e) => setLogoUrl(e.currentTarget.value)}
             />
 
-            <div>
-              <Text size="sm" fw={500} mb={6}>
-                Campus Official Brand Color
-              </Text>
-              <Group gap="xs" mb="xs">
-                {UNIVERSITY_COLOR_PALETTES.map((palette) => (
-                  <Tooltip key={palette.color} label={palette.name}>
-                    <button
-                      type="button"
-                      onClick={() => setBrandColor(palette.color)}
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: "50%",
-                        backgroundColor: palette.color,
-                        border: brandColor === palette.color ? "3px solid #ffffff" : "2px solid rgba(0,0,0,0.15)",
-                        boxShadow: brandColor === palette.color ? "0 0 0 2px #0070f3" : "none",
-                        cursor: "pointer",
-                        outline: "none",
-                        transition: "transform 0.15s ease",
-                      }}
-                    />
-                  </Tooltip>
-                ))}
-              </Group>
-              <TextInput
-                placeholder="#0070f3"
-                value={brandColor}
-                onChange={(e) => setBrandColor(e.currentTarget.value)}
-                size="xs"
-                styles={{ input: { fontFamily: "monospace" } }}
-              />
-            </div>
+            <BrandCustomizerWithPreview
+              value={brandColor}
+              onChange={setBrandColor}
+              institutionCode={code || "CAMPUS"}
+              institutionName={name || "University"}
+            />
 
             <Text fw={600} size="sm" mt="xs">
               Primary Administrator Credentials
@@ -506,39 +469,12 @@ export default function SuperAdminInstitutionsPage() {
               onChange={(e) => setEditLogoUrl(e.currentTarget.value)}
             />
 
-            <div>
-              <Text size="sm" fw={500} mb={6}>
-                Campus Official Brand Color
-              </Text>
-              <Group gap="xs" mb="xs">
-                {UNIVERSITY_COLOR_PALETTES.map((palette) => (
-                  <Tooltip key={palette.color} label={palette.name}>
-                    <button
-                      type="button"
-                      onClick={() => setEditBrandColor(palette.color)}
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: "50%",
-                        backgroundColor: palette.color,
-                        border: editBrandColor === palette.color ? "3px solid #ffffff" : "2px solid rgba(0,0,0,0.15)",
-                        boxShadow: editBrandColor === palette.color ? "0 0 0 2px #0070f3" : "none",
-                        cursor: "pointer",
-                        outline: "none",
-                        transition: "transform 0.15s ease",
-                      }}
-                    />
-                  </Tooltip>
-                ))}
-              </Group>
-              <TextInput
-                placeholder="#0070f3"
-                value={editBrandColor}
-                onChange={(e) => setEditBrandColor(e.currentTarget.value)}
-                size="xs"
-                styles={{ input: { fontFamily: "monospace" } }}
-              />
-            </div>
+            <BrandCustomizerWithPreview
+              value={editBrandColor}
+              onChange={setEditBrandColor}
+              institutionCode={editCode || "CAMPUS"}
+              institutionName={editName || "University"}
+            />
 
             <Switch
               label="Active Status"

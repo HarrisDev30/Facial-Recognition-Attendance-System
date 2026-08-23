@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { LoadingOverlay } from "@mantine/core";
 import { useAuthStore } from "./store/authStore";
+import { InstitutionThemeProvider } from "./theme/InstitutionThemeProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 import SuperAdminLayout from "./components/layout/SuperAdminLayout";
@@ -87,7 +88,7 @@ export default function App() {
   }, [restoreSession]);
 
   return (
-    <>
+    <InstitutionThemeProvider>
       <MaintenanceBanner />
       <Routes>
         <Route path="/" element={<RootHandler />} />
@@ -107,7 +108,13 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* Student + Staff (shared attendee routes) */}
+        {/* Dedicated Immersive Biometric Setup Flow (Isolated without dashboard chrome) */}
+        <Route element={<ProtectedRoute roles={["student", "staff"]} />}>
+          <Route path="/register-biometrics" element={<StudentBiometricRegistration />} />
+          <Route path="/student/register-biometrics" element={<StudentBiometricRegistration />} />
+        </Route>
+
+        {/* Student + Staff (standard dashboard chrome routes) */}
         <Route element={<ProtectedRoute roles={["student", "staff"]} />}>
           <Route element={<StudentLayout />}>
             <Route path="/student/dashboard" element={<StudentDashboardPage />} />
@@ -116,7 +123,6 @@ export default function App() {
             <Route path="/student/events/:eventId" element={<EventAttendanceDetailPage />} />
             <Route path="/student/profile" element={<StudentProfilePage />} />
             <Route path="/profile" element={<StudentProfilePage />} />
-            <Route path="/register-biometrics" element={<StudentBiometricRegistration />} />
             <Route path="/privacy/data-removal" element={<DataRemovalRequestPage />} />
           </Route>
         </Route>
@@ -168,6 +174,6 @@ export default function App() {
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
+    </InstitutionThemeProvider>
   );
 }

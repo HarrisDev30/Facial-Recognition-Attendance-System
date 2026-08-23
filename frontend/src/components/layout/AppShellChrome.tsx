@@ -5,6 +5,7 @@ import {
   NavLink,
   Burger,
   rem,
+  Box,
   ScrollArea,
   Stack,
   UnstyledButton,
@@ -16,6 +17,7 @@ import { useState, useCallback, useEffect, type ReactNode, type MouseEvent } fro
 import Wordmark from "./Wordmark";
 import UserMenu from "./UserMenu";
 import NotificationBell from "./NotificationBell";
+import ThemeToggle from "./ThemeToggle";
 import ConfirmDialog from "../shared/ConfirmDialog";
 
 export interface NavItem {
@@ -134,30 +136,56 @@ export default function AppShellChrome({
   }, [dragging, handleMouseMove, handleMouseUp]);
 
   return (
-    <AppShell
-      header={{ height: 64 }}
-      navbar={{ width: navbarWidth, breakpoint: "sm", collapsed: { mobile: !opened } }}
-      padding="lg"
-    >
-      <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
-          <Group>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-            <Wordmark />
+    <>
+      {/* 2px Top-Edge Brand Energy Ribbon */}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 2,
+          background: "var(--brand-gradient)",
+          zIndex: 2000,
+          pointerEvents: "none",
+          transition: "background 200ms ease",
+        }}
+      />
+      <AppShell
+        header={{ height: 64 }}
+        navbar={{ width: navbarWidth, breakpoint: "sm", collapsed: { mobile: !opened } }}
+        padding="lg"
+      >
+        <AppShell.Header
+          style={{
+            backdropFilter: "blur(16px)",
+            backgroundColor: "var(--surface-1)",
+            borderBottom: "1px solid var(--border-subtle)",
+            backgroundImage: "radial-gradient(circle at 10% 0%, var(--brand-surface) 0%, transparent 65%)",
+            transition: "border-color 200ms ease, background-color 200ms ease",
+          }}
+        >
+          <Group h="100%" px={{ base: "xs", sm: "md" }} justify="space-between" wrap="nowrap">
+            <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
+              <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+              <Wordmark />
+            </Group>
+            <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
+              {headerRight}
+              <Box visibleFrom="sm">
+                <ThemeToggle />
+              </Box>
+              <NotificationBell />
+              <UserMenu
+                email={email ?? undefined}
+                firstName={firstName}
+                lastName={lastName}
+                profilePhotoUrl={profilePhotoUrl}
+                onLogout={openLogout}
+              />
+            </Group>
           </Group>
-          <Group gap="sm">
-            {headerRight}
-            <NotificationBell />
-            <UserMenu
-              email={email ?? undefined}
-              firstName={firstName}
-              lastName={lastName}
-              profilePhotoUrl={profilePhotoUrl}
-              onLogout={openLogout}
-            />
-          </Group>
-        </Group>
-      </AppShell.Header>
+        </AppShell.Header>
 
       <AppShell.Navbar p="sm" style={{ paddingBottom: 0 }}>
         <div style={{ position: "relative", display: "flex", flexDirection: "column", flex: 1 }}>
@@ -225,5 +253,6 @@ export default function AppShellChrome({
         color="red"
       />
     </AppShell>
+    </>
   );
 }

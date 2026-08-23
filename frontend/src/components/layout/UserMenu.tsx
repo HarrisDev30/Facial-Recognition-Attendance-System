@@ -5,11 +5,16 @@ import {
   Group,
   Menu,
   rem,
+  Box,
+  useMantineColorScheme,
+  useComputedColorScheme,
 } from "@mantine/core";
 import {
   IconLogout,
   IconChevronDown,
   IconUser,
+  IconSun,
+  IconMoon,
 } from "@tabler/icons-react";
 import Avatar from "../Avatar";
 import { useAuthStore } from "../../store/authStore";
@@ -31,6 +36,10 @@ export default function UserMenu({
 }: UserMenuProps) {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { setColorScheme } = useMantineColorScheme();
+  const computedColorScheme = useComputedColorScheme("dark", { getInitialValueInEffect: true });
+  const isDark = computedColorScheme === "dark";
+
   const displayName = firstName ? `${firstName} ${lastName ?? ""}`.trim() : email ?? "User";
 
   const handleProfileClick = () => {
@@ -44,10 +53,14 @@ export default function UserMenu({
     }
   };
 
+  const toggleTheme = () => {
+    setColorScheme(isDark ? "light" : "dark");
+  };
+
   return (
     <Menu shadow="md" width={240} offset={8}>
       <Menu.Target>
-        <UnstyledButton>
+        <UnstyledButton className="btn-pressable">
           <Group gap="xs">
             <Avatar
               src={profilePhotoUrl}
@@ -55,26 +68,28 @@ export default function UserMenu({
               lastName={lastName}
               size="sm"
             />
-            <Text size="sm" visibleFrom="sm">
+            <Text size="sm" visibleFrom="sm" c="var(--text-primary)">
               {firstName ?? email ?? "User"}
             </Text>
-            <IconChevronDown
-              size={14}
-              style={{ color: "var(--text-secondary)", transition: "transform 0.2s ease" }}
-              className="menu-chevron"
-            />
+            <Box visibleFrom="sm" style={{ display: "flex", alignItems: "center" }}>
+              <IconChevronDown
+                size={14}
+                style={{ color: "var(--text-secondary)", transition: "transform 0.2s ease" }}
+                className="menu-chevron"
+              />
+            </Box>
           </Group>
         </UnstyledButton>
       </Menu.Target>
       <Menu.Dropdown
         style={{
-          background: "#141414",
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: "0px 4px 12px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.3)",
+          background: "var(--surface-1)",
+          border: "1px solid var(--border-subtle)",
+          boxShadow: "var(--shadow-card)",
         }}
       >
         <div style={{ padding: `${rem(8)} ${rem(12)}` }}>
-          <Text size="sm" fw={600}>
+          <Text size="sm" fw={600} c="var(--text-primary)">
             {displayName}
           </Text>
           {email && (
@@ -91,6 +106,18 @@ export default function UserMenu({
           onClick={handleProfileClick}
         >
           Profile Settings
+        </Menu.Item>
+        <Menu.Item
+          leftSection={
+            isDark ? (
+              <IconSun size={16} style={{ color: "var(--text-primary)" }} />
+            ) : (
+              <IconMoon size={16} style={{ color: "var(--text-primary)" }} />
+            )
+          }
+          onClick={toggleTheme}
+        >
+          {isDark ? "Light Mode" : "Dark Mode"}
         </Menu.Item>
         <Menu.Divider />
         <Menu.Item
