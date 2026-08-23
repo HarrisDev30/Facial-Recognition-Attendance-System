@@ -608,11 +608,17 @@ html {
   background: #ffffff;
   border: 1px solid #d4d4d4;
   color: #171717;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.landing-root-container[data-theme="light"] .theme-toggle-btn svg {
+  color: #171717;
 }
 
 .landing-root-container[data-theme="light"] .theme-toggle-btn:hover {
   background: #f5f5f5;
   border-color: #a3a3a3;
+  color: #171717;
 }
 
 .landing-root-container[data-theme="light"] .nav-cta-find-campus {
@@ -649,22 +655,96 @@ html {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
-.landing-root-container[data-theme="dark"] .campus-jump-select-wrapper {
-  background: rgba(23, 23, 23, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+.landing-root-container[data-theme="light"] .mantine-Select-dropdown,
+.landing-root-container[data-theme="light"] [data-combobox-dropdown] {
+  background: #ffffff !important;
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+  padding: 6px !important;
+}
+
+.landing-root-container[data-theme="light"] .mantine-Select-option,
+.landing-root-container[data-theme="light"] [data-combobox-option] {
+  color: #171717 !important;
+  border-radius: 8px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  padding: 8px 12px !important;
+  transition: background-color 0.12s ease, color 0.12s ease !important;
+}
+
+.landing-root-container[data-theme="light"] .mantine-Select-option:hover,
+.landing-root-container[data-theme="light"] .mantine-Select-option[data-hovered],
+.landing-root-container[data-theme="light"] [data-combobox-option]:hover,
+.landing-root-container[data-theme="light"] [data-combobox-option][data-hovered] {
+  background-color: #f0f0f2 !important;
+  color: #000000 !important;
+}
+
+.landing-root-container[data-theme="light"] .mantine-Select-option[data-checked],
+.landing-root-container[data-theme="light"] [data-combobox-option][data-checked] {
+  background-color: #e5e5e8 !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
 }
 
 /* ─── Dark Mode Button & Control Overrides ─── */
 .landing-root-container[data-theme="dark"] .theme-toggle-btn {
-  background: #171717;
-  border: 1px solid #262626;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.landing-root-container[data-theme="dark"] .theme-toggle-btn svg {
   color: #ffffff;
 }
 
 .landing-root-container[data-theme="dark"] .theme-toggle-btn:hover {
-  background: #262626;
-  border-color: #404040;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+
+.landing-root-container[data-theme="dark"] .campus-jump-select-wrapper {
+  background: rgba(24, 24, 27, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.landing-root-container[data-theme="dark"] .mantine-Select-dropdown,
+.landing-root-container[data-theme="dark"] [data-combobox-dropdown] {
+  background: #18181b !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+  padding: 6px !important;
+}
+
+.landing-root-container[data-theme="dark"] .mantine-Select-option,
+.landing-root-container[data-theme="dark"] [data-combobox-option] {
+  color: #f1f5f9 !important;
+  border-radius: 8px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  padding: 8px 12px !important;
+  transition: background-color 0.12s ease, color 0.12s ease !important;
+}
+
+.landing-root-container[data-theme="dark"] .mantine-Select-option:hover,
+.landing-root-container[data-theme="dark"] .mantine-Select-option[data-hovered],
+.landing-root-container[data-theme="dark"] [data-combobox-option]:hover,
+.landing-root-container[data-theme="dark"] [data-combobox-option][data-hovered] {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+.landing-root-container[data-theme="dark"] .mantine-Select-option[data-checked],
+.landing-root-container[data-theme="dark"] [data-combobox-option][data-checked] {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
 }
 
 .landing-root-container[data-theme="dark"] .nav-cta-find-campus {

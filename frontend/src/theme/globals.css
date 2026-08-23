@@ -278,9 +278,10 @@ html, body {
 }
 
 [data-mantine-color-scheme="dark"] .theme-toggle-btn {
-  background: #171717;
-  border: 1px solid #262626;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 [data-mantine-color-scheme="dark"] .theme-toggle-btn svg {
@@ -296,8 +297,8 @@ html, body {
   }
 
   [data-mantine-color-scheme="dark"] .theme-toggle-btn:hover {
-    background: #262626;
-    border-color: #404040;
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.32);
     color: #ffffff;
   }
 }
@@ -325,5 +326,36 @@ html, body {
   background: #18181b;
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #ffffff;
+}
+
+/* ─── Universal Select / Combobox Option Hover Fixes ─── */
+.mantine-Select-option,
+[data-combobox-option] {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  transition: background-color 0.12s ease, color 0.12s ease !important;
+}
+
+.mantine-Select-option:hover,
+.mantine-Select-option[data-hovered],
+[data-combobox-option]:hover,
+[data-combobox-option][data-hovered] {
+  background-color: #f0f0f2 !important;
+  color: #000000 !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Select-dropdown,
+[data-mantine-color-scheme="dark"] [data-combobox-dropdown] {
+  background-color: #18181b !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: #f1f5f9 !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Select-option:hover,
+[data-mantine-color-scheme="dark"] .mantine-Select-option[data-hovered],
+[data-mantine-color-scheme="dark"] [data-combobox-option]:hover,
+[data-mantine-color-scheme="dark"] [data-combobox-option][data-hovered] {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
 }
 

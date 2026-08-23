@@ -260,6 +260,11 @@ export default function LandingPage() {
                   if (val) handleLaunchCampus(val);
                 }}
                 className="campus-jump-select"
+                comboboxProps={{
+                  withinPortal: false,
+                  transitionProps: { transition: "fade-down", duration: 150 },
+                  shadow: "xl",
+                }}
               />
             </div>
           </div>
