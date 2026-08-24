@@ -3,22 +3,28 @@ import {
   Container,
   Group,
   Select,
-  Paper,
   Text,
-  Badge,
   Box,
   Pagination,
-  SimpleGrid,
+  Skeleton,
 } from "@mantine/core";
-import { IconClock } from "@tabler/icons-react";
+import {
+  IconHistory,
+  IconClock,
+  IconShieldCheck,
+  IconQrcode,
+  IconUserCheck,
+  IconCalendar,
+} from "@tabler/icons-react";
 import { getMyAttendanceLogs } from "../api/attendees";
 import type { AttendanceLogEntry } from "../types/auth";
-import PageHeader from "../components/layout/PageHeader";
+import EmptyState from "../components/EmptyState";
 import { usePagination } from "../hooks";
 import { formatDate, formatTime, formatConfidence } from "../utils/formatters";
+import "./AttendanceHistoryPage.css";
 
 const EVENT_TYPES = [
-  { value: "", label: "All types" },
+  { value: "", label: "All event types" },
   { value: "intramurals", label: "Intramurals" },
   { value: "seminar", label: "Seminar" },
   { value: "workshop", label: "Workshop" },
@@ -27,23 +33,14 @@ const EVENT_TYPES = [
   { value: "assembly", label: "Assembly" },
 ];
 
-const VERIFICATION_LABELS: Record<string, string> = {
-  face_recognition: "Face",
-  qr_code: "QR",
-  marshal_override: "Manual",
-};
-
-const VERIFICATION_COLORS: Record<string, { bg: string; fg: string }> = {
-  face_recognition: { bg: "rgba(59, 130, 246, 0.12)", fg: "#3b82f6" },
-  marshal_override: { bg: "rgba(249, 115, 22, 0.12)", fg: "#f97316" },
-  qr_code: { bg: "rgba(34, 211, 238, 0.12)", fg: "#22d3ee" },
-};
+type MethodFilter = "all" | "face_recognition" | "qr_code" | "marshal_override";
 
 export default function AttendanceHistoryPage() {
   const [logs, setLogs] = useState<AttendanceLogEntry[]>([]);
   const { page, setPage, pageSize, total, setTotal } = usePagination(1, 20);
   const [sort, setSort] = useState("date_desc");
   const [eventType, setEventType] = useState("");
+  const [methodFilter, setMethodFilter] = useState<MethodFilter>("all");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -68,9 +65,15 @@ export default function AttendanceHistoryPage() {
     }
   };
 
+  // Client-side method filtering for instant feedback
+  const filteredLogs = useMemo(() => {
+    if (methodFilter === "all") return logs;
+    return logs.filter((row) => row.verification_method === methodFilter);
+  }, [logs, methodFilter]);
+
   const dayGroups = useMemo(() => {
-    const groups: { date: string; items: typeof logs }[] = [];
-    for (const row of logs) {
+    const groups: { date: string; items: typeof filteredLogs }[] = [];
+    for (const row of filteredLogs) {
       const date = formatDate(row.session_date || row.check_in_time);
       let group = groups[groups.length - 1];
       if (!group || group.date !== date) {
@@ -80,84 +83,201 @@ export default function AttendanceHistoryPage() {
       group.items.push(row);
     }
     return groups;
-  }, [logs]);
+  }, [filteredLogs]);
+
+  // Telemetry counts
+  const faceIdCount = useMemo(
+    () => logs.filter((l) => l.verification_method === "face_recognition").length,
+    [logs],
+  );
 
   return (
-    <Container size="lg" pt={0} pb="4xl">
-      <PageHeader title="Attendance History" />
-
-      <SimpleGrid cols={{ base: 2, xs: 2 }} mb="md">
-        <Select
-          size="sm"
-          placeholder="Event Type"
-          value={eventType}
-          onChange={(v) => {
-            setEventType(v || "");
-            setPage(1);
-          }}
-          data={EVENT_TYPES}
-          clearable
-        />
-        <Select
-          size="sm"
-          placeholder="Sort By"
-          value={sort}
-          onChange={(v) => {
-            setSort(v || "date_desc");
-            setPage(1);
-          }}
-          data={[
-            { value: "date_desc", label: "Newest first" },
-            { value: "date_asc", label: "Oldest first" },
-            { value: "event_name", label: "By event name" },
-          ]}
-        />
-      </SimpleGrid>
-
-      {!loading && logs.length === 0 ? (
-        <Paper p="xl" radius="md" bg="var(--surface-1)" ta="center">
-          <IconClock size={40} style={{ opacity: 0.15 }} />
-          <Text c="dimmed" mt="md">
-            No attendance records found.
+    <Container
+      size="lg"
+      pt={{ base: "xs", sm: 0 }}
+      pb={{ base: "6.5rem", sm: "4xl" }}
+      px={{ base: "14px", sm: "md" }}
+    >
+      {/* ─── 1. Header Card ─── */}
+      <div className="history-header-card">
+        <div className="history-header-text">
+          <Group gap={8} align="center">
+            <IconHistory size={20} style={{ color: "var(--brand-primary)" }} />
+            <Text
+              fz={{ base: "1.25rem", sm: "1.5rem" }}
+              fw={600}
+              c="var(--text-primary)"
+              lh={1.2}
+              lts="-0.02em"
+            >
+              Attendance History
+            </Text>
+          </Group>
+          <Text fz="0.8125rem" c="var(--text-secondary)" mt={4}>
+            View all recorded attendance and check-in times.
           </Text>
-        </Paper>
+        </div>
+
+        {/* Ribbon Counts Pod */}
+        <div className="history-telemetry-ribbon">
+          <div className="history-ribbon-pod">
+            <span className="history-pod-val">{total}</span>
+            <span className="history-pod-lbl">Total Records</span>
+          </div>
+          <div className="history-pod-divider" />
+          <div className="history-ribbon-pod">
+            <span className="history-pod-val verified">
+              {logs.length > 0
+                ? `${Math.round((faceIdCount / logs.length) * 100)}%`
+                : "100%"}
+            </span>
+            <span className="history-pod-lbl">Face ID</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── 2. Controls Toolbar ─── */}
+      <div className="history-toolbar">
+        {/* Method Filter Chips */}
+        <div className="history-filter-chips">
+          <button
+            type="button"
+            className={`history-chip ${methodFilter === "all" ? "is-active" : ""}`}
+            onClick={() => setMethodFilter("all")}
+          >
+            All Methods
+          </button>
+          <button
+            type="button"
+            className={`history-chip ${methodFilter === "face_recognition" ? "is-active" : ""}`}
+            onClick={() => setMethodFilter("face_recognition")}
+          >
+            <span className="history-chip-dot face" />
+            Face ID
+          </button>
+          <button
+            type="button"
+            className={`history-chip ${methodFilter === "qr_code" ? "is-active" : ""}`}
+            onClick={() => setMethodFilter("qr_code")}
+          >
+            <span className="history-chip-dot qr" />
+            QR Code
+          </button>
+          <button
+            type="button"
+            className={`history-chip ${methodFilter === "marshal_override" ? "is-active" : ""}`}
+            onClick={() => setMethodFilter("marshal_override")}
+          >
+            <span className="history-chip-dot marshal" />
+            Manual
+          </button>
+        </div>
+
+        {/* Dropdown Filters */}
+        <Group gap="xs" wrap="nowrap">
+          <Select
+            size="xs"
+            placeholder="Event type"
+            value={eventType}
+            onChange={(v) => {
+              setEventType(v || "");
+              setPage(1);
+            }}
+            data={EVENT_TYPES}
+            clearable
+            style={{ width: 150 }}
+            styles={{
+              input: {
+                borderRadius: "6px",
+                backgroundColor: "var(--surface-0)",
+                borderColor: "var(--border-subtle)",
+                fontSize: "13px",
+                height: "32px",
+              },
+            }}
+          />
+
+          <Select
+            size="xs"
+            placeholder="Sort by"
+            value={sort}
+            onChange={(v) => {
+              setSort(v || "date_desc");
+              setPage(1);
+            }}
+            data={[
+              { value: "date_desc", label: "Newest first" },
+              { value: "date_asc", label: "Oldest first" },
+              { value: "event_name", label: "Event name" },
+            ]}
+            style={{ width: 140 }}
+            styles={{
+              input: {
+                borderRadius: "6px",
+                backgroundColor: "var(--surface-0)",
+                borderColor: "var(--border-subtle)",
+                fontSize: "13px",
+                height: "32px",
+              },
+            }}
+          />
+        </Group>
+      </div>
+
+      {/* ─── 3. Timeline Feed Layout ─── */}
+      {loading && (
+        <Box style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <Skeleton height={80} radius="md" />
+          <Skeleton height={80} radius="md" />
+          <Skeleton height={80} radius="md" />
+        </Box>
+      )}
+
+      {!loading && filteredLogs.length === 0 ? (
+        <EmptyState
+          title="No attendance records found"
+          description="Check-in records will appear here automatically when you attend campus sessions."
+          icon={<IconHistory size={32} />}
+        />
       ) : (
-        <Paper radius="md" bg="var(--surface-1)" style={{ overflow: "hidden" }}>
-          {dayGroups.map((group) => (
-            <Box key={group.date}>
-              <Box
-                px="md"
-                py="xs"
-                style={{
-                  background: "var(--surface-0)",
-                  borderBottom: "1px solid var(--border-subtle)",
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 1,
-                }}
-              >
-                <Text size="xs" fw={600} c="dimmed" tt="uppercase">
-                  {group.date}
-                </Text>
-              </Box>
-              {group.items.map((row, i) => (
-                <LogRow
-                  key={row.id ?? i}
-                  row={row}
-                  isLast={i === group.items.length - 1}
-                />
-              ))}
-            </Box>
-          ))}
-        </Paper>
+        !loading && (
+          <div className="history-timeline-feed">
+            {dayGroups.map((group) => (
+              <div key={group.date} className="history-milestone-group">
+                {/* Date Milestone Header */}
+                <div className="history-milestone-header">
+                  <div className="history-milestone-tag">
+                    <IconCalendar size={14} style={{ color: "var(--text-secondary)" }} />
+                    <span>{group.date}</span>
+                  </div>
+                  <span className="history-milestone-count">
+                    {group.items.length} {group.items.length === 1 ? "check-in" : "check-ins"}
+                  </span>
+                </div>
+
+                {/* Milestone Cards Stack */}
+                <div className="history-milestone-stack">
+                  {group.items.map((row) => (
+                    <HistoryRecordCard
+                      key={row.id || `${row.event_name}-${row.check_in_time}`}
+                      row={row}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
       {total > pageSize && (
-        <Group justify="center" pt="md">
+        <Group justify="center" pt="xl">
           <Pagination
             total={Math.ceil(total / pageSize)}
             value={page}
             onChange={setPage}
+            size="sm"
+            radius="md"
           />
         </Group>
       )}
@@ -165,15 +285,8 @@ export default function AttendanceHistoryPage() {
   );
 }
 
-function LogRow({
-  row,
-  isLast,
-}: {
-  row: AttendanceLogEntry;
-  isLast: boolean;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const vc = VERIFICATION_COLORS[row.verification_method];
+function HistoryRecordCard({ row }: { row: AttendanceLogEntry }) {
+  const method = row.verification_method;
 
   const toTitleCase = (s: string) =>
     s
@@ -181,69 +294,82 @@ function LogRow({
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
       .join(" ");
 
+  const isFace = method === "face_recognition";
+  const isQr = method === "qr_code";
+
   return (
-    <Box
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        backgroundColor: hovered ? "var(--surface-2)" : undefined,
-        borderBottom: isLast ? undefined : "1px solid var(--border-subtle)",
-        transition: "background-color 0.15s ease, transform 0.15s ease",
-        transform: hovered ? "scale(1.01)" : undefined,
-        padding: "var(--mantine-spacing-sm) var(--mantine-spacing-md)",
-      }}
-    >
-      <Group align="flex-start" wrap="nowrap">
-        <Box
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: "var(--mantine-radius-md)",
-            background: "var(--surface-2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <IconClock size={20} style={{ opacity: 0.6 }} />
-        </Box>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <Group justify="space-between" wrap="nowrap" gap="xs">
-            <Text
-              size="sm"
-              fw={600}
-              style={{ wordBreak: "break-word" }}
-            >
-              {row.event_name}
-            </Text>
-            <Badge
-              size="xs"
-              variant="light"
-              style={{ flexShrink: 0 }}
-              styles={{
-                root: {
-                  background: vc
-                    ? vc.bg
-                    : "rgba(136, 136, 136, 0.12)",
-                  color: vc ? vc.fg : "#888888",
-                },
-              }}
-            >
-              {VERIFICATION_LABELS[row.verification_method] ||
-                row.verification_method}
-            </Badge>
-          </Group>
-          <Text size="xs" c="dimmed">
-            {formatTime(row.check_in_time)}
-            {row.session_name
-              ? ` \u00b7 ${toTitleCase(row.session_name)}`
-              : ""}
-            {row.confidence_score != null &&
-              ` \u00b7 ${formatConfidence(row.confidence_score)} confidence`}
-          </Text>
+    <div className="history-record-card">
+      {/* Desktop Monospace Time Anchor */}
+      <div className="record-time-anchor">
+        <IconClock size={13} />
+        <span>{formatTime(row.check_in_time)}</span>
+      </div>
+
+      {/* Main Content Details */}
+      <div className="record-info-body">
+        <div className="record-title-row">
+          <Text className="record-event-name">{row.event_name}</Text>
+
+          {/* Mobile Verification Capsule */}
+          <div
+            className={`record-verify-capsule mobile-only ${
+              isFace ? "face" : isQr ? "qr" : "marshal"
+            }`}
+          >
+            {isFace ? (
+              <IconShieldCheck size={11} style={{ color: "#10b981" }} />
+            ) : isQr ? (
+              <IconQrcode size={11} style={{ color: "#3b82f6" }} />
+            ) : (
+              <IconUserCheck size={11} style={{ color: "#f59e0b" }} />
+            )}
+            <span>{isFace ? "Face ID" : isQr ? "QR" : "Manual"}</span>
+          </div>
         </div>
-      </Group>
-    </Box>
+
+        <div className="record-meta-line">
+          {/* Mobile Timestamp */}
+          <span className="record-time-mobile">
+            <IconClock size={12} />
+            <span>{formatTime(row.check_in_time)}</span>
+          </span>
+
+          {row.session_name && (
+            <>
+              <span className="record-meta-dot">•</span>
+              <span>{toTitleCase(row.session_name)}</span>
+            </>
+          )}
+
+          {row.venue && (
+            <>
+              <span className="record-meta-dot">•</span>
+              <span>{row.venue}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop Verification Capsule */}
+      <div
+        className={`record-verify-capsule desktop-only ${
+          isFace ? "face" : isQr ? "qr" : "marshal"
+        }`}
+      >
+        {isFace ? (
+          <IconShieldCheck size={13} style={{ color: "#10b981" }} />
+        ) : isQr ? (
+          <IconQrcode size={13} style={{ color: "#3b82f6" }} />
+        ) : (
+          <IconUserCheck size={13} style={{ color: "#f59e0b" }} />
+        )}
+        <span>{isFace ? "Face ID" : isQr ? "QR Code" : "Manual"}</span>
+        {row.confidence_score != null && (
+          <span className="verify-match-text">
+            • {formatConfidence(row.confidence_score)}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }

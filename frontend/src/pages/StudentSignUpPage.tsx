@@ -3,7 +3,6 @@ import { useNavigate, Link, useParams, useSearchParams, useLocation } from "reac
 import {
   Title,
   TextInput,
-  PasswordInput,
   Button,
   Alert,
   Text,
@@ -15,6 +14,7 @@ import {
   Avatar,
   Stack,
   Loader,
+  ActionIcon,
 } from "@mantine/core";
 import {
   IconBuildingArch,
@@ -30,6 +30,8 @@ import {
   IconSchool,
   IconArrowRight,
   IconRosetteDiscountCheckFilled,
+  IconEye,
+  IconEyeOff,
 } from "@tabler/icons-react";
 import { registerStudent } from "../api/auth";
 import { getDepartments } from "../api/departments";
@@ -139,6 +141,8 @@ export default function StudentSignUpPage() {
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
   const [loadingInst, setLoadingInst] = useState(!initialInstitution);
   const [loadingDepts, setLoadingDepts] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useGSAP(
     () => {
@@ -592,16 +596,30 @@ export default function StudentSignUpPage() {
                 }}
               />
 
-              <PasswordInput
+              <TextInput
+                type={showPassword ? "text" : "password"}
                 label="Password"
-                placeholder="Minimum 8 characters with mixed case & numbers"
+                placeholder="••••••••"
                 leftSection={<IconLock size={16} />}
                 leftSectionPointerEvents="none"
+                rightSection={
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    style={{ color: "var(--auth-text-muted, #737373)" }}
+                  >
+                    {showPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                  </ActionIcon>
+                }
                 value={form.password}
                 onChange={handleChange("password")}
                 required
                 styles={{
-                  innerInput: { paddingLeft: "42px" },
+                  input: { paddingLeft: "42px", paddingRight: "38px" },
                 }}
               />
               {form.password && (
@@ -614,16 +632,30 @@ export default function StudentSignUpPage() {
                 />
               )}
 
-              <PasswordInput
+              <TextInput
+                type={showConfirmPassword ? "text" : "password"}
                 label="Confirm Password"
-                placeholder="Re-type your password"
+                placeholder="••••••••"
                 leftSection={<IconLock size={16} />}
                 leftSectionPointerEvents="none"
+                rightSection={
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    tabIndex={-1}
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    style={{ color: "var(--auth-text-muted, #737373)" }}
+                  >
+                    {showConfirmPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                  </ActionIcon>
+                }
                 value={form.password_confirm}
                 onChange={handleChange("password_confirm")}
                 required
                 styles={{
-                  innerInput: { paddingLeft: "42px" },
+                  input: { paddingLeft: "42px", paddingRight: "38px" },
                 }}
               />
 

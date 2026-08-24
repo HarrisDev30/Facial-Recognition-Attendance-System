@@ -341,14 +341,21 @@
 /* ─── Inputs: Light & Dark Overrides ─── */
 .campus-portal-container[data-theme="light"] .campus-clean-card input,
 .campus-portal-container[data-theme="light"] .campus-clean-card .mantine-TextInput-input,
-.campus-portal-container[data-theme="light"] .campus-clean-card .mantine-PasswordInput-input,
-.campus-portal-container[data-theme="light"] .campus-clean-card .mantine-PasswordInput-innerInput {
+.campus-portal-container[data-theme="light"] .campus-clean-card .mantine-PasswordInput-input {
   background-color: #ffffff !important;
   border: 1px solid #d4d4d4 !important;
   color: #171717 !important;
   border-radius: 8px !important;
   height: 42px !important;
   font-size: 0.875rem !important;
+}
+
+.campus-portal-container .mantine-PasswordInput-innerInput {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  height: 100% !important;
 }
 
 .campus-portal-container[data-theme="light"] .campus-clean-card input::placeholder,
@@ -372,8 +379,7 @@
 
 .campus-portal-container[data-theme="dark"] .campus-clean-card input,
 .campus-portal-container[data-theme="dark"] .campus-clean-card .mantine-TextInput-input,
-.campus-portal-container[data-theme="dark"] .campus-clean-card .mantine-PasswordInput-input,
-.campus-portal-container[data-theme="dark"] .campus-clean-card .mantine-PasswordInput-innerInput {
+.campus-portal-container[data-theme="dark"] .campus-clean-card .mantine-PasswordInput-input {
   background-color: rgba(26, 26, 26, 0.85) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   color: #ffffff !important;

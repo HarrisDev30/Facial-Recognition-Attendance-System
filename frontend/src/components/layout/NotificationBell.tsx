@@ -1,30 +1,16 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Badge,
   Text,
   Group,
   Stack,
   Button,
   Box,
   ScrollArea,
-  Indicator,
-  ThemeIcon,
-  UnstyledButton,
-  Paper,
-  ActionIcon,
-  Tooltip,
+  Popover,
 } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
-import {
-  IconBell,
-  IconCalendar,
-  IconCheck,
-  IconUsers,
-  IconInfoCircle,
-  IconChecklist,
-  IconBellOff,
-} from "@tabler/icons-react";
+import { IconBell } from "@tabler/icons-react";
 import {
   getMyNotifications,
   markNotificationRead,
@@ -39,9 +25,6 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const isMobile = useMediaQuery("(max-width: 576px)");
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -58,16 +41,6 @@ export default function NotificationBell() {
     const interval = setInterval(loadNotifications, 10000);
     return () => clearInterval(interval);
   }, [loadNotifications]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpened(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleToggle = () => {
     setOpened((prev) => {
@@ -97,23 +70,9 @@ export default function NotificationBell() {
     }
   };
 
-  const handleSingleMarkRead = async (e: React.MouseEvent, notifId: string) => {
-    e.stopPropagation();
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notifId ? { ...n, is_read: true } : n))
-    );
-    setUnreadCount((prev) => Math.max(0, prev - 1));
-    try {
-      await markNotificationRead(notifId);
-    } catch {
-      /* ignore */
-    }
-  };
-
   const handleMarkAllRead = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setLoading(true);
-    // Optimistic clear
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnreadCount(0);
     try {
@@ -125,235 +84,182 @@ export default function NotificationBell() {
     }
   };
 
-  const getCategoryMeta = (type: string) => {
-    switch (type) {
-      case "cohost_invite":
-        return {
-          icon: <IconUsers size={15} style={{ color: "#c084fc" }} />,
-          label: "Co-Host Invite",
-          color: "grape",
-          accentColor: "#c084fc",
-          bgColor: "rgba(192, 132, 252, 0.08)",
-        };
-      case "event_announcement":
-        return {
-          icon: <IconCalendar size={15} style={{ color: "#60a5fa" }} />,
-          label: "Event",
-          color: "blue",
-          accentColor: "#60a5fa",
-          bgColor: "rgba(96, 165, 250, 0.08)",
-        };
-      case "attendance_checkin":
-        return {
-          icon: <IconCheck size={15} style={{ color: "#4ade80" }} />,
-          label: "Check-In",
-          color: "teal",
-          accentColor: "#4ade80",
-          bgColor: "rgba(74, 222, 128, 0.08)",
-        };
-      default:
-        return {
-          icon: <IconInfoCircle size={15} style={{ color: "#fbbf24" }} />,
-          label: "Notice",
-          color: "yellow",
-          accentColor: "#fbbf24",
-          bgColor: "rgba(251, 191, 36, 0.08)",
-        };
-    }
-  };
-
   return (
-    <Box ref={containerRef} style={{ position: "relative", display: "inline-block" }}>
-      <UnstyledButton
-        aria-label="Notifications"
-        onClick={handleToggle}
+    <Popover
+      opened={opened}
+      onChange={setOpened}
+      position="bottom-end"
+      offset={8}
+      shadow="md"
+      width={320}
+      withinPortal
+      transitionProps={{ transition: "pop-top-right", duration: 160 }}
+    >
+      <Popover.Target>
+        <button
+          type="button"
+          aria-label="Notifications"
+          title="Notifications"
+          onClick={handleToggle}
+          className={`theme-toggle-btn notification-bell-btn ${opened ? "is-active" : ""}`}
+        >
+          <IconBell size={17} stroke={1.75} />
+          {unreadCount > 0 && <span className="notification-unread-dot" />}
+        </button>
+      </Popover.Target>
+
+      <Popover.Dropdown
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 38,
-          height: 38,
-          borderRadius: "10px",
-          transition: "all 0.2s ease",
-          color: opened ? "#2dd4bf" : "var(--text-secondary)",
-          backgroundColor: opened ? "rgba(45, 212, 191, 0.12)" : "transparent",
-          cursor: "pointer",
-        }}
-        onMouseEnter={(e) => {
-          if (!opened) {
-            e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)";
-            e.currentTarget.style.color = "var(--text-primary)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!opened) {
-            e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "var(--text-secondary)";
-          }
+          background: "var(--surface-1)",
+          backdropFilter: "blur(20px)",
+          border: "1px solid var(--border-subtle)",
+          boxShadow: "0 12px 32px -4px rgba(0, 0, 0, 0.28)",
+          borderRadius: "14px",
+          padding: 0,
+          overflow: "hidden",
+          maxWidth: "calc(100vw - 24px)",
         }}
       >
-        <Indicator
-          disabled={unreadCount === 0}
-          label={unreadCount > 9 ? "9+" : unreadCount}
-          size={18}
-          color="red"
-          offset={-2}
-          processing={unreadCount > 0}
-        >
-          <IconBell size={20} />
-        </Indicator>
-      </UnstyledButton>
-
-      {opened && (
-        <Paper
-          p="xs"
+        {/* Header Row */}
+        <Group
+          justify="space-between"
+          px="md"
+          py="xs"
           style={{
-            position: isMobile ? "fixed" : "absolute",
-            top: isMobile ? "58px" : "calc(100% + 10px)",
-            left: isMobile ? "12px" : "auto",
-            right: isMobile ? "12px" : 0,
-            width: isMobile ? "auto" : "360px",
-            maxWidth: isMobile ? "calc(100vw - 24px)" : 380,
-            zIndex: 1000,
-            background: "#121214",
-            backdropFilter: "blur(16px)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0px 20px 40px -10px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05)",
-            borderRadius: "14px",
-            animation: "fadeIn 0.15s ease-out",
+            borderBottom: "1px solid var(--border-subtle)",
+            background: "var(--surface-0)",
           }}
         >
-          <Group justify="space-between" px="xs" py="xs" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <Group gap="xs">
-              <Text size="sm" fw={700} style={{ letterSpacing: "-0.01em" }}>
-                Notifications
-              </Text>
-              {unreadCount > 0 && (
-                <Badge size="xs" color="teal" variant="light" radius="sm" style={{ fontWeight: 600 }}>
-                  {unreadCount} new
-                </Badge>
-              )}
-            </Group>
+          <Group gap={6} align="center">
+            <Text size="sm" fw={600} c="var(--text-primary)" style={{ letterSpacing: "-0.01em" }}>
+              Notifications
+            </Text>
             {unreadCount > 0 && (
-              <Button
-                variant="subtle"
-                size="xs"
-                color="gray"
-                leftSection={<IconChecklist size={12} />}
-                loading={loading}
-                onClick={handleMarkAllRead}
-                style={{ fontSize: "11px" }}
+              <span
+                style={{
+                  fontSize: "0.6875rem",
+                  fontWeight: 600,
+                  color: "#10b981",
+                  background: "rgba(16, 185, 129, 0.12)",
+                  padding: "1px 6px",
+                  borderRadius: "5px",
+                }}
               >
-                Mark all read
-              </Button>
+                {unreadCount} new
+              </span>
             )}
           </Group>
 
-          <ScrollArea.Autosize mah={isMobile ? 300 : 380} mx="-xs" px="xs" mt="xs">
-            {notifications.length === 0 ? (
-              <Box
-                py="xl"
-                px="md"
-                style={{
-                  textAlign: "center",
-                  background: "rgba(255,255,255,0.02)",
-                  borderRadius: "10px",
-                  margin: "8px 0",
-                  border: "1px stroke rgba(255,255,255,0.04)",
-                }}
-              >
-                <ThemeIcon
-                  size={46}
-                  radius="xl"
-                  variant="light"
-                  color="teal"
-                  mx="auto"
-                  mb="xs"
-                  style={{ background: "rgba(45, 212, 191, 0.08)" }}
+          {unreadCount > 0 && (
+            <Button
+              variant="subtle"
+              size="compact-xs"
+              color="gray"
+              loading={loading}
+              onClick={handleMarkAllRead}
+              style={{
+                fontSize: "0.6875rem",
+                color: "var(--text-secondary)",
+                fontWeight: 500,
+              }}
+            >
+              Mark all as read
+            </Button>
+          )}
+        </Group>
+
+        {/* List Area */}
+        <ScrollArea.Autosize mah={360}>
+          {notifications.length === 0 ? (
+            <Box py="xl" px="md" style={{ textAlign: "center" }}>
+              <Text size="sm" fw={600} c="var(--text-primary)">
+                No notifications
+              </Text>
+              <Text size="xs" c="var(--text-muted)" mt={4}>
+                You're all caught up.
+              </Text>
+            </Box>
+          ) : (
+            <Stack gap={0}>
+              {notifications.map((n, idx) => (
+                <Box
+                  key={n.id}
+                  p="sm"
+                  onClick={() => handleNotificationClick(n)}
+                  style={{
+                    cursor: "pointer",
+                    transition: "background-color 150ms ease, transform 100ms ease",
+                    borderBottom:
+                      idx === notifications.length - 1
+                        ? "none"
+                        : "1px solid var(--border-subtle)",
+                    background: n.is_read ? "transparent" : "var(--surface-0)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "var(--surface-2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = n.is_read
+                      ? "transparent"
+                      : "var(--surface-0)";
+                  }}
+                  onMouseDown={(e) => {
+                    e.currentTarget.style.transform = "scale(0.99)";
+                  }}
+                  onMouseUp={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
                 >
-                  <IconBellOff size={22} style={{ color: "#2dd4bf" }} />
-                </ThemeIcon>
-                <Text size="sm" fw={600} c="dimmed">
-                  All caught up! 🎉
-                </Text>
-                <Text size="xs" c="dimmed" mt={2} style={{ opacity: 0.7 }}>
-                  You have no new notifications or alerts at the moment.
-                </Text>
-              </Box>
-            ) : (
-              <Stack gap={6}>
-                {notifications.map((n) => {
-                  const meta = getCategoryMeta(n.notification_type);
-                  return (
-                    <Box
-                      key={n.id}
-                      p="xs"
-                      style={{
-                        borderRadius: "10px",
-                        background: n.is_read ? "transparent" : meta.bgColor,
-                        borderLeft: n.is_read ? "3px solid transparent" : `3px solid ${meta.accentColor}`,
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                        position: "relative",
-                      }}
-                      className="notification-item"
-                      onClick={() => handleNotificationClick(n)}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = n.is_read ? "transparent" : meta.bgColor;
-                      }}
+                  <Group justify="space-between" align="center" gap={6} wrap="nowrap" mb={2}>
+                    <Group gap={6} align="center" wrap="nowrap" style={{ minWidth: 0 }}>
+                      {!n.is_read && (
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            backgroundColor: "#10b981",
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
+                      <Text
+                        size="xs"
+                        fw={n.is_read ? 500 : 600}
+                        c="var(--text-primary)"
+                        lh={1.25}
+                        truncate
+                      >
+                        {n.title}
+                      </Text>
+                    </Group>
+                    <Text
+                      size="10px"
+                      c="var(--text-muted)"
+                      style={{ flexShrink: 0, whiteSpace: "nowrap" }}
                     >
-                      <Group align="flex-start" gap="xs" wrap="nowrap">
-                        <ThemeIcon
-                          size={28}
-                          radius="md"
-                          variant="light"
-                          color={meta.color}
-                          mt={2}
-                          style={{ background: "rgba(255,255,255,0.04)" }}
-                        >
-                          {meta.icon}
-                        </ThemeIcon>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <Group justify="space-between" align="center" gap={4} wrap="nowrap" mb={2}>
-                            <Badge size="xs" color={meta.color} variant="outline" radius="xs" style={{ fontSize: "9px", padding: "0 4px", height: "16px" }}>
-                              {meta.label}
-                            </Badge>
-                            <Text size="10px" c="dimmed" style={{ opacity: 0.6 }}>
-                              {timeAgo(n.created_at)}
-                            </Text>
-                          </Group>
-                          <Text size="xs" fw={n.is_read ? 500 : 700} lh={1.3} truncate>
-                            {n.title}
-                          </Text>
-                          <Text size="xs" c="dimmed" lh={1.35} mt={2} style={{ fontSize: "11px", wordBreak: "break-word" }}>
-                            {n.message}
-                          </Text>
-                        </div>
-                        {!n.is_read && (
-                          <Tooltip label="Mark read" position="left" withArrow>
-                            <ActionIcon
-                              size="xs"
-                              variant="subtle"
-                              color="gray"
-                              onClick={(e) => handleSingleMarkRead(e, n.id)}
-                              style={{ opacity: 0.6 }}
-                            >
-                              <IconCheck size={12} />
-                            </ActionIcon>
-                          </Tooltip>
-                        )}
-                      </Group>
-                    </Box>
-                  );
-                })}
-              </Stack>
-            )}
-          </ScrollArea.Autosize>
-        </Paper>
-      )}
-    </Box>
+                      {timeAgo(n.created_at)}
+                    </Text>
+                  </Group>
+
+                  <Text
+                    size="xs"
+                    c="var(--text-secondary)"
+                    lh={1.35}
+                    mt={3}
+                    style={{
+                      paddingLeft: n.is_read ? 0 : 12,
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {n.message}
+                  </Text>
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </ScrollArea.Autosize>
+      </Popover.Dropdown>
+    </Popover>
   );
 }

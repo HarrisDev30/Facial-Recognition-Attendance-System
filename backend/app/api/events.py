@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, 
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/api/events", tags=["events"])
 
@@ -126,17 +127,31 @@ async def list_upcoming_events(
     current_user: User | None = Depends(get_current_user),
 ):
     org_filter = organization_id or department_id
-    if not org_filter and current_user and current_user.role != UserRole.admin:
+    inst_filter = None
+    if current_user:
+        if current_user.role == UserRole.super_admin:
+            inst_filter = None
+        else:
+            inst_filter = str(current_user.institution_id) if current_user.institution_id else None
+
+    if current_user and current_user.role != UserRole.admin and current_user.role != UserRole.super_admin:
         attendee_res = await session.execute(
-            select(Attendee).where(Attendee.user_id == current_user.id)
+            select(Attendee).options(selectinload(Attendee.organization)).where(Attendee.user_id == current_user.id)
         )
         att = attendee_res.scalar_one_or_none()
-        if att and att.organization_id:
-            org_filter = str(att.organization_id)
+        if att:
+            if not org_filter and att.organization_id:
+                org_filter = str(att.organization_id)
+            if not inst_filter and att.organization and att.organization.institution_id:
+                inst_filter = str(att.organization.institution_id)
 
     skip = (page - 1) * size
-    events_with_counts = await event_service.get_upcoming_events(session, skip=skip, limit=size, organization_id=org_filter)
-    total = await event_service.count_upcoming_events(session, organization_id=org_filter)
+    events_with_counts = await event_service.get_upcoming_events(
+        session, skip=skip, limit=size, organization_id=org_filter, institution_id=inst_filter
+    )
+    total = await event_service.count_upcoming_events(
+        session, organization_id=org_filter, institution_id=inst_filter
+    )
     items = [
         UpcomingEventResponse(
             id=str(event.id),
@@ -166,17 +181,31 @@ async def list_all_events(
     current_user: User | None = Depends(get_current_user),
 ):
     org_filter = organization_id or department_id
-    if not org_filter and current_user and current_user.role != UserRole.admin:
+    inst_filter = None
+    if current_user:
+        if current_user.role == UserRole.super_admin:
+            inst_filter = None
+        else:
+            inst_filter = str(current_user.institution_id) if current_user.institution_id else None
+
+    if current_user and current_user.role != UserRole.admin and current_user.role != UserRole.super_admin:
         attendee_res = await session.execute(
-            select(Attendee).where(Attendee.user_id == current_user.id)
+            select(Attendee).options(selectinload(Attendee.organization)).where(Attendee.user_id == current_user.id)
         )
         att = attendee_res.scalar_one_or_none()
-        if att and att.organization_id:
-            org_filter = str(att.organization_id)
+        if att:
+            if not org_filter and att.organization_id:
+                org_filter = str(att.organization_id)
+            if not inst_filter and att.organization and att.organization.institution_id:
+                inst_filter = str(att.organization.institution_id)
 
     skip = (page - 1) * size
-    events_with_counts = await event_service.get_all_events(session, skip=skip, limit=size, organization_id=org_filter)
-    total = await event_service.count_upcoming_events(session, organization_id=org_filter)
+    events_with_counts = await event_service.get_all_events(
+        session, skip=skip, limit=size, organization_id=org_filter, institution_id=inst_filter
+    )
+    total = await event_service.count_all_events(
+        session, organization_id=org_filter, institution_id=inst_filter
+    )
     items = [
         UpcomingEventResponse(
             id=str(event.id),
@@ -200,11 +229,14 @@ async def list_all_events(
 async def get_event(
     event_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     event = await event_service.get_event(session, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
+    if current_user.role != UserRole.super_admin and current_user.institution_id:
+        if event.institution_id != current_user.institution_id:
+            raise HTTPException(status_code=404, detail="Event not found")
     return _event_response(event)
 
 

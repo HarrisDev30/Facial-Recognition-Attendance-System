@@ -6,8 +6,8 @@ from app.middleware.auth import get_current_user, require_admin_or_marshal
 from app.models.attendance_log import AttendanceLog, VerificationMethod
 from app.models.attendance_session import AttendanceSession
 from app.models.attendee import Attendee
-from app.models.event import Event
-from app.models.user import User
+from app.models.event import Event, EventStatus, EventTargetScope
+from app.models.user import User, UserRole
 from app.schemas.attendance import (
     AttendanceLogResponse,
     AttendanceSummary,
@@ -19,7 +19,7 @@ from app.schemas.attendance import (
 )
 from app.services import attendance_service, attendee_service
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/api/attendance", tags=["attendance"])
@@ -131,9 +131,30 @@ async def get_my_attendance_summary(
         attendance_by_type[etype].add(r.event_id)
     attendance_by_type_counts = {k: len(v) for k, v in attendance_by_type.items()}
 
-    total_events_result = await session.execute(
-        select(func.count(func.distinct(AttendanceSession.event_id)))
+    inst_id = current_user.institution_id
+    if not inst_id and attendee.organization_id:
+        from app.models.organization import Organization
+        org = await session.get(Organization, attendee.organization_id)
+        if org:
+            inst_id = org.institution_id
+
+    total_events_stmt = (
+        select(func.count(func.distinct(Event.id)))
+        .join(AttendanceSession, AttendanceSession.event_id == Event.id)
+        .where(Event.status != EventStatus.cancelled)
     )
+    if inst_id:
+        total_events_stmt = total_events_stmt.where(Event.institution_id == inst_id)
+    if attendee.organization_id:
+        org_str = str(attendee.organization_id)
+        total_events_stmt = total_events_stmt.where(
+            or_(
+                Event.organization_id == attendee.organization_id,
+                Event.target_scope == EventTargetScope.all,
+                cast(Event.co_host_dept_ids, String).like(f"%{org_str}%"),
+            )
+        )
+    total_events_result = await session.execute(total_events_stmt)
     total_events_available = total_events_result.scalar() or 0
 
     attendance_rate = (
@@ -164,6 +185,9 @@ async def get_my_event_attendance(
     event = await session.get(Event, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
+    if current_user.role != UserRole.super_admin and current_user.institution_id:
+        if event.institution_id != current_user.institution_id:
+            raise HTTPException(status_code=404, detail="Event not found")
 
     sessions_query = await session.execute(
         select(AttendanceSession)

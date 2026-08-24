@@ -279,7 +279,11 @@ async def activate_session(
 
 
 async def get_upcoming_events(
-    session: AsyncSession, skip: int = 0, limit: int = 100, organization_id: str | None = None
+    session: AsyncSession,
+    skip: int = 0,
+    limit: int = 100,
+    organization_id: str | None = None,
+    institution_id: str | uuid.UUID | None = None,
 ) -> list[tuple[Event, int, int]]:
     today = datetime.now(UTC).date()
     active_session_subquery = (
@@ -303,6 +307,13 @@ async def get_upcoming_events(
             Event.status != EventStatus.cancelled,
         )
     )
+    if institution_id:
+        try:
+            inst_uuid = uuid.UUID(str(institution_id))
+            query = query.where(Event.institution_id == inst_uuid)
+        except ValueError:
+            pass
+
     if organization_id:
         try:
             org_uuid = uuid.UUID(organization_id)
@@ -323,7 +334,11 @@ async def get_upcoming_events(
 
 
 async def get_all_events(
-    session: AsyncSession, skip: int = 0, limit: int = 100, organization_id: str | None = None
+    session: AsyncSession,
+    skip: int = 0,
+    limit: int = 100,
+    organization_id: str | None = None,
+    institution_id: str | uuid.UUID | None = None,
 ) -> list[tuple[Event, int, int]]:
     query = (
         select(
@@ -336,6 +351,13 @@ async def get_all_events(
         .outerjoin(AttendanceSession, AttendanceSession.event_id == Event.id)
         .where(Event.status != EventStatus.cancelled)
     )
+    if institution_id:
+        try:
+            inst_uuid = uuid.UUID(str(institution_id))
+            query = query.where(Event.institution_id == inst_uuid)
+        except ValueError:
+            pass
+
     if organization_id:
         try:
             org_uuid = uuid.UUID(organization_id)
@@ -355,7 +377,11 @@ async def get_all_events(
     return [(row[0], row[1] or 0, row[2] or 0) for row in result.all()]
 
 
-async def count_upcoming_events(session: AsyncSession, organization_id: str | None = None) -> int:
+async def count_upcoming_events(
+    session: AsyncSession,
+    organization_id: str | None = None,
+    institution_id: str | uuid.UUID | None = None,
+) -> int:
     today = datetime.now(UTC).date()
     active_session_subquery = (
         select(AttendanceSession.event_id)
@@ -368,6 +394,13 @@ async def count_upcoming_events(session: AsyncSession, organization_id: str | No
         ),
         Event.status != EventStatus.cancelled,
     )
+    if institution_id:
+        try:
+            inst_uuid = uuid.UUID(str(institution_id))
+            query = query.where(Event.institution_id == inst_uuid)
+        except ValueError:
+            pass
+
     if organization_id:
         try:
             org_uuid = uuid.UUID(organization_id)
@@ -386,12 +419,36 @@ async def count_upcoming_events(session: AsyncSession, organization_id: str | No
     return result.scalar() or 0
 
 
-async def count_all_events(session: AsyncSession) -> int:
-    result = await session.execute(
-        select(func.count(Event.id)).where(
-            Event.status != EventStatus.cancelled,
-        )
+async def count_all_events(
+    session: AsyncSession,
+    organization_id: str | None = None,
+    institution_id: str | uuid.UUID | None = None,
+) -> int:
+    query = select(func.count(Event.id)).where(
+        Event.status != EventStatus.cancelled,
     )
+    if institution_id:
+        try:
+            inst_uuid = uuid.UUID(str(institution_id))
+            query = query.where(Event.institution_id == inst_uuid)
+        except ValueError:
+            pass
+
+    if organization_id:
+        try:
+            org_uuid = uuid.UUID(organization_id)
+            org_str = str(org_uuid)
+            query = query.where(
+                or_(
+                    Event.organization_id == org_uuid,
+                    Event.target_scope == EventTargetScope.all,
+                    cast(Event.co_host_dept_ids, String).like(f"%{org_str}%"),
+                )
+            )
+        except ValueError:
+            pass
+
+    result = await session.execute(query)
     return result.scalar() or 0
 
 

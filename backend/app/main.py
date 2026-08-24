@@ -39,6 +39,7 @@ async def lifespan(app: FastAPI):
     from app.database import get_session_ctx
     from app.models.institution import Institution
     from app.services.faiss_index import ensure_institution_index_loaded
+    from sqlalchemy import select
 
     print("Pre-warming FAISS vector indices for active institutions...")
     try:

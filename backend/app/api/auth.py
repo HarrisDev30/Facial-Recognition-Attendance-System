@@ -19,9 +19,10 @@ from app.schemas.auth import (
 from app.services.auth_service import create_access_token
 from app.utils.security import hash_password, verify_password
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -55,13 +56,23 @@ async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)
     if body.institution_slug and user.role != UserRole.super_admin:
         clean_slug = body.institution_slug.strip().lower()
         inst_res = await session.execute(
-            select(Institution).where(Institution.code == clean_slug)
+            select(Institution).where(func.lower(Institution.code) == clean_slug)
         )
         target_inst = inst_res.scalar_one_or_none()
-        if target_inst and user.institution_id and user.institution_id != target_inst.id:
+
+        user_inst_id = user.institution_id
+        if not user_inst_id:
+            att_res = await session.execute(
+                select(Attendee).options(selectinload(Attendee.organization)).where(Attendee.user_id == user.id)
+            )
+            att = att_res.scalar_one_or_none()
+            if att and att.organization and att.organization.institution_id:
+                user_inst_id = att.organization.institution_id
+
+        if not target_inst or (user_inst_id and user_inst_id != target_inst.id):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email, password, or institution portal.",
+                detail="This account does not belong to this campus portal. Please log in through your institution portal.",
             )
 
     attendee_result = await session.execute(

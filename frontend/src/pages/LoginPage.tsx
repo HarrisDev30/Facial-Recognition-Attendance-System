@@ -2,12 +2,12 @@ import { useState, useRef } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
 import {
   TextInput,
-  PasswordInput,
   Button,
   Alert,
   Text,
   Anchor,
   Stack,
+  ActionIcon,
 } from "@mantine/core";
 import {
   IconScan,
@@ -17,6 +17,8 @@ import {
   IconSun,
   IconMoon,
   IconAlertCircle,
+  IconEye,
+  IconEyeOff,
 } from "@tabler/icons-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -31,6 +33,7 @@ export default function LoginPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { token, user, login } = useAuthStore();
   const navigate = useNavigate();
 
@@ -140,7 +143,7 @@ export default function LoginPage() {
               Welcome back
             </Text>
             <Text size="sm" c="dimmed">
-              Sign in to your Attendify portal account
+              Enter your credentials to continue
             </Text>
           </Stack>
 
@@ -148,7 +151,7 @@ export default function LoginPage() {
             <Stack gap="md">
               <TextInput
                 label="Email address"
-                placeholder="name@institution.edu or admin@attendify.app"
+                placeholder="name@university.edu"
                 leftSection={<IconMail size={16} />}
                 leftSectionPointerEvents="none"
                 value={email}
@@ -160,17 +163,32 @@ export default function LoginPage() {
                   },
                 }}
               />
-              <PasswordInput
+              <TextInput
+                type={showPassword ? "text" : "password"}
                 label="Password"
-                placeholder="Enter your account password"
+                placeholder="••••••••"
                 leftSection={<IconLock size={16} />}
                 leftSectionPointerEvents="none"
+                rightSection={
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    style={{ color: "var(--auth-text-muted, #737373)" }}
+                  >
+                    {showPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                  </ActionIcon>
+                }
                 value={password}
                 onChange={(e) => setPassword(e.currentTarget.value)}
                 required
                 styles={{
-                  innerInput: {
+                  input: {
                     paddingLeft: "42px",
+                    paddingRight: "38px",
                   },
                 }}
               />
@@ -187,15 +205,15 @@ export default function LoginPage() {
                 className="auth-btn-submit"
                 rightSection={<IconArrowRight size={16} />}
               >
-                Sign In to Gateway
+                Sign In
               </Button>
             </Stack>
           </form>
 
           <Text ta="center" mt="xl" size="sm" c="dimmed">
-            New student or faculty member?{" "}
+            Don't have an account?{" "}
             <Anchor component={Link} to="/register" fw={600} td="underline" style={{ color: "#0070f3" }}>
-              Register account
+              Create an account
             </Anchor>
           </Text>
         </div>

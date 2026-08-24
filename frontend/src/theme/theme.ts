@@ -371,32 +371,38 @@ export const theme: MantineThemeOverride = {
     Modal: {
       defaultProps: {
         radius: "lg",
-        padding: "xl",
+        padding: "lg",
+        centered: true,
       },
       styles: {
         header: {
-          backgroundColor: surface2,
+          backgroundColor: surface1,
           borderBottom: `1px solid ${borderSubtle}`,
-          padding: "24px 32px",
+          padding: "16px 20px",
           marginBottom: 0,
         },
         title: {
-          fontSize: "20px",
+          fontSize: "17px",
           fontWeight: 600,
-          lineHeight: "28px",
-          letterSpacing: "-0.6px",
+          lineHeight: "24px",
+          letterSpacing: "-0.01em",
           color: textPrimary,
         },
         body: {
-          padding: "24px 32px",
-          backgroundColor: surface2,
+          padding: "20px",
+          backgroundColor: surface1,
+          color: textSecondary,
         },
         content: {
-          backgroundColor: surface2,
-          boxShadow: shadow2xl,
+          backgroundColor: surface1,
+          border: `1px solid ${borderSubtle}`,
+          boxShadow: "0 20px 48px -10px rgba(0, 0, 0, 0.35)",
+          borderRadius: "16px",
+          overflow: "hidden",
         },
         close: {
           color: textSecondary,
+          borderRadius: "8px",
         },
       },
     },

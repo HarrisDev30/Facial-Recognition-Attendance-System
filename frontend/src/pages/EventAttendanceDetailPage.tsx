@@ -18,7 +18,7 @@ import {
   IconShieldCheck,
   IconQrcode,
   IconUserCheck,
-  IconArrowLeft,
+  IconChevronLeft,
 } from "@tabler/icons-react";
 import { getAllEvents } from "../api/events";
 import { getMyEventAttendance } from "../api/attendees";
@@ -26,7 +26,6 @@ import type { UpcomingEvent } from "../types/event";
 import { useAsync } from "../hooks";
 import { EVENT_TYPE_COLORS, EVENT_TYPE_LABELS } from "../utils/constants";
 import { formatDate, formatTime, formatDateTime, formatConfidence } from "../utils/formatters";
-import PageHeader from "../components/layout/PageHeader";
 import "./EventAttendanceDetailPage.css";
 
 const EVENT_GRADIENTS: Record<string, string> = {
@@ -104,27 +103,33 @@ export default function EventAttendanceDetailPage() {
     : String(eventDate.getDate()).padStart(2, "0");
 
   return (
-    <Container size="lg" pt={0} pb="4xl" px={{ base: "xs", sm: "md" }}>
-      <PageHeader
-        title={event?.name ?? "Event Details"}
-        breadcrumbs={[
-          { label: "Dashboard", to: "/student/dashboard" },
-          { label: "Events", to: "/student/events" },
-          { label: event?.name ?? "..." },
-        ]}
-      />
-
-      <Button
-        variant="subtle"
-        size="xs"
-        component={Link}
-        to="/student/events"
-        leftSection={<IconArrowLeft size={14} />}
-        mb="md"
-        styles={{ root: { color: "var(--text-secondary)" } }}
-      >
-        Back to Events Directory
-      </Button>
+    <Container
+      size="lg"
+      pt={{ base: "xs", sm: 0 }}
+      pb={{ base: "6.5rem", sm: "4xl" }}
+      px={{ base: "14px", sm: "md" }}
+    >
+      {/* ─── Top Navigation Bar ─── */}
+      <div className="event-detail-topbar">
+        <Button
+          variant="default"
+          size="xs"
+          component={Link}
+          to="/student/events"
+          leftSection={<IconChevronLeft size={14} />}
+          style={{
+            borderRadius: "6px",
+            height: "32px",
+            fontSize: "13px",
+            fontWeight: 500,
+            borderColor: "var(--border-subtle)",
+            background: "var(--surface-0)",
+            color: "var(--text-primary)",
+          }}
+        >
+          All Events
+        </Button>
+      </div>
 
       {loading && (
         <Box>
@@ -155,9 +160,10 @@ export default function EventAttendanceDetailPage() {
                   styles={{
                     root: {
                       backdropFilter: "blur(8px)",
-                      fontWeight: 700,
+                      fontWeight: 600,
                       textTransform: "uppercase",
                       letterSpacing: "0.04em",
+                      borderRadius: "4px",
                     },
                   }}
                 >
@@ -169,10 +175,10 @@ export default function EventAttendanceDetailPage() {
                     color="red"
                     variant="filled"
                     size="sm"
-                    leftSection={<span className="live-indicator-dot" style={{ width: 6, height: 6 }} />}
-                    styles={{ root: { fontWeight: 700 } }}
+                    leftSection={<span className="live-indicator-dot" />}
+                    styles={{ root: { fontWeight: 700, borderRadius: "4px" } }}
                   >
-                    LIVE SCANNER ACTIVE
+                    Live now
                   </Badge>
                 )}
               </Group>
@@ -187,19 +193,19 @@ export default function EventAttendanceDetailPage() {
 
               <div className="event-hero-chips">
                 <div className="event-hero-chip">
-                  <IconCalendarEvent size={15} />
+                  <IconCalendarEvent size={14} />
                   <span>{formatDate(event.date)}</span>
                 </div>
 
                 {event.venue && (
                   <div className="event-hero-chip">
-                    <IconMapPin size={15} />
+                    <IconMapPin size={14} />
                     <span>{event.venue}</span>
                   </div>
                 )}
 
                 <div className="event-hero-chip">
-                  <IconClock size={15} />
+                  <IconClock size={14} />
                   <span>
                     {event.sessions_count} Session{event.sessions_count !== 1 ? "s" : ""}
                   </span>
@@ -208,7 +214,7 @@ export default function EventAttendanceDetailPage() {
             </div>
           </div>
 
-          {/* ─── Clearance Progress Telemetry Card ─── */}
+          {/* ─── Attendance Progress Card ─── */}
           <div
             className={`clearance-status-card ${
               isFullyCleared ? "is-cleared" : hasLiveSession ? "is-live" : ""
@@ -216,45 +222,45 @@ export default function EventAttendanceDetailPage() {
           >
             <div style={{ minWidth: 0, flex: 1 }}>
               <Group gap="xs" align="center" mb={4}>
-                <Text fz="0.95rem" fw={700} c="var(--text-primary)">
+                <Text fz="0.9375rem" fw={600} c="var(--text-primary)" lts="-0.01em">
                   {isFullyCleared
-                    ? "✓ Attendance Requirement Fulfilled"
+                    ? "✓ Completed"
                     : hasLiveSession
-                    ? "🔴 Check-In In Progress"
-                    : "Clearance Requirement Status"}
+                    ? "Session in progress"
+                    : "Attendance progress"}
                 </Text>
                 <Badge
                   size="xs"
                   variant="light"
                   color={isFullyCleared ? "teal" : hasLiveSession ? "red" : "blue"}
-                  styles={{ root: { fontWeight: 700, fontVariantNumeric: "tabular-nums" } }}
+                  styles={{ root: { fontWeight: 600, fontVariantNumeric: "tabular-nums" } }}
                 >
-                  {checkedCount} / {totalSessions} Sessions ({progressPercent}%)
+                  {checkedCount} of {totalSessions} Sessions ({progressPercent}%)
                 </Badge>
               </Group>
 
               <Text fz="0.775rem" c="var(--text-secondary)">
                 {isFullyCleared
-                  ? "You have completed all mandatory check-in sessions for this event."
+                  ? "You have attended all sessions for this event."
                   : hasLiveSession
-                  ? "A scanner session is currently open. Walk to the campus kiosk or scan your pass."
-                  : `Attend all ${totalSessions} sessions to earn full clearance credit.`}
+                  ? "Check-in is currently open for this event."
+                  : `Attend all ${totalSessions} sessions to complete this event.`}
               </Text>
             </div>
 
             <Box style={{ width: 140, flexShrink: 0 }}>
               <Progress
                 value={progressPercent}
-                size="md"
+                size="sm"
                 color={isFullyCleared ? "teal" : hasLiveSession ? "red" : "blue"}
                 radius="xl"
               />
             </Box>
           </div>
 
-          {/* ─── Connected Timeline Session Stream ─── */}
+          {/* ─── Sessions Stream ─── */}
           <div>
-            <div className="timeline-section-title">Event Schedule & Check-In Receipts</div>
+            <div className="timeline-section-title">Sessions & attendance</div>
 
             {sessions.length === 0 ? (
               <Box py="xl" ta="center">

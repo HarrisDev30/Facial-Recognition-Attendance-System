@@ -58,7 +58,7 @@ export default function UserMenu({
   };
 
   return (
-    <Menu shadow="md" width={240} offset={8}>
+    <Menu shadow="md" width={240} offset={8} position="bottom-end" transitionProps={{ transition: "pop-top-right", duration: 160 }}>
       <Menu.Target>
         <UnstyledButton className="btn-pressable">
           <Group gap="xs">
@@ -68,7 +68,7 @@ export default function UserMenu({
               lastName={lastName}
               size="sm"
             />
-            <Text size="sm" visibleFrom="sm" c="var(--text-primary)">
+            <Text size="sm" visibleFrom="sm" c="var(--text-primary)" fw={500}>
               {firstName ?? email ?? "User"}
             </Text>
             <Box visibleFrom="sm" style={{ display: "flex", alignItems: "center" }}>
@@ -84,48 +84,69 @@ export default function UserMenu({
       <Menu.Dropdown
         style={{
           background: "var(--surface-1)",
+          backdropFilter: "blur(20px)",
           border: "1px solid var(--border-subtle)",
-          boxShadow: "var(--shadow-card)",
+          boxShadow: "0 12px 32px -4px rgba(0, 0, 0, 0.28)",
+          borderRadius: "14px",
+          padding: "6px",
         }}
       >
-        <div style={{ padding: `${rem(8)} ${rem(12)}` }}>
-          <Text size="sm" fw={600} c="var(--text-primary)">
+        <div style={{ padding: "8px 10px" }}>
+          <Text size="sm" fw={600} c="var(--text-primary)" lh={1.2}>
             {displayName}
           </Text>
           {email && (
-            <Text size="xs" c="dimmed">
+            <Text size="xs" c="dimmed" mt={2} lineClamp={1}>
               {email}
             </Text>
           )}
         </div>
-        <Menu.Divider />
+        <Menu.Divider style={{ borderColor: "var(--border-subtle)", margin: "4px 0" }} />
         <Menu.Item
           leftSection={
-            <IconUser style={{ width: rem(16), height: rem(16) }} />
+            <IconUser style={{ width: rem(15), height: rem(15) }} />
           }
           onClick={handleProfileClick}
+          style={{
+            borderRadius: "8px",
+            fontSize: "13px",
+            fontWeight: 500,
+            transition: "transform 140ms var(--ease-out), background-color 140ms ease",
+          }}
         >
           Profile Settings
         </Menu.Item>
         <Menu.Item
           leftSection={
             isDark ? (
-              <IconSun size={16} style={{ color: "var(--text-primary)" }} />
+              <IconSun size={15} style={{ color: "var(--text-primary)" }} />
             ) : (
-              <IconMoon size={16} style={{ color: "var(--text-primary)" }} />
+              <IconMoon size={15} style={{ color: "var(--text-primary)" }} />
             )
           }
           onClick={toggleTheme}
+          style={{
+            borderRadius: "8px",
+            fontSize: "13px",
+            fontWeight: 500,
+            transition: "transform 140ms var(--ease-out), background-color 140ms ease",
+          }}
         >
           {isDark ? "Light Mode" : "Dark Mode"}
         </Menu.Item>
-        <Menu.Divider />
+        <Menu.Divider style={{ borderColor: "var(--border-subtle)", margin: "4px 0" }} />
         <Menu.Item
           color="red"
           leftSection={
-            <IconLogout style={{ width: rem(16), height: rem(16) }} />
+            <IconLogout style={{ width: rem(15), height: rem(15) }} />
           }
           onClick={onLogout}
+          style={{
+            borderRadius: "8px",
+            fontSize: "13px",
+            fontWeight: 500,
+            transition: "transform 140ms var(--ease-out), background-color 140ms ease",
+          }}
         >
           Sign Out
         </Menu.Item>

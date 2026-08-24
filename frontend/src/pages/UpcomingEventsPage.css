@@ -1,9 +1,75 @@
 /* ==========================================================================
-   Upcoming Events Page Styles — Emil Kowalski Design Engineering
-   Apple Calendar Badges, Category Ambient Accents & Responsive Flow
+   Upcoming Events Page Styles — Emil Kowalski Craft & Dashboard Consistency
+   Apple Calendar Badges, Clean Header Pod, Responsive Card Flow
    ========================================================================== */
 
-/* ─── Filter Bar ─── */
+/* ─── 1. Directory Hero Header Card ─── */
+.events-directory-header {
+  position: relative;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.events-header-text {
+  flex: 1;
+  min-width: 260px;
+}
+
+/* Directory Telemetry Pod */
+.events-telemetry-pod {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 10px 16px;
+  flex-shrink: 0;
+}
+
+.events-pod-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.pod-metric-val {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.pod-metric-val.is-live {
+  color: #ef4444;
+}
+
+.pod-metric-lbl {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.events-pod-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-subtle);
+}
+
+/* ─── 2. Filter Bar Track ─── */
 .events-filter-track {
   display: flex;
   align-items: center;
@@ -21,19 +87,22 @@
 
 .events-filter-chip {
   padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.775rem;
   font-weight: 500;
-  background: var(--surface-1);
+  background: var(--surface-0);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--duration-fast) ease,
-              border-color var(--duration-fast) ease,
-              color var(--duration-fast) ease,
-              transform var(--duration-fast) var(--ease-out);
+  transition: background 150ms ease,
+              border-color 150ms ease,
+              color 150ms ease,
+              transform 150ms var(--craft-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
   user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .events-filter-chip:hover {
@@ -47,14 +116,20 @@
 }
 
 .events-filter-chip.is-active {
-  background: var(--brand-primary);
-  color: var(--brand-contrast-text);
-  border-color: var(--brand-primary);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-strong, #888888);
   font-weight: 600;
-  box-shadow: 0 0 14px -2px var(--brand-glow);
 }
 
-/* ─── Event Grid Card ─── */
+.events-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+/* ─── 3. Event Grid Card ─── */
 .event-grid-card {
   position: relative;
   background: var(--surface-1);
@@ -68,16 +143,16 @@
   cursor: pointer;
   text-decoration: none;
   color: inherit;
-  transition: transform var(--duration-fast) var(--ease-out),
-              box-shadow var(--duration-fast) ease,
-              border-color var(--duration-fast) ease;
+  transition: transform 180ms var(--craft-ease-out, cubic-bezier(0.23, 1, 0.32, 1)),
+              box-shadow 180ms ease,
+              border-color 180ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .event-grid-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.12);
-    border-color: var(--card-border-hover, var(--brand-border));
+    border-color: var(--border-hover);
   }
 }
 
@@ -88,7 +163,7 @@
 /* ─── Event Card Header Banner ─── */
 .event-card-header {
   position: relative;
-  height: 120px;
+  height: 110px;
   background: var(--card-banner-bg, linear-gradient(135deg, var(--surface-2) 0%, var(--surface-3) 100%));
   display: flex;
   align-items: flex-start;
@@ -101,18 +176,19 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+  background: radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
   pointer-events: none;
 }
 
 /* ─── Apple Calendar Micro-Badge ─── */
 .event-calendar-badge {
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 8px;
-  width: 44px;
-  height: 46px;
+  width: 42px;
+  height: 44px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -123,7 +199,7 @@
 }
 
 .event-cal-month {
-  font-size: 0.575rem;
+  font-size: 0.55rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -133,7 +209,7 @@
 }
 
 .event-cal-day {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #ffffff;
   line-height: 1;
@@ -142,19 +218,21 @@
 
 /* ─── Card Body ─── */
 .event-card-body {
-  padding: 16px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   flex: 1;
   justify-content: space-between;
+  background: var(--surface-1);
 }
 
 .event-card-title {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.9375rem;
+  font-weight: 600;
   color: var(--text-primary);
   line-height: 1.35;
-  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
 }
 
 .event-card-desc {
@@ -168,7 +246,7 @@
 .event-meta-cluster {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   margin-top: auto;
   padding-top: 10px;
   border-top: 1px solid var(--border-subtle);
@@ -178,13 +256,13 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.725rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
 .event-meta-row svg {
   flex-shrink: 0;
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 /* ─── Card Footer Action ─── */
@@ -196,24 +274,50 @@
   padding-top: 10px;
   border-top: 1px dashed var(--border-subtle);
   font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--brand-primary);
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color 150ms ease;
 }
 
-.event-card-footer-arrow {
-  transition: transform var(--duration-fast) var(--ease-out);
+.event-footer-arrow-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: transform 150ms ease, background-color 150ms ease, color 150ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .event-grid-card:hover .event-card-footer-arrow {
-    transform: translateX(3px);
+  .event-grid-card:hover .event-card-footer {
+    color: var(--text-primary);
+  }
+  .event-grid-card:hover .event-footer-arrow-box {
+    background: var(--surface-0);
+    color: var(--text-primary);
+    transform: translateX(2px);
   }
 }
 
 /* ─── Mobile Responsiveness (≤640px) ─── */
 @media (max-width: 640px) {
+  .events-directory-header {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .events-telemetry-pod {
+    width: 100%;
+    justify-content: space-around;
+    padding: 8px 12px;
+  }
+
   .event-card-header {
-    height: 100px;
+    height: 96px;
     padding: 10px 12px;
   }
 
@@ -222,6 +326,6 @@
   }
 
   .event-card-title {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
   }
 }

@@ -304,7 +304,6 @@
 .auth-page-container[data-theme="light"] select,
 .auth-page-container[data-theme="light"] .mantine-TextInput-input,
 .auth-page-container[data-theme="light"] .mantine-PasswordInput-input,
-.auth-page-container[data-theme="light"] .mantine-PasswordInput-innerInput,
 .auth-page-container[data-theme="light"] .mantine-Select-input {
   background-color: #ffffff !important;
   color: #171717 !important;
@@ -313,6 +312,14 @@
   height: 42px !important;
   font-size: 0.875rem !important;
   transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.auth-page-container .mantine-PasswordInput-innerInput {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  height: 100% !important;
 }
 
 .auth-page-container[data-theme="light"] input::placeholder,
@@ -362,7 +369,6 @@
 .auth-page-container[data-theme="dark"] select,
 .auth-page-container[data-theme="dark"] .mantine-TextInput-input,
 .auth-page-container[data-theme="dark"] .mantine-PasswordInput-input,
-.auth-page-container[data-theme="dark"] .mantine-PasswordInput-innerInput,
 .auth-page-container[data-theme="dark"] .mantine-Select-input {
   background-color: rgba(26, 26, 26, 0.85) !important;
   color: #ffffff !important;

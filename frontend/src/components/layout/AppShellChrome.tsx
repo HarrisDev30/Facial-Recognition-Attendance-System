@@ -5,7 +5,6 @@ import {
   NavLink,
   Burger,
   rem,
-  Box,
   ScrollArea,
   Stack,
   UnstyledButton,
@@ -86,9 +85,25 @@ export default function AppShellChrome({
             component={Link}
             to={item.to}
             label={item.label}
-            leftSection={<Icon style={{ width: rem(20), height: rem(20) }} />}
+            leftSection={<Icon style={{ width: rem(18), height: rem(18) }} />}
             active={active}
             onClick={close}
+            styles={{
+              root: {
+                borderRadius: "6px",
+                padding: "8px 12px",
+                fontSize: "14px",
+                fontWeight: active ? 600 : 500,
+                color: active ? "var(--text-primary)" : "var(--text-secondary)",
+                backgroundColor: active ? "var(--surface-2)" : "transparent",
+                transition: "background-color 150ms ease, color 150ms ease",
+                marginBottom: "2px",
+              },
+              label: {
+                fontSize: "14px",
+                letterSpacing: "-0.01em",
+              },
+            }}
           />
         );
       })}
@@ -161,20 +176,19 @@ export default function AppShellChrome({
             backdropFilter: "blur(16px)",
             backgroundColor: "var(--surface-1)",
             borderBottom: "1px solid var(--border-subtle)",
-            backgroundImage: "radial-gradient(circle at 10% 0%, var(--brand-surface) 0%, transparent 65%)",
             transition: "border-color 200ms ease, background-color 200ms ease",
           }}
         >
           <Group h="100%" px={{ base: "xs", sm: "md" }} justify="space-between" wrap="nowrap">
             <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
-              <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+              {navLabel !== "Student" && (
+                <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+              )}
               <Wordmark />
             </Group>
-            <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
+            <Group gap={8} wrap="nowrap" align="center" style={{ flexShrink: 0 }}>
               {headerRight}
-              <Box visibleFrom="sm">
-                <ThemeToggle />
-              </Box>
+              <ThemeToggle />
               <NotificationBell />
               <UserMenu
                 email={email ?? undefined}

@@ -8,20 +8,22 @@ import {
   SimpleGrid,
   Box,
   Skeleton,
+  Group,
 } from "@mantine/core";
 import {
   IconCalendarEvent,
   IconMapPin,
   IconClock,
-  IconArrowRight,
+  IconChevronRight,
   IconAlertCircle,
+  IconCalendar,
 } from "@tabler/icons-react";
 import { getAllEvents } from "../api/events";
 import type { UpcomingEvent } from "../types/event";
-import PageHeader from "../components/layout/PageHeader";
 import EmptyState from "../components/EmptyState";
 import { useAsync } from "../hooks";
 import { EVENT_TYPE_COLORS } from "../utils/constants";
+import { formatDate } from "../utils/formatters";
 import "./UpcomingEventsPage.css";
 
 const EVENT_GRADIENTS: Record<string, string> = {
@@ -85,16 +87,56 @@ export default function UpcomingEventsPage() {
   );
 
   return (
-    <Container size="lg" pt={0} pb="4xl" px={{ base: "xs", sm: "md" }}>
-      <PageHeader title="Events Directory" />
+    <Container
+      size="lg"
+      pt={{ base: "xs", sm: 0 }}
+      pb={{ base: "6.5rem", sm: "4xl" }}
+      px={{ base: "14px", sm: "md" }}
+    >
+      {/* ─── 1. Header ─── */}
+      <div className="events-directory-header">
+        <div className="events-header-text">
+          <Group gap={8} align="center">
+            <IconCalendar size={20} style={{ color: "var(--brand-primary)" }} />
+            <Text fz={{ base: "1.25rem", sm: "1.5rem" }} fw={600} c="var(--text-primary)" lh={1.2} lts="-0.02em">
+              Events
+            </Text>
+          </Group>
+          <Text fz="0.8125rem" c="var(--text-secondary)" mt={4}>
+            Browse scheduled campus events and session times.
+          </Text>
+        </div>
+
+        {/* Directory Counts Pod */}
+        <div className="events-telemetry-pod">
+          <div className="events-pod-metric">
+            <span className="pod-metric-val">{counts.all}</span>
+            <span className="pod-metric-lbl">Total Events</span>
+          </div>
+          <div className="events-pod-divider" />
+          <div className="events-pod-metric">
+            <span className={`pod-metric-val ${counts.active > 0 ? "is-live" : ""}`}>
+              {counts.active}
+            </span>
+            <span className="pod-metric-lbl">Active Now</span>
+          </div>
+        </div>
+      </div>
 
       {error && (
-        <Alert icon={<IconAlertCircle size={16} />} color="red" mb="md" withCloseButton onClose={() => setError(null)}>
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          color="red"
+          variant="light"
+          mb="md"
+          withCloseButton
+          onClose={() => setError(null)}
+        >
           {error}
         </Alert>
       )}
 
-      {/* ─── Frictionless Horizontal Filter Track ─── */}
+      {/* ─── 2. Filter Bar ─── */}
       {list.length > 0 && (
         <div className="events-filter-track">
           <button
@@ -102,14 +144,15 @@ export default function UpcomingEventsPage() {
             className={`events-filter-chip ${filter === "all" ? "is-active" : ""}`}
             onClick={() => setFilter("all")}
           >
-            All Events ({counts.all})
+            All ({counts.all})
           </button>
           <button
             type="button"
             className={`events-filter-chip ${filter === "active" ? "is-active" : ""}`}
             onClick={() => setFilter("active")}
           >
-            🔴 Active Now ({counts.active})
+            {counts.active > 0 && <span className="events-chip-dot" />}
+            Active ({counts.active})
           </button>
           <button
             type="button"
@@ -123,13 +166,14 @@ export default function UpcomingEventsPage() {
             className={`events-filter-chip ${filter === "past" ? "is-active" : ""}`}
             onClick={() => setFilter("past")}
           >
-            Past Sessions ({counts.past})
+            Past ({counts.past})
           </button>
         </div>
       )}
 
+      {/* ─── 3. Event Cards Grid ─── */}
       {loading && (
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
           <Skeleton height={260} radius="md" />
           <Skeleton height={260} radius="md" />
           <Skeleton height={260} radius="md" />
@@ -143,7 +187,7 @@ export default function UpcomingEventsPage() {
           icon={<IconCalendarEvent size={28} />}
         />
       ) : (
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
           {filtered.map((ev) => {
             const accentColor = EVENT_TYPE_COLORS[ev.event_type] || "blue";
             const bannerBg = ev.photo_url
@@ -190,9 +234,10 @@ export default function UpcomingEventsPage() {
                       styles={{
                         root: {
                           backdropFilter: "blur(8px)",
-                          fontWeight: 700,
+                          fontWeight: 600,
                           textTransform: "uppercase",
                           letterSpacing: "0.04em",
+                          borderRadius: "4px",
                         },
                       }}
                     >
@@ -204,8 +249,8 @@ export default function UpcomingEventsPage() {
                         color="red"
                         variant="filled"
                         size="xs"
-                        leftSection={<span className="live-indicator-dot" style={{ width: 6, height: 6 }} />}
-                        styles={{ root: { fontWeight: 700 } }}
+                        leftSection={<span className="live-indicator-dot" />}
+                        styles={{ root: { fontWeight: 700, borderRadius: "4px" } }}
                       >
                         LIVE
                       </Badge>
@@ -230,24 +275,26 @@ export default function UpcomingEventsPage() {
                   {/* Metadata Cluster */}
                   <div className="event-meta-cluster">
                     <div className="event-meta-row">
-                      <IconMapPin size={14} />
+                      <IconMapPin size={13} />
                       <Text fz="0.75rem" c="var(--text-secondary)" lineClamp={1}>
                         {ev.venue || "Campus Venue TBD"}
                       </Text>
                     </div>
 
                     <div className="event-meta-row">
-                      <IconClock size={14} />
-                      <Text fz="0.75rem" c="var(--text-secondary)">
-                        {ev.sessions_count} Session{ev.sessions_count !== 1 ? "s" : ""} Required
+                      <IconClock size={13} />
+                      <Text fz="0.75rem" c="var(--text-secondary)" style={{ fontVariantNumeric: "tabular-nums" }}>
+                        {formatDate(ev.date)} • {ev.sessions_count} Session{ev.sessions_count !== 1 ? "s" : ""}
                       </Text>
                     </div>
                   </div>
 
                   {/* Card Footer Action */}
                   <div className="event-card-footer">
-                    <span>View Schedule & Clearance</span>
-                    <IconArrowRight size={14} className="event-card-footer-arrow" />
+                    <span>View details</span>
+                    <div className="event-footer-arrow-box">
+                      <IconChevronRight size={14} />
+                    </div>
                   </div>
                 </div>
               </div>

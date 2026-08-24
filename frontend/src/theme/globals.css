@@ -260,11 +260,13 @@ html, body {
   background: #ffffff;
   border: 1px solid #d4d4d4;
   color: #171717;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   cursor: pointer;
-  padding: 0;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box;
   transition: background-color var(--duration-fast) ease,
               border-color var(--duration-fast) ease,
               color var(--duration-fast) ease,
@@ -273,7 +275,12 @@ html, body {
 }
 
 .theme-toggle-btn svg {
+  display: block;
+  width: 17px;
+  height: 17px;
+  margin: auto;
   color: #171717;
+  flex-shrink: 0;
   will-change: transform;
 }
 
@@ -305,6 +312,27 @@ html, body {
 
 .theme-toggle-btn:active {
   transform: scale(0.95) !important;
+}
+
+/* ─── Universal Notification Bell Button (Extends Theme Toggle Box) ─── */
+.notification-bell-btn {
+  position: relative;
+}
+
+.notification-unread-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 1.5px var(--surface-1, #121214);
+  pointer-events: none;
+}
+
+.notification-bell-btn.is-active {
+  border-color: var(--brand-primary, #38bdf8) !important;
 }
 
 /* ─── Universal Brand Logo Mark (Crisp Stark White) ─── */
@@ -357,5 +385,75 @@ html, body {
 [data-mantine-color-scheme="dark"] [data-combobox-option][data-hovered] {
   background-color: rgba(255, 255, 255, 0.12) !important;
   color: #ffffff !important;
+}
+
+/* ─── Universal Mantine Menu Theme Polish (Light & Dark Hover Fixes) ─── */
+.mantine-Menu-dropdown {
+  background: var(--surface-1) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.28) !important;
+  border-radius: 14px !important;
+  padding: 6px !important;
+}
+
+.mantine-Menu-item {
+  color: var(--text-primary) !important;
+  background-color: transparent !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: background-color var(--duration-fast, 150ms) ease,
+              transform var(--duration-fast, 150ms) var(--ease-out, ease-out) !important;
+}
+
+.mantine-Menu-item:hover,
+.mantine-Menu-item[data-hovered] {
+  background-color: var(--surface-2) !important;
+  color: var(--text-primary) !important;
+}
+
+.mantine-Menu-item:active {
+  transform: scale(0.98) !important;
+}
+
+.mantine-Menu-item[data-color="red"],
+.mantine-Menu-item.menu-item-danger {
+  color: var(--error, #ef4444) !important;
+}
+
+.mantine-Menu-item[data-color="red"]:hover,
+.mantine-Menu-item[data-color="red"][data-hovered] {
+  background-color: var(--error-soft, rgba(239, 68, 68, 0.12)) !important;
+  color: var(--error, #ef4444) !important;
+}
+
+/* ─── Universal Mantine Button Theme Consistency ─── */
+.mantine-Button-root[data-variant="default"] {
+  background-color: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+}
+
+.mantine-Button-root[data-variant="default"]:hover {
+  background-color: var(--surface-2) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text-primary) !important;
+}
+
+.mantine-Button-root[data-variant="filled"] {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+
+.mantine-Button-root[data-variant="filled"][data-color="red"] {
+  background-color: var(--error, #ef4444) !important;
+  color: #ffffff !important;
+}
+
+.mantine-Button-root[data-variant="filled"][data-color="red"]:hover {
+  background-color: #dc2626 !important;
 }
 

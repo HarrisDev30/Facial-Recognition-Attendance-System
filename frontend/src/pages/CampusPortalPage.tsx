@@ -3,13 +3,13 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Button,
   TextInput,
-  PasswordInput,
   Title,
   Text,
   Group,
   Stack,
   Loader,
   Alert,
+  ActionIcon,
 } from "@mantine/core";
 import {
   IconBuildingArch,
@@ -23,6 +23,8 @@ import {
   IconArrowRight,
   IconRosetteDiscountCheckFilled,
   IconShieldCheck,
+  IconEye,
+  IconEyeOff,
 } from "@tabler/icons-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -94,6 +96,7 @@ export default function CampusPortalPage() {
   // Form State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -225,7 +228,7 @@ export default function CampusPortalPage() {
     setAuthError(null);
 
     try {
-      await login(email.trim(), password);
+      await login(email.trim(), password, slug);
       const currentUser = useAuthStore.getState().user;
       if (currentUser) {
         navigate(roleHome(currentUser.role), { replace: true });
@@ -400,16 +403,30 @@ export default function CampusPortalPage() {
                 }}
               />
 
-              <PasswordInput
+              <TextInput
+                type={showPassword ? "text" : "password"}
                 label="Password"
-                placeholder="Enter your password"
+                placeholder="••••••••"
                 required
                 leftSection={<IconLock size={16} />}
                 leftSectionPointerEvents="none"
+                rightSection={
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    style={{ color: "var(--text-muted, #737373)" }}
+                  >
+                    {showPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                  </ActionIcon>
+                }
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 styles={{
-                  innerInput: { paddingLeft: "42px" },
+                  input: { paddingLeft: "42px", paddingRight: "38px" },
                 }}
               />
 

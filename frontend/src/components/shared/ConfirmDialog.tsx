@@ -24,14 +24,47 @@ export default function ConfirmDialog({
   loading = false,
 }: ConfirmDialogProps) {
   return (
-    <Modal opened={opened} onClose={onClose} title={title} size="sm">
-      <Stack>
-        <Text size="sm">{message}</Text>
-        <Group justify="flex-end" gap="sm">
-          <Button variant="default" onClick={onClose} disabled={loading}>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={title}
+      size="sm"
+      centered
+      radius="lg"
+      overlayProps={{
+        backgroundOpacity: 0.45,
+        blur: 4,
+      }}
+    >
+      <Stack gap="md">
+        <Text size="sm" c="var(--text-secondary)" lh={1.5}>
+          {message}
+        </Text>
+        <Group justify="flex-end" gap="xs" mt="xs">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onClose}
+            disabled={loading}
+            style={{
+              borderRadius: "8px",
+              fontWeight: 500,
+              color: "var(--text-primary)",
+              borderColor: "var(--border-subtle)",
+            }}
+          >
             {cancelLabel}
           </Button>
-          <Button color={color} onClick={onConfirm} loading={loading}>
+          <Button
+            color={color}
+            size="sm"
+            onClick={onConfirm}
+            loading={loading}
+            style={{
+              borderRadius: "8px",
+              fontWeight: 600,
+            }}
+          >
             {confirmLabel}
           </Button>
         </Group>
