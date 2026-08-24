@@ -410,21 +410,24 @@ export default function StudentSignUpPage() {
 
       {/* Top Navbar */}
       <header className="auth-top-nav">
-        <Link to="/" className="auth-brand-link">
-          <div className="auth-logo-badge">
-            <IconScan size={18} color="#ffffff" stroke={2.5} />
-          </div>
-          <span className="auth-brand-name">Attendify</span>
-        </Link>
+        <div className="auth-nav-inner">
+          <Link to="/" className="landing-brand">
+            <div className="brand-logo-mark">
+              <IconScan size={20} color="#ffffff" stroke={2.5} />
+            </div>
+            <span className="brand-title">Attendify</span>
+            <span className="brand-version-badge">v2.0</span>
+          </Link>
 
-        <button
-          className="auth-theme-toggle"
-          onClick={toggleTheme}
-          title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
-          aria-label="Toggle theme mode"
-        >
-          {theme === "dark" ? <IconSun size={16} /> : <IconMoon size={16} />}
-        </button>
+          <button
+            className="theme-toggle-btn auth-theme-toggle"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+            aria-label="Toggle theme mode"
+          >
+            {theme === "dark" ? <IconSun size={17} /> : <IconMoon size={17} />}
+          </button>
+        </div>
       </header>
 
       {/* Main Glassmorphic Card with Progressive Flow */}

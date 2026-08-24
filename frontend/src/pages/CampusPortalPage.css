@@ -149,14 +149,14 @@
   gap: 12px;
 }
 
-.portal-landing-brand {
+.landing-brand {
   display: flex;
   align-items: center;
   gap: 10px;
   text-decoration: none;
 }
 
-.portal-brand-logo-mark {
+.brand-logo-mark {
   width: 32px;
   height: 32px;
   background: var(--campus-brand, #171717);
@@ -167,9 +167,10 @@
   justify-content: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  flex-shrink: 0;
 }
 
-.portal-brand-title {
+.brand-title {
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: -0.03em;

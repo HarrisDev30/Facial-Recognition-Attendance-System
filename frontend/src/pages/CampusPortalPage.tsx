@@ -300,11 +300,11 @@ export default function CampusPortalPage() {
       <header className="campus-portal-nav">
         <div className="campus-nav-inner">
           <div className="nav-left">
-            <Link to="/" className="portal-landing-brand">
-              <div className="portal-brand-logo-mark">
+            <Link to="/" className="landing-brand">
+              <div className="brand-logo-mark">
                 <IconScan size={20} color="#ffffff" stroke={2.5} />
               </div>
-              <span className="portal-brand-title">Attendify</span>
+              <span className="brand-title">Attendify</span>
             </Link>
             <span className="portal-nav-divider">/</span>
             <span className="portal-campus-code">{institution.code.toUpperCase()}</span>

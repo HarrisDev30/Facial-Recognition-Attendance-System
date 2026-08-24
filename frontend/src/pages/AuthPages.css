@@ -123,60 +123,79 @@
   opacity: 0.12;
 }
 
-/* ─── Top Navigation Bar ─── */
+/* ─── Top Navigation Bar (Exact 1:1 Pixel Match with Landing Page) ─── */
 .auth-top-nav {
   position: sticky;
   top: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
+  z-index: 100;
+  height: 64px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   background-color: var(--auth-nav-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 2px solid var(--campus-brand, var(--auth-border));
-  box-shadow: 0 4px 20px var(--campus-brand-subtle, rgba(0, 0, 0, 0.04));
+  border-bottom: 1px solid var(--auth-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.auth-brand-link {
+.auth-nav-inner {
+  max-width: 1280px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.landing-brand {
   display: flex;
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  color: var(--auth-text-heading);
+  color: var(--auth-text-heading, #171717);
+  z-index: 1;
 }
 
-.auth-logo-badge {
+.auth-page-container[data-theme="dark"] .landing-brand {
+  color: #ffffff;
+}
+
+.brand-logo-mark {
   width: 32px;
   height: 32px;
-  background: var(--campus-brand, #171717);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #171717;
+  border: 1px solid var(--auth-border, rgba(255, 255, 255, 0.16));
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  flex-shrink: 0;
 }
 
-.auth-page-container[data-theme="dark"] .auth-logo-badge {
-  background: var(--campus-brand, #171717);
+.auth-page-container[data-theme="dark"] .brand-logo-mark {
+  background: #171717;
   border: 1px solid #333333;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.auth-logo-badge svg {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
-}
-
-.auth-brand-name {
+.brand-title {
+  font-size: 1.15rem;
   font-weight: 700;
-  font-size: 1.05rem;
-  letter-spacing: -0.5px;
-  color: var(--auth-text-heading);
+  letter-spacing: -0.03em;
+  color: inherit;
+}
+
+.brand-version-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  background: var(--auth-surface-subtle, #f5f5f5);
+  color: var(--auth-text-muted, #888888);
+  border: 1px solid var(--auth-border, #ebebeb);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .auth-theme-toggle {
