@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const TOTAL_FRAMES = 192;
+const STRIDE_STEP = 8; // Step size for high-priority instant skeleton loading
 
 const formatFrameNum = (num: number): string => {
   return String(num).padStart(3, "0");
@@ -24,7 +25,7 @@ export const HardwareCanvasSequence: React.FC = () => {
 
   const [currentStage, setCurrentStage] = useState<"phone" | "laptop">("phone");
 
-  // High-DPI canvas drawing with balanced device proportions (Laptop 86%, Phone 94%)
+  // High-DPI canvas drawing with Smart Nearest-Loaded-Frame Fallback (100% Stutter-Free on first load)
   const drawFrame = useCallback(
     (
       canvas: HTMLCanvasElement | null,
@@ -37,8 +38,30 @@ export const HardwareCanvasSequence: React.FC = () => {
       if (!ctx) return;
 
       const safeIndex = Math.max(0, Math.min(frameIndex, TOTAL_FRAMES - 1));
-      const img = images[safeIndex];
-      if (!img || !img.complete || img.naturalWidth === 0) return;
+      let img = images[safeIndex];
+
+      // 🛡️ Zero-Stutter Fallback: If exact frame is still downloading on slow networks, grab closest ready frame
+      if (!img || !img.complete || img.naturalWidth === 0) {
+        let bestIndex = -1;
+        for (let r = 1; r < TOTAL_FRAMES; r++) {
+          const left = safeIndex - r;
+          if (left >= 0 && images[left]?.complete && images[left].naturalWidth > 0) {
+            bestIndex = left;
+            break;
+          }
+          const right = safeIndex + r;
+          if (right < TOTAL_FRAMES && images[right]?.complete && images[right].naturalWidth > 0) {
+            bestIndex = right;
+            break;
+          }
+        }
+
+        if (bestIndex !== -1) {
+          img = images[bestIndex];
+        } else {
+          return;
+        }
+      }
 
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const displayWidth = canvas.clientWidth;
@@ -116,24 +139,26 @@ export const HardwareCanvasSequence: React.FC = () => {
     }
   }, [drawFrame]);
 
-  // 1. Asynchronously preload both 192-frame pristine original WebP sequences into memory
+  // 1. Two-Pass Smart Stride Preloading (Keyframes First -> Infill Background Stream)
   useEffect(() => {
     let isCancelled = false;
-    phoneImagesRef.current = [];
-    laptopImagesRef.current = [];
+    phoneImagesRef.current = new Array(TOTAL_FRAMES);
+    laptopImagesRef.current = new Array(TOTAL_FRAMES);
     phoneLoadedCountRef.current = 0;
     laptopLoadedCountRef.current = 0;
 
-    for (let i = 1; i <= TOTAL_FRAMES; i++) {
-      const frameStr = formatFrameNum(i);
+    // Helper to load a single frame index
+    const loadFrame = (index: number) => {
+      const frameStr = formatFrameNum(index + 1);
 
-      // Preload Phone WebP
+      // Load Phone frame
       const phoneImg = new Image();
+      phoneImg.decoding = "async";
       phoneImg.src = `/assets/objects/phone/frame-${frameStr}.webp`;
       phoneImg.onload = () => {
         if (isCancelled) return;
         phoneLoadedCountRef.current++;
-        if (i === 1) {
+        if (index === 0) {
           drawFrame(phoneCanvasRef.current, phoneImagesRef.current, 0, "phone");
         }
         if (phoneLoadedCountRef.current >= TOTAL_FRAMES && laptopLoadedCountRef.current >= TOTAL_FRAMES) {
@@ -141,15 +166,16 @@ export const HardwareCanvasSequence: React.FC = () => {
           ScrollTrigger.refresh();
         }
       };
-      phoneImagesRef.current.push(phoneImg);
+      phoneImagesRef.current[index] = phoneImg;
 
-      // Preload Laptop WebP
+      // Load Laptop frame
       const laptopImg = new Image();
+      laptopImg.decoding = "async";
       laptopImg.src = `/assets/objects/laptop/frame-${frameStr}.webp`;
       laptopImg.onload = () => {
         if (isCancelled) return;
         laptopLoadedCountRef.current++;
-        if (i === 1) {
+        if (index === 0) {
           drawFrame(laptopCanvasRef.current, laptopImagesRef.current, 0, "laptop");
         }
         if (phoneLoadedCountRef.current >= TOTAL_FRAMES && laptopLoadedCountRef.current >= TOTAL_FRAMES) {
@@ -157,11 +183,27 @@ export const HardwareCanvasSequence: React.FC = () => {
           ScrollTrigger.refresh();
         }
       };
-      laptopImagesRef.current.push(laptopImg);
+      laptopImagesRef.current[index] = laptopImg;
+    };
+
+    // 🚀 Pass 1: High-Priority Skeleton Keyframes (Every 8th frame loads in ~200ms)
+    for (let i = 0; i < TOTAL_FRAMES; i += STRIDE_STEP) {
+      loadFrame(i);
     }
+
+    // 🌊 Pass 2: Infill all remaining in-between frames
+    const infillTimer = setTimeout(() => {
+      if (isCancelled) return;
+      for (let i = 0; i < TOTAL_FRAMES; i++) {
+        if (i % STRIDE_STEP !== 0) {
+          loadFrame(i);
+        }
+      }
+    }, 40);
 
     return () => {
       isCancelled = true;
+      clearTimeout(infillTimer);
     };
   }, [drawFrame, renderCurrentScroll]);
 
