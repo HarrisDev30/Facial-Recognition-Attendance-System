@@ -118,17 +118,13 @@ export default function LandingPage() {
   const scrollToSection = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
 
-    // Ensure all ScrollTriggers are refreshed
-    ScrollTrigger.refresh();
-
     if (id === "hardware") {
       const st = ScrollTrigger.getById("hardware-trigger");
       if (st) {
         gsap.to(window, {
           scrollTo: { y: st.start + 2, autoKill: false },
-          duration: 0.85,
-          ease: "power2.inOut",
-          onComplete: () => ScrollTrigger.refresh(),
+          duration: 1.15,
+          ease: "power3.inOut",
         });
         return;
       }
@@ -138,9 +134,8 @@ export default function LandingPage() {
     if (el) {
       gsap.to(window, {
         scrollTo: { y: el, offsetY: 72, autoKill: false },
-        duration: 0.85,
-        ease: "power2.inOut",
-        onComplete: () => ScrollTrigger.refresh(),
+        duration: 1.15,
+        ease: "power3.inOut",
       });
     }
   };
@@ -150,9 +145,8 @@ export default function LandingPage() {
     if (el) {
       gsap.to(window, {
         scrollTo: { y: el, offsetY: 72, autoKill: false },
-        duration: 0.85,
-        ease: "power2.inOut",
-        onComplete: () => ScrollTrigger.refresh(),
+        duration: 1.15,
+        ease: "power3.inOut",
       });
     }
   };
