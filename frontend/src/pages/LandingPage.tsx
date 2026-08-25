@@ -7,11 +7,10 @@ import {
   IconBuildingArch,
   IconSparkles,
   IconLockCheck,
-  IconSun,
-  IconMoon,
 } from "@tabler/icons-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { useGSAP } from "@gsap/react";
 
 import { getInstitutions } from "../api/institutions";
@@ -20,12 +19,12 @@ import { AnimatedBackground } from "../components/landing/AnimatedBackground";
 import { InteractiveCampusCarousel } from "../components/landing/InteractiveCampusCarousel";
 import { HeroProductWindow } from "../components/landing/HeroProductWindow";
 import { ScrollPipelineSection } from "../components/landing/ScrollPipelineSection";
-import { MultiDeviceMeshSection } from "../components/landing/MultiDeviceMeshSection";
+import { HardwareCanvasSequence } from "../components/landing/HardwareCanvasSequence";
 import { PrivacyVaultSection } from "../components/landing/PrivacyVaultSection";
 import { CampusOnboardingModal } from "../components/landing/CampusOnboardingModal";
 import "./LandingPage.css";
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+gsap.registerPlugin(ScrollTrigger, useGSAP, ScrollToPlugin);
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -35,28 +34,6 @@ export default function LandingPage() {
   const [institutions, setInstitutions] = useState<InstitutionPublicResponse[]>([]);
   const [selectedSlug, setSelectedSlug] = useState<string | null>("cjc");
   const [modalOpened, setModalOpened] = useState(false);
-
-  // Theme Engine (Light / Dark mode) with persistence & system preference detection
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    const saved = localStorage.getItem("attendify_landing_theme");
-    if (saved === "light" || saved === "dark") return saved;
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
-  });
-
-  const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    localStorage.setItem("attendify_landing_theme", nextTheme);
-
-    // Smooth GSAP spin & pop on the theme toggle icon
-    gsap.fromTo(
-      ".theme-toggle-btn svg",
-      { rotate: -90, scale: 0.6, opacity: 0 },
-      { rotate: 0, scale: 1, opacity: 1, duration: 0.35, ease: "back.out(1.6)" },
-    );
-  };
 
   useEffect(() => {
     async function loadData() {
@@ -138,10 +115,45 @@ export default function LandingPage() {
     { scope: pageRef },
   );
 
+  const scrollToSection = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+
+    // Ensure all ScrollTriggers are refreshed
+    ScrollTrigger.refresh();
+
+    if (id === "hardware") {
+      const st = ScrollTrigger.getById("hardware-trigger");
+      if (st) {
+        gsap.to(window, {
+          scrollTo: { y: st.start + 2, autoKill: false },
+          duration: 0.85,
+          ease: "power2.inOut",
+          onComplete: () => ScrollTrigger.refresh(),
+        });
+        return;
+      }
+    }
+
+    const el = document.getElementById(id);
+    if (el) {
+      gsap.to(window, {
+        scrollTo: { y: el, offsetY: 72, autoKill: false },
+        duration: 0.85,
+        ease: "power2.inOut",
+        onComplete: () => ScrollTrigger.refresh(),
+      });
+    }
+  };
+
   const scrollToCampuses = () => {
     const el = document.getElementById("campuses");
     if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
+      gsap.to(window, {
+        scrollTo: { y: el, offsetY: 72, autoKill: false },
+        duration: 0.85,
+        ease: "power2.inOut",
+        onComplete: () => ScrollTrigger.refresh(),
+      });
     }
   };
 
@@ -151,9 +163,9 @@ export default function LandingPage() {
   };
 
   return (
-    <div ref={pageRef} className="landing-root-container" data-theme={theme}>
+    <div ref={pageRef} className="landing-root-container" data-theme="light">
       {/* GSAP Ambient Animated Background */}
-      <AnimatedBackground theme={theme} />
+      <AnimatedBackground theme="light" />
 
       {/* Top Navbar */}
       <header className="landing-nav">
@@ -168,24 +180,14 @@ export default function LandingPage() {
 
           {/* Center Navigation Links */}
           <nav className="nav-center-links">
-            <a href="#pipeline" className="nav-link-item">Pipeline</a>
-            <a href="#hardware" className="nav-link-item">Scanners</a>
-            <a href="#privacy" className="nav-link-item">Privacy</a>
-            <a href="#campuses" className="nav-link-item">Campuses</a>
+            <a href="#pipeline" className="nav-link-item" onClick={(e) => scrollToSection(e, "pipeline")}>Pipeline</a>
+            <a href="#hardware" className="nav-link-item" onClick={(e) => scrollToSection(e, "hardware")}>Scanners</a>
+            <a href="#privacy" className="nav-link-item" onClick={(e) => scrollToSection(e, "privacy")}>Privacy</a>
+            <a href="#campuses" className="nav-link-item" onClick={(e) => scrollToSection(e, "campuses")}>Campuses</a>
           </nav>
 
           {/* Right Action Cluster */}
           <div className="nav-actions-cluster">
-            {/* Theme Switcher Toggle */}
-            <button
-              className="theme-toggle-btn"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
-              aria-label="Toggle theme mode"
-            >
-              {theme === "dark" ? <IconSun size={17} /> : <IconMoon size={17} />}
-            </button>
-
             <Button
               component={Link}
               to="/login"
@@ -296,8 +298,8 @@ export default function LandingPage() {
       {/* Luminous Section Divider */}
       <div className="section-luminous-divider" />
 
-      {/* Multi-Device Hardware Mesh Section */}
-      <MultiDeviceMeshSection />
+      {/* Hardware Freedom: 240-Frame Dual-Canvas Scroll Showroom */}
+      <HardwareCanvasSequence />
 
       {/* Luminous Section Divider */}
       <div className="section-luminous-divider" />

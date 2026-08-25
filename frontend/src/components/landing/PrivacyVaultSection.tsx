@@ -50,22 +50,24 @@ export const PrivacyVaultSection: React.FC = () => {
           card,
           {
             opacity: 0,
-            y: 40,
+            y: 36,
             rotation: fanAngles[i] || 0,
-            scale: 0.95,
+            scale: 0.96,
           },
           {
             opacity: 1,
             y: 0,
             rotation: 0,
             scale: 1,
-            duration: 0.7,
-            delay: i * 0.1,
+            duration: 0.6,
+            delay: i * 0.08,
             ease: "power3.out",
+            clearProps: "all",
             scrollTrigger: {
               trigger: sectionRef.current,
-              start: "top 70%",
-              toggleActions: "play none none reverse",
+              start: "top 85%",
+              toggleActions: "play none none none",
+              once: true,
             },
           }
         );
@@ -74,17 +76,19 @@ export const PrivacyVaultSection: React.FC = () => {
       // 3. Scanline sweep on trust seal bar
       gsap.fromTo(
         ".privacy-trust-seal-bar",
-        { opacity: 0, y: 20 },
+        { opacity: 0, y: 16 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.6,
-          delay: 0.4,
+          duration: 0.5,
+          delay: 0.3,
           ease: "power2.out",
+          clearProps: "all",
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: "top 65%",
-            toggleActions: "play none none reverse",
+            start: "top 80%",
+            toggleActions: "play none none none",
+            once: true,
           },
         }
       );
