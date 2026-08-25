@@ -123,8 +123,8 @@ export default function LandingPage() {
       if (st) {
         gsap.to(window, {
           scrollTo: { y: st.start + 2, autoKill: false },
-          duration: 1.15,
-          ease: "power3.inOut",
+          duration: 0.7,
+          ease: "power2.out",
         });
         return;
       }
@@ -134,8 +134,8 @@ export default function LandingPage() {
     if (el) {
       gsap.to(window, {
         scrollTo: { y: el, offsetY: 72, autoKill: false },
-        duration: 1.15,
-        ease: "power3.inOut",
+        duration: 0.7,
+        ease: "power2.out",
       });
     }
   };
@@ -145,8 +145,8 @@ export default function LandingPage() {
     if (el) {
       gsap.to(window, {
         scrollTo: { y: el, offsetY: 72, autoKill: false },
-        duration: 1.15,
-        ease: "power3.inOut",
+        duration: 0.7,
+        ease: "power2.out",
       });
     }
   };
