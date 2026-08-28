@@ -176,10 +176,10 @@ export default function AdminEventSessionsPage() {
                   position: "relative",
                   overflow: "hidden",
                   borderLeft: `3px solid ${meta.accent}`,
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  transform: hoveredCard === s.id ? "translateY(-4px) scale(1.01)" : undefined,
+                  transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+                  borderColor: hoveredCard === s.id ? "var(--border-strong, #3a3a3a)" : undefined,
                   boxShadow: hoveredCard === s.id
-                    ? "0px 8px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.4)"
+                    ? "0 4px 16px rgba(0,0,0,0.25)"
                     : undefined,
                 }}
               >

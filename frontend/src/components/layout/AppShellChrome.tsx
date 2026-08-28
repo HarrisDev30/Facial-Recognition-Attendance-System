@@ -181,7 +181,7 @@ export default function AppShellChrome({
         >
           <Group h="100%" px={{ base: "xs", sm: "md" }} justify="space-between" wrap="nowrap">
             <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
-              {navLabel !== "Student" && (
+              {navLabel !== "Student" && navLabel !== "Marshal" && (
                 <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
               )}
               <Wordmark />

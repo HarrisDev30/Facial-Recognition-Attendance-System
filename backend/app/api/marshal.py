@@ -59,6 +59,7 @@ class MarshalUpcomingEventResponse(BaseModel):
     start_date: str
     end_date: str
     organization_name: str | None = None
+    photo_url: str | None = None
     sessions: list[UpcomingSessionItem]
 
 
@@ -93,7 +94,7 @@ async def get_marshal_upcoming_events(
         if scope.assigned_org_ids:
             from sqlalchemy import String, cast
             cohost_clauses = [
-                cast(Event.co_host_dept_ids, String).like(f"%{str(org_id)}%")
+                cast(Event.cohost_org_ids, String).like(f"%{org_id}%")
                 for org_id in scope.assigned_org_ids
             ]
             query = query.where(
@@ -118,6 +119,7 @@ async def get_marshal_upcoming_events(
             start_date=ev.start_date.isoformat(),
             end_date=ev.end_date.isoformat(),
             organization_name=ev.organization.name if ev.organization else "Campus Wide",
+            photo_url=ev.photo_url,
             sessions=[
                 UpcomingSessionItem(
                     id=str(sess.id),

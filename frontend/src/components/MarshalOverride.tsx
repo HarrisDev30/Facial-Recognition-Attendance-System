@@ -147,10 +147,11 @@ export default function MarshalOverride({
       <Modal
         opened={opened}
         onClose={onClose}
+        zIndex={2000}
         title={
           <Group gap="xs">
             <IconShieldCheck size={20} color="var(--mantine-color-teal-filled)" />
-            <Text fw={600} size="md">Marshal Fast-Triage Manual Override</Text>
+            <Text fw={600} size="md">Manual Check-In</Text>
           </Group>
         }
         centered

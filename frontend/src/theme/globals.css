@@ -10,6 +10,7 @@
   --text-muted: #71717a;
   --border-subtle: #2a2a2a;
   --border-strong: #3a3a3a;
+  --border-hover: #333333;
   --selection-bg: #ededed;
   --selection-fg: #0a0a0a;
 
@@ -35,6 +36,7 @@
   --text-muted: #64748b;
   --border-subtle: #e2e8f0;
   --border-strong: #cbd5e1;
+  --border-hover: #cbd5e1;
   --selection-bg: #0f172a;
   --selection-fg: #ffffff;
 

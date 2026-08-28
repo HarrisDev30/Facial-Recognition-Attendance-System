@@ -16,41 +16,14 @@
   border-radius: var(--marshal-card-radius);
   padding: 22px 24px;
   display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: stretch;
-  gap: 24px;
+  grid-template-columns: 1.2fr 0.8fr;
+  align-items: center;
+  gap: 28px;
   margin-bottom: 20px;
   box-shadow: var(--shadow-card, 0 2px 8px rgba(0, 0, 0, 0.04));
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.marshal-header-card:hover {
-  border-color: var(--border-hover);
-}
-
-.marshal-avatar-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.marshal-avatar-box {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  background: var(--surface-0);
-  border: 2px solid var(--border-subtle);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--brand-primary, #10b981);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  flex-shrink: 0;
 }
 
 .marshal-identity-col {
@@ -140,7 +113,51 @@
   border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
-/* ─── 2. Metric Bento Grid (Matches Student Dashboard Metrics) ─── */
+/* ─── Integrated Header Telemetry Pod (Camera & Connection) ─── */
+.marshal-telemetry-pod {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--marshal-subcard-radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.marshal-telemetry-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.marshal-telemetry-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.marshal-telemetry-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-primary, #10b981);
+  flex-shrink: 0;
+}
+
+.marshal-telemetry-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  width: 100%;
+}
+
+/* ─── 2. Metric Bento Grid ─── */
 .marshal-metric-card {
   background: var(--surface-1);
   border: 1px solid var(--border-subtle);
@@ -149,15 +166,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: transform 160ms var(--craft-ease-out), border-color 160ms ease, box-shadow 160ms ease;
   position: relative;
   overflow: hidden;
-}
-
-.marshal-metric-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-hover);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
 }
 
 .marshal-metric-label {
@@ -196,11 +206,6 @@
   padding: 22px 24px;
   margin-bottom: 20px;
   box-shadow: var(--shadow-card, 0 2px 8px rgba(0, 0, 0, 0.04));
-  transition: border-color 0.2s ease;
-}
-
-.marshal-section-card:hover {
-  border-color: var(--border-hover);
 }
 
 .marshal-section-header {
@@ -221,19 +226,16 @@
   margin: 0;
 }
 
-/* ─── 4. Live Station Card (Pulsating Beacon & Action Bar) ─── */
+/* ─── 4. Live Station Card with Hero Primary Action & Secondary Grid ─── */
 .marshal-station-item {
   background: var(--surface-0);
   border: 1px solid var(--border-subtle);
   border-radius: var(--marshal-subcard-radius);
   padding: 20px;
-  margin-bottom: 14px;
-  transition: transform 160ms var(--craft-ease-out), border-color 160ms ease, box-shadow 160ms ease;
-}
-
-.marshal-station-item:hover {
-  border-color: rgba(16, 185, 129, 0.35);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .marshal-live-beacon {
@@ -262,12 +264,66 @@
   }
 }
 
+/* Hero Launch Scanner Button */
+.marshal-hero-btn {
+  background: var(--brand-primary, #10b981) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.9375rem !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 4px 14px var(--brand-glow, rgba(16, 185, 129, 0.28)) !important;
+  transition: transform 160ms var(--craft-ease-out), box-shadow 160ms ease !important;
+  width: 100%;
+}
+
+.marshal-hero-btn:hover {
+  filter: brightness(1.05);
+}
+
+.marshal-hero-btn:active {
+  transform: scale(0.98) !important;
+}
+
+/* Secondary Actions Grid */
+.marshal-secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.marshal-sub-action-btn {
+  border: 1px solid var(--border-subtle) !important;
+  background: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 0.8125rem !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  padding: 0 8px !important;
+  transition: transform 150ms var(--craft-ease-out), border-color 150ms ease, background-color 150ms ease !important;
+}
+
+.marshal-sub-action-btn:hover {
+  border-color: var(--border-hover) !important;
+  background: var(--surface-2) !important;
+}
+
+.marshal-sub-action-btn:active {
+  transform: scale(0.96) !important;
+}
+
 .marshal-action-btn-primary {
   background: var(--brand-primary, #10b981) !important;
   color: #ffffff !important;
   font-weight: 600 !important;
-  border-radius: 10px !important;
+  border-radius: 8px !important;
   border: none !important;
+  height: 34px !important;
+  font-size: 0.8125rem !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
   transition: transform 160ms var(--craft-ease-out) !important;
 }
 
@@ -280,7 +336,11 @@
   background: var(--surface-1) !important;
   color: var(--text-primary) !important;
   font-weight: 500 !important;
-  border-radius: 10px !important;
+  border-radius: 8px !important;
+  height: 34px !important;
+  font-size: 0.8125rem !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
   transition: transform 160ms var(--craft-ease-out), border-color 160ms ease !important;
 }
 
@@ -292,41 +352,307 @@
   transform: scale(0.97) !important;
 }
 
-/* ─── 5. Hardware Hub Item ─── */
-.marshal-hardware-row {
+/* ─── 5. Upcoming Department Events & Sessions Root Stack ─── */
+.marshal-event-card {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--marshal-subcard-radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.marshal-event-banner {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 21 / 8;
+  min-height: 140px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: flex-end;
+  padding: 16px 20px;
+  box-sizing: border-box;
+}
+
+.marshal-event-banner-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.85) 100%);
+  pointer-events: none;
+}
+
+.marshal-event-banner-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.marshal-event-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  letter-spacing: -0.01em;
+}
+
+.marshal-event-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.marshal-event-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 500;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.marshal-event-body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.marshal-sessions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.marshal-session-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.marshal-session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.marshal-session-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.marshal-session-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.marshal-session-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.marshal-session-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+  background: var(--surface-2);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.marshal-session-venue {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.marshal-session-action {
+  flex-shrink: 0;
+}
+
+/* ─── 6. Recent Manual Check-Ins List ─── */
+.marshal-override-item {
   padding: 12px 14px;
   background: var(--surface-0);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  margin-bottom: 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
-/* ─── 6. Mobile Responsiveness ─── */
-@media (max-width: 768px) {
+.marshal-override-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.marshal-override-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.marshal-override-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ─── 7. Mobile Responsiveness ─── */
+@media (max-width: 992px) {
   .marshal-header-card {
     grid-template-columns: 1fr;
     gap: 16px;
     padding: 18px 16px;
   }
+}
 
-  .marshal-avatar-col {
-    flex-direction: row;
-    justify-content: flex-start;
-  }
-
-  .marshal-avatar-box {
-    width: 52px;
-    height: 52px;
+@media (max-width: 768px) {
+  .marshal-header-card {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 16px 14px;
+    border-radius: 16px;
   }
 
   .marshal-greeting-title {
-    font-size: 1.75rem;
+    font-size: 1.6rem;
   }
 
   .marshal-section-card {
     padding: 16px 14px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .marshal-station-item {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .marshal-event-banner {
+    aspect-ratio: 16 / 9;
+    min-height: 120px;
+    padding: 12px 14px;
+  }
+
+  .marshal-event-title {
+    font-size: 1rem;
+  }
+
+  .marshal-event-body {
+    padding: 12px 14px;
+  }
+
+  .marshal-session-row {
+    padding: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .marshal-session-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .marshal-session-meta-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .marshal-session-action {
+    width: 100%;
+    margin-top: 2px;
+  }
+
+  .marshal-session-action button {
+    width: 100% !important;
+    height: 38px !important;
+    font-size: 0.875rem !important;
+  }
+
+  .marshal-secondary-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .marshal-metric-card {
+    padding: 14px 14px;
+    border-radius: 14px;
+  }
+
+  .marshal-metric-value {
+    font-size: 1.65rem;
+  }
+
+  .marshal-metric-subtext {
+    font-size: 0.6875rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .marshal-greeting-title {
+    font-size: 1.45rem;
+  }
+
+  .marshal-metric-card {
+    padding: 12px;
+  }
+
+  .marshal-metric-value {
+    font-size: 1.45rem;
   }
 }

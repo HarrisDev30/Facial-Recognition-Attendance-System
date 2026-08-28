@@ -8,13 +8,14 @@ import {
   Button,
   Alert,
   Box,
+  Grid,
   SimpleGrid,
   Skeleton,
   Stack,
   ThemeIcon,
   Modal,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import {
   IconDeviceMobile,
@@ -50,8 +51,7 @@ import {
   type MarshalOverride as MarshalOverrideType,
 } from "../../api/marshal";
 import { getAttendees, type AttendeeResponse } from "../../api/attendees";
-import MarshalOverride from "../../components/MarshalOverride";
-import { RapidRosterTriageDrawer } from "../../components/marshal/RapidRosterTriageDrawer";
+import StudentSearchModal from "../../components/marshal/StudentSearchModal";
 import { formatTime, greeting } from "../../utils/formatters";
 import {
   initOfflineSyncWatcher,
@@ -72,19 +72,19 @@ export default function MarshalDashboardPage() {
   const { user } = useAuthStore();
   const { institution } = useInstitutionTheme();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Role detection
   const isStudentMarshal = Boolean(
     user?.attendee_id ||
       (user?.assigned_org_ids && user.assigned_org_ids.length > 0 && user.role === "student") ||
-      (user?.is_marshal && user.role === "student")
+      (user?.is_marshal && user.role === "student"),
   );
   const firstName = user?.first_name || user?.email?.split("@")[0] || "Officer";
 
   // Data states
   const [attendees, setAttendees] = useState<AttendeeResponse[]>([]);
-  const [triageDrawerOpen, setTriageDrawerOpen] = useState(false);
-  const [preselectedAttendee, setPreselectedAttendee] = useState<AttendeeResponse | null>(null);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [upcomingEvents, setUpcomingEvents] = useState<MarshalUpcomingEvent[]>([]);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
@@ -136,22 +136,10 @@ export default function MarshalDashboardPage() {
   const overrides = data?.overrides ?? [];
 
   const [overrideSessionId, setOverrideSessionId] = useState<string | null>(null);
-  const [marshalOpen, { open: openMarshal, close: closeMarshal }] = useDisclosure(false);
 
-  const openOverride = (sessionId: string, attendee?: AttendeeResponse) => {
+  const openOverride = (sessionId: string) => {
     setOverrideSessionId(sessionId);
-    setPreselectedAttendee(attendee || null);
-    openMarshal();
-  };
-
-  const handleTriageSelect = (att: AttendeeResponse) => {
-    const defaultSession = sessions[0]?.session_id;
-    if (defaultSession) {
-      openOverride(defaultSession, att);
-    } else {
-      setPreselectedAttendee(att);
-      openMarshal();
-    }
+    setSearchModalOpen(true);
   };
 
   const handleStartSession = async (sessionId: string) => {
@@ -165,7 +153,7 @@ export default function MarshalDashboardPage() {
         icon: <IconCheck size={16} />,
       });
       execute();
-    } catch (err: unknown) {
+    } catch {
       notifications.show({
         title: "Could not activate session",
         message: "Please ensure you have permissions for this department event.",
@@ -187,7 +175,7 @@ export default function MarshalDashboardPage() {
         icon: <IconCheck size={16} />,
       });
       execute();
-    } catch (err: unknown) {
+    } catch {
       notifications.show({
         title: "Could not extend session",
         message: "Error extending time.",
@@ -226,21 +214,16 @@ export default function MarshalDashboardPage() {
 
   return (
     <Container fluid pt={0} pb={{ base: "6.5rem", sm: "4xl" }} px={0} style={{ maxWidth: 1440 }}>
-      {/* ─── 1. Executive Split Header Card (Student Parity, Zero Gradient Bar) ─── */}
+      {/* ─── 1. Executive Split Header Card with Integrated Camera & Network Pod ─── */}
       <div className="marshal-header-card">
-        <div className="marshal-avatar-col">
-          <div className="marshal-avatar-box">
-            <IconScan size={34} stroke={1.75} />
-          </div>
-        </div>
-
+        {/* Left Column: Officer Identity & Controls */}
         <div className="marshal-identity-col">
           <div>
             <h1 className="marshal-greeting-title">
               {greeting(firstName)}
             </h1>
             <span className="marshal-institution-subtext">
-              {institution?.name || "Campus Command"} • Gate Biometrics & Verification Console
+              {institution?.name || "Campus Portal"} • Check-In Station
             </span>
           </div>
 
@@ -253,19 +236,7 @@ export default function MarshalDashboardPage() {
             ) : (
               <span className="marshal-status-pill badge-staff">
                 <IconShieldCheck size={13} />
-                Staff Field Marshal
-              </span>
-            )}
-
-            {isOnline ? (
-              <span className="marshal-status-pill online">
-                <IconWifi size={13} />
-                Gate Online
-              </span>
-            ) : (
-              <span className="marshal-status-pill offline">
-                <IconWifiOff size={13} />
-                Offline Mode Active
+                Field Marshal
               </span>
             )}
 
@@ -274,14 +245,14 @@ export default function MarshalDashboardPage() {
             </span>
           </div>
 
-          <Group gap="xs" mt={4}>
+          <Group gap="xs" mt={4} wrap="wrap">
             <Button
               className="marshal-action-btn-secondary"
               size="sm"
               leftSection={<IconUsers size={16} />}
-              onClick={() => setTriageDrawerOpen(true)}
+              onClick={() => setSearchModalOpen(true)}
             >
-              Roster Triage
+              Search Students
             </Button>
             <Button
               className="marshal-action-btn-secondary"
@@ -292,79 +263,158 @@ export default function MarshalDashboardPage() {
             >
               Refresh
             </Button>
-            {pendingQueueCount > 0 && (
+          </Group>
+        </div>
+
+        {/* Right Column: Integrated Camera & Network Telemetry Pod */}
+        <div className="marshal-telemetry-pod">
+          {/* Camera Readiness */}
+          <div className="marshal-telemetry-row">
+            <div className="marshal-telemetry-info">
+              <div className="marshal-telemetry-icon-box">
+                <IconCamera size={16} />
+              </div>
+              <div>
+                <Text size="xs" fw={600} c="var(--text-primary)">
+                  Camera Sensor
+                </Text>
+                <Text size="10px" c="dimmed">
+                  Biometric readiness
+                </Text>
+              </div>
+            </div>
+            <Button
+              size="compact-xs"
+              variant="light"
+              color="teal"
+              leftSection={<IconCamera size={12} />}
+              onClick={testCamera}
+            >
+              Test Camera
+            </Button>
+          </div>
+
+          <div className="marshal-telemetry-divider" />
+
+          {/* Network Connection */}
+          <div className="marshal-telemetry-row">
+            <div className="marshal-telemetry-info">
+              <div className="marshal-telemetry-icon-box">
+                {isOnline ? <IconWifi size={16} /> : <IconWifiOff size={16} />}
+              </div>
+              <div>
+                <Text size="xs" fw={600} c="var(--text-primary)">
+                  Connection
+                </Text>
+                <Text size="10px" c="dimmed">
+                  {isOnline ? "Live sync active" : "Offline mode active"}
+                </Text>
+              </div>
+            </div>
+            {isOnline ? (
+              <Badge size="sm" color="teal" variant="light">
+                Online
+              </Badge>
+            ) : (
+              <Badge size="sm" color="red" variant="filled">
+                Offline
+              </Badge>
+            )}
+          </div>
+
+          <div className="marshal-telemetry-divider" />
+
+          {/* Saved Offline Scans */}
+          <div className="marshal-telemetry-row">
+            <div className="marshal-telemetry-info">
+              <div className="marshal-telemetry-icon-box">
+                <IconCloudUpload size={16} />
+              </div>
+              <div>
+                <Text size="xs" fw={600} c="var(--text-primary)">
+                  Saved Scans
+                </Text>
+                <Text size="10px" c="dimmed">
+                  {pendingQueueCount === 0 ? "All scans synced" : `${pendingQueueCount} buffered`}
+                </Text>
+              </div>
+            </div>
+            {pendingQueueCount > 0 ? (
               <Button
-                size="sm"
+                size="compact-xs"
                 color="orange"
                 variant="filled"
                 loading={syncing}
-                leftSection={<IconCloudUpload size={14} />}
                 onClick={handleManualSync}
               >
-                Sync {pendingQueueCount} Offline
+                Sync {pendingQueueCount}
               </Button>
+            ) : (
+              <Badge size="sm" color="gray" variant="light">
+                0 queued
+              </Badge>
             )}
-          </Group>
+          </div>
         </div>
       </div>
 
-      {/* ─── 2. Metric Bento Grid (Student Parity) ─── */}
+      {/* ─── 2. Metric Bento Grid (Clean & Direct) ─── */}
       <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" mb="xl">
         <div className="marshal-metric-card">
           <div className="marshal-metric-label">
-            <span>Verified Today</span>
+            <span>Total Checked In</span>
             <IconUserCheck size={16} style={{ opacity: 0.6 }} />
           </div>
           <div className="marshal-metric-value" style={{ color: "var(--brand-primary, #10b981)" }}>
             {shiftStats?.total_verified_today ?? 0}
           </div>
-          <div className="marshal-metric-subtext">Total verified attendees</div>
+          <div className="marshal-metric-subtext">Verified attendees today</div>
         </div>
 
         <div className="marshal-metric-card">
           <div className="marshal-metric-label">
-            <span>Facial Match</span>
+            <span>Face Scans</span>
             <IconScan size={16} style={{ opacity: 0.6 }} />
           </div>
           <div className="marshal-metric-value" style={{ color: "#3b82f6" }}>
             {shiftStats?.face_count ?? 0}
           </div>
-          <div className="marshal-metric-subtext">Instant biometric scans</div>
+          <div className="marshal-metric-subtext">Biometric camera scans</div>
         </div>
 
         <div className="marshal-metric-card">
           <div className="marshal-metric-label">
-            <span>QR Passes</span>
+            <span>QR Codes</span>
             <IconQrcode size={16} style={{ opacity: 0.6 }} />
           </div>
           <div className="marshal-metric-value" style={{ color: "#06b6d4" }}>
             {shiftStats?.qr_count ?? 0}
           </div>
-          <div className="marshal-metric-subtext">Dynamic encrypted tokens</div>
+          <div className="marshal-metric-subtext">Digital pass scans</div>
         </div>
 
         <div className="marshal-metric-card">
           <div className="marshal-metric-label">
-            <span>Manual Overrides</span>
+            <span>Manual Check-Ins</span>
             <IconShieldCheck size={16} style={{ opacity: 0.6 }} />
           </div>
           <div className="marshal-metric-value" style={{ color: "#f59e0b" }}>
             {shiftStats?.override_count ?? 0}
           </div>
-          <div className="marshal-metric-subtext">Triage exceptions</div>
+          <div className="marshal-metric-subtext">Manual roster lookups</div>
         </div>
       </SimpleGrid>
 
-      {/* ─── 3. Main 2-Column Responsive Bento Layout ─── */}
-      <SimpleGrid cols={{ base: 1, lg: 12 }} spacing="lg">
-        {/* Left Column (8 cols): Active Gate Stations & Upcoming Launchers */}
-        <Box style={{ gridColumn: "span 8" }}>
-          {/* Active Gate Check-In Stations Card */}
+      {/* ─── 3. Main Responsive Layout (Grid with Full-Width Mobile Support) ─── */}
+      <Grid gutter="lg">
+        {/* Left Column: Active Check-In Stations & Upcoming Events */}
+        <Grid.Col span={{ base: 12, lg: 8 }}>
+          {/* Active Check-In Stations Card */}
           <div className="marshal-section-card">
             <div className="marshal-section-header">
               <h2 className="marshal-section-title">
                 <span className="marshal-live-beacon" />
-                Active Gate Check-In Stations
+                Active Check-In Stations
               </h2>
               <Badge color="teal" variant="light" size="sm">
                 {sessions.length} Live
@@ -373,8 +423,8 @@ export default function MarshalDashboardPage() {
 
             {loading && !data ? (
               <Stack gap="md">
-                <Skeleton height={120} radius="md" />
-                <Skeleton height={120} radius="md" />
+                <Skeleton height={140} radius="md" />
+                <Skeleton height={140} radius="md" />
               </Stack>
             ) : error ? (
               <Alert color="red" title="Error Loading Stations">
@@ -385,15 +435,16 @@ export default function MarshalDashboardPage() {
                 <ThemeIcon size={48} radius="xl" color="gray" variant="light" mx="auto" mb="sm">
                   <IconCalendarEvent size={24} />
                 </ThemeIcon>
-                <Text fw={600} size="sm">No Active Gate Sessions Right Now</Text>
+                <Text fw={600} size="sm">No Live Stations Right Now</Text>
                 <Text size="xs" c="dimmed" mt={4}>
-                  Choose an upcoming event below to launch check-in on demand, or test your station hardware.
+                  Choose an upcoming event below to start check-in, or test your camera.
                 </Text>
               </div>
             ) : (
               sessions.map((session) => (
                 <div key={session.session_id} className="marshal-station-item">
-                  <Group justify="space-between" mb="xs">
+                  {/* Station Info Header */}
+                  <Group justify="space-between" align="flex-start">
                     <div>
                       <Text fw={700} size="md" c="var(--text-primary)">
                         {session.session_name}
@@ -402,12 +453,13 @@ export default function MarshalDashboardPage() {
                         {session.event_name}
                       </Text>
                     </div>
-                    <Badge color="teal" variant="light">
-                      Live Station
+                    <Badge color="teal" variant="light" size="sm">
+                      Live Gate
                     </Badge>
                   </Group>
 
-                  <Group gap="md" my="sm">
+                  {/* Telemetry Row */}
+                  <Group gap="md">
                     {session.venue && (
                       <Group gap={4}>
                         <IconMapPin size={14} style={{ opacity: 0.6 }} />
@@ -430,51 +482,61 @@ export default function MarshalDashboardPage() {
                     </Group>
                   </Group>
 
-                  <Group justify="space-between" mt="md" wrap="wrap" gap="xs">
-                    <Group gap="xs">
+                  {/* Hero Action: Kiosk for Desktop/Laptop vs Mobile Scanner for Phone */}
+                  {!isMobile ? (
+                    <Button
+                      className="marshal-hero-btn"
+                      leftSection={<IconScan size={18} />}
+                      onClick={() => navigate(`/marshal/scanner/${session.session_id}`)}
+                    >
+                      Launch Station Kiosk (Laptop)
+                    </Button>
+                  ) : (
+                    <Button
+                      className="marshal-hero-btn"
+                      leftSection={<IconDeviceMobile size={18} />}
+                      onClick={() => navigate(`/marshal/scanner/mobile/${session.session_id}`)}
+                    >
+                      Launch Mobile Scanner
+                    </Button>
+                  )}
+
+                  {/* Secondary Actions Matrix */}
+                  <div className="marshal-secondary-grid">
+                    {!isMobile && (
                       <Button
-                        className="marshal-action-btn-primary"
-                        size="xs"
-                        leftSection={<IconScan size={14} />}
-                        onClick={() => navigate(`/marshal/scanner/${session.session_id}`)}
-                      >
-                        Kiosk Scanner
-                      </Button>
-                      <Button
-                        className="marshal-action-btn-secondary"
-                        size="xs"
+                        className="marshal-sub-action-btn"
                         leftSection={<IconDeviceMobile size={14} />}
                         onClick={() => navigate(`/marshal/scanner/mobile/${session.session_id}`)}
                       >
-                        Mobile Triage
+                        Phone Scan
                       </Button>
-                      <Button
-                        className="marshal-action-btn-secondary"
-                        size="xs"
-                        leftSection={<IconQrcode size={14} />}
-                        onClick={() => navigate(`/marshal/scanner/qr/${session.session_id}`)}
-                      >
-                        QR Pass
-                      </Button>
-                      <Button
-                        className="marshal-action-btn-secondary"
-                        size="xs"
-                        leftSection={<IconShieldCheck size={14} />}
-                        onClick={() => openOverride(session.session_id)}
-                      >
-                        Quick Override
-                      </Button>
-                    </Group>
+                    )}
 
                     <Button
-                      className="marshal-action-btn-secondary"
-                      size="xs"
+                      className="marshal-sub-action-btn"
+                      leftSection={<IconQrcode size={14} />}
+                      onClick={() => navigate(`/marshal/scanner/mobile/${session.session_id}?mode=qr`)}
+                    >
+                      QR Pass
+                    </Button>
+
+                    <Button
+                      className="marshal-sub-action-btn"
+                      leftSection={<IconShieldCheck size={14} />}
+                      onClick={() => openOverride(session.session_id)}
+                    >
+                      Manual
+                    </Button>
+
+                    <Button
+                      className="marshal-sub-action-btn"
                       loading={actionLoadingId === session.session_id}
                       onClick={() => handleExtendSession(session.session_id)}
                     >
-                      +15m
+                      +15m Extend
                     </Button>
-                  </Group>
+                  </div>
                 </div>
               ))
             )}
@@ -485,7 +547,7 @@ export default function MarshalDashboardPage() {
             <div className="marshal-section-header">
               <h2 className="marshal-section-title">
                 <IconCalendarEvent size={18} color="var(--brand-primary, #10b981)" />
-                Upcoming Department Events & Sessions
+                Upcoming Events & Sessions
               </h2>
               <Badge color="blue" variant="light" size="sm">
                 {upcomingEvents.length} Scheduled
@@ -494,155 +556,125 @@ export default function MarshalDashboardPage() {
 
             {upcomingEvents.length === 0 ? (
               <Text size="xs" c="dimmed" ta="center" py="lg">
-                No upcoming events found for your department scope today.
+                No upcoming events found for your department today.
               </Text>
             ) : (
-              <Stack gap="sm">
+              <Stack gap="md">
                 {upcomingEvents.map((ev) => (
-                  <div key={ev.id} className="marshal-station-item">
-                    <Group justify="space-between" mb="xs">
-                      <div>
-                        <Text fw={600} size="sm">
-                          {ev.name}
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                          {ev.organization_name} • {ev.venue || "Campus Main Venue"}
-                        </Text>
-                      </div>
-                      <Badge size="xs" variant="outline" color="blue">
-                        {ev.event_type || "Event"}
-                      </Badge>
-                    </Group>
-
-                    {ev.sessions && ev.sessions.length > 0 ? (
-                      <Stack gap={6} mt="xs">
-                        {ev.sessions.map((sess) => (
-                          <div
-                            key={sess.id}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              padding: "8px 12px",
-                              background: "var(--surface-1)",
-                              borderRadius: "8px",
-                              border: "1px solid var(--border-subtle)",
-                            }}
-                          >
-                            <Group gap="xs">
-                              <Text size="xs" fw={500}>
-                                {sess.name}
-                              </Text>
-                              <Text size="xs" c="dimmed">
-                                ({formatTime(sess.start_time)} - {formatTime(sess.end_time)})
-                              </Text>
-                              <Badge
-                                size="xs"
-                                color={sess.status === "active" ? "teal" : "gray"}
-                                variant="light"
-                              >
-                                {sess.status}
-                              </Badge>
-                            </Group>
-
-                            {sess.status === "active" ? (
-                              <Button
-                                className="marshal-action-btn-primary"
-                                size="compact-xs"
-                                leftSection={<IconScan size={12} />}
-                                onClick={() => navigate(`/marshal/scanner/${sess.id}`)}
-                              >
-                                Open Station
-                              </Button>
-                            ) : (
-                              <Button
-                                className="marshal-action-btn-secondary"
-                                size="compact-xs"
-                                loading={actionLoadingId === sess.id}
-                                leftSection={<IconPlayerPlay size={12} />}
-                                onClick={() => handleStartSession(sess.id)}
-                              >
-                                Start Station Now
-                              </Button>
-                            )}
+                  <div key={ev.id} className="marshal-event-card">
+                    {/* Event Cover Image / Gradient Header */}
+                    <div
+                      className="marshal-event-banner"
+                      style={{
+                        background: ev.photo_url
+                          ? `url(${ev.photo_url}) center / cover no-repeat`
+                          : "linear-gradient(135deg, var(--surface-2) 0%, var(--surface-3) 100%)",
+                      }}
+                    >
+                      <div className="marshal-event-banner-scrim" />
+                      <div className="marshal-event-banner-content">
+                        <div>
+                          <h3 className="marshal-event-title">{ev.name}</h3>
+                          <div className="marshal-event-meta-row">
+                            <span className="marshal-event-meta-item">
+                              <IconSchool size={14} />
+                              {ev.organization_name}
+                            </span>
+                            <span className="marshal-event-meta-item">
+                              <IconMapPin size={14} />
+                              {ev.venue || "Campus Main Venue"}
+                            </span>
                           </div>
-                        ))}
-                      </Stack>
-                    ) : (
-                      <Text size="xs" c="dimmed">
-                        No individual attendance sessions configured yet.
-                      </Text>
-                    )}
+                        </div>
+                        <Badge size="sm" variant="filled" color="dark">
+                          {ev.event_type || "Event"}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Sessions Body */}
+                    <div className="marshal-event-body">
+                      {ev.sessions && ev.sessions.length > 0 ? (
+                        <div className="marshal-sessions-stack">
+                          {ev.sessions.map((sess) => (
+                            <div key={sess.id} className="marshal-session-row">
+                              <div className="marshal-session-info">
+                                <div className="marshal-session-title-row">
+                                  <span className="marshal-session-name">{sess.name}</span>
+                                  <Badge
+                                    size="xs"
+                                    color={sess.status === "active" ? "teal" : "gray"}
+                                    variant="light"
+                                  >
+                                    {sess.status === "active" ? "Active Gate" : "Scheduled"}
+                                  </Badge>
+                                </div>
+                                <div className="marshal-session-meta-row">
+                                  <span className="marshal-session-time">
+                                    <IconClock size={12} />
+                                    {formatTime(sess.start_time)} – {formatTime(sess.end_time)}
+                                  </span>
+                                  {sess.venue && (
+                                    <span className="marshal-session-venue">
+                                      <IconMapPin size={12} />
+                                      {sess.venue}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="marshal-session-action">
+                                {sess.status === "active" ? (
+                                  <Button
+                                    className="marshal-action-btn-primary"
+                                    size="xs"
+                                    leftSection={isMobile ? <IconDeviceMobile size={14} /> : <IconScan size={14} />}
+                                    onClick={() =>
+                                      navigate(
+                                        isMobile
+                                          ? `/marshal/scanner/mobile/${sess.id}`
+                                          : `/marshal/scanner/${sess.id}`
+                                      )
+                                    }
+                                  >
+                                    {isMobile ? "Mobile Scanner" : "Station Kiosk"}
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    className="marshal-action-btn-secondary"
+                                    size="xs"
+                                    loading={actionLoadingId === sess.id}
+                                    leftSection={<IconPlayerPlay size={14} />}
+                                    onClick={() => handleStartSession(sess.id)}
+                                  >
+                                    Start Session
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <Text size="xs" c="dimmed">
+                          No sessions scheduled yet for this event.
+                        </Text>
+                      )}
+                    </div>
                   </div>
                 ))}
               </Stack>
             )}
           </div>
-        </Box>
+        </Grid.Col>
 
-        {/* Right Column (4 cols): Station Hardware Hub & Shift Ledger */}
-        <Box style={{ gridColumn: "span 4" }}>
-          {/* Station Hardware & Network Hub */}
-          <div className="marshal-section-card">
-            <div className="marshal-section-header">
-              <h2 className="marshal-section-title">
-                <IconShieldCheck size={18} color="var(--brand-primary, #10b981)" />
-                Station Hardware Hub
-              </h2>
-            </div>
-
-            <div className="marshal-hardware-row">
-              <div>
-                <Text size="xs" fw={600}>Biometric Camera</Text>
-                <Text size="10px" c="dimmed">Sensor readiness & focus</Text>
-              </div>
-              <Button
-                className="marshal-action-btn-secondary"
-                size="compact-xs"
-                leftSection={<IconCamera size={12} />}
-                onClick={testCamera}
-              >
-                Test Sensor
-              </Button>
-            </div>
-
-            <div className="marshal-hardware-row">
-              <div>
-                <Text size="xs" fw={600}>Gate Network</Text>
-                <Text size="10px" c="dimmed">
-                  {isOnline ? "Low-latency connection" : "Offline buffer active"}
-                </Text>
-              </div>
-              {isOnline ? (
-                <Badge size="sm" color="teal" variant="light">
-                  Online
-                </Badge>
-              ) : (
-                <Badge size="sm" color="red" variant="filled">
-                  Offline
-                </Badge>
-              )}
-            </div>
-
-            <div className="marshal-hardware-row">
-              <div>
-                <Text size="xs" fw={600}>Offline Influx Buffer</Text>
-                <Text size="10px" c="dimmed">
-                  {pendingQueueCount === 0 ? "All scans synced" : `${pendingQueueCount} buffered scans`}
-                </Text>
-              </div>
-              <Badge size="sm" color={pendingQueueCount > 0 ? "orange" : "gray"} variant="light">
-                {pendingQueueCount} queued
-              </Badge>
-            </div>
-          </div>
-
-          {/* Recent Shift Overrides & Activity */}
+        {/* Right Column: Shift Activity Log (Full width on mobile, 4-col on desktop) */}
+        <Grid.Col span={{ base: 12, lg: 4 }}>
+          {/* Recent Manual Check-Ins Activity */}
           <div className="marshal-section-card">
             <div className="marshal-section-header">
               <h2 className="marshal-section-title">
                 <IconHistory size={18} color="var(--brand-primary, #10b981)" />
-                Shift Overrides Log
+                Recent Manual Check-Ins
               </h2>
               <Badge size="xs" variant="light" color="yellow">
                 {overrides.length} Logged
@@ -651,66 +683,58 @@ export default function MarshalDashboardPage() {
 
             {overrides.length === 0 ? (
               <Text size="xs" c="dimmed" ta="center" py="md">
-                No manual overrides logged during this shift.
+                No manual check-ins logged during this shift.
               </Text>
             ) : (
               <Stack gap="xs">
-                {overrides.slice(0, 5).map((ov) => (
-                  <div
-                    key={ov.id}
-                    style={{
-                      padding: "10px 12px",
-                      background: "var(--surface-0)",
-                      borderRadius: "10px",
-                      border: "1px solid var(--border-subtle)",
-                    }}
-                  >
-                    <Group justify="space-between" mb={2}>
-                      <Text size="xs" fw={600}>
+                {overrides.slice(0, 8).map((ov) => (
+                  <div key={ov.id} className="marshal-override-item">
+                    <div className="marshal-override-header">
+                      <span className="marshal-override-name">
                         {ov.attendee_name || "Student"}
-                      </Text>
+                      </span>
                       <Badge size="xs" color="yellow" variant="light">
-                        {ov.reason || "Override"}
+                        {ov.reason || "Manual Override"}
                       </Badge>
-                    </Group>
-                    <Text size="10px" c="dimmed">
-                      {ov.timestamp ? new Date(ov.timestamp).toLocaleTimeString() : "Recent"} • {ov.session_name || "Gate Session"}
-                    </Text>
+                    </div>
+                    <div className="marshal-override-meta">
+                      <span>{ov.session_name || "Station Gate"}</span>
+                      <span>
+                        {ov.timestamp
+                          ? new Date(ov.timestamp).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "Just now"}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </Stack>
             )}
           </div>
-        </Box>
-      </SimpleGrid>
+        </Grid.Col>
+      </Grid>
 
-      {/* Rapid Roster Triage Drawer */}
-      <RapidRosterTriageDrawer
-        opened={triageDrawerOpen}
-        onClose={() => setTriageDrawerOpen(false)}
+      {/* Unified Student Search & Direct Manual Check-In Modal */}
+      <StudentSearchModal
+        opened={searchModalOpen}
+        onClose={() => {
+          setSearchModalOpen(false);
+          setOverrideSessionId(null);
+        }}
+        sessionId={overrideSessionId || sessions[0]?.session_id}
         attendees={attendees}
-        onSelectAttendee={handleTriageSelect}
+        onSuccess={() => {
+          execute();
+        }}
       />
 
-      {/* Manual Override Modal */}
-      {overrideSessionId && (
-        <MarshalOverride
-          sessionId={overrideSessionId}
-          opened={marshalOpen}
-          onClose={closeMarshal}
-          onSuccess={() => {
-            closeMarshal();
-            execute();
-          }}
-          preselectedAttendee={preselectedAttendee}
-        />
-      )}
-
-      {/* Camera Readiness Diagnostic Modal */}
+      {/* Camera Test Modal */}
       <Modal
         opened={cameraModalOpen}
         onClose={closeCameraTest}
-        title="Biometric Camera Sensor Test"
+        title="Camera Test"
         centered
         radius="lg"
       >
@@ -730,17 +754,17 @@ export default function MarshalDashboardPage() {
           <Group justify="center" mt="md">
             {cameraStatus === "testing" && (
               <Badge color="yellow" variant="light">
-                Initializing Video Feed...
+                Testing video feed...
               </Badge>
             )}
             {cameraStatus === "success" && (
               <Badge color="teal" variant="light" leftSection={<IconCheck size={12} />}>
-                Camera & Lens Operational
+                Camera is working
               </Badge>
             )}
             {cameraStatus === "failed" && (
               <Badge color="red" variant="light">
-                Camera Access Denied or Missing
+                Camera access denied or unavailable
               </Badge>
             )}
           </Group>

@@ -5,28 +5,45 @@ interface UseCameraOptions {
 }
 
 interface UseCameraReturn {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  videoRef: React.RefObject<HTMLVideoElement>;
   streamRef: React.MutableRefObject<MediaStream | null>;
   cameraActive: boolean;
   error: string | null;
-  startCamera: () => Promise<void>;
+  startCamera: (customDeviceId?: string | unknown) => Promise<void>;
   stopCamera: () => void;
   captureFrame: () => string | null;
 }
 
 export function useCamera(options?: UseCameraOptions): UseCameraReturn {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const startCamera = useCallback(async () => {
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+  }, []);
+
+  const startCamera = useCallback(async (customDeviceId?: string | unknown) => {
     try {
       setError(null);
+      // Stop previous tracks if already running
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+      const targetId = typeof customDeviceId === "string" ? customDeviceId : options?.deviceId;
       const constraints: MediaStreamConstraints = {
-        video: options?.deviceId
-          ? { deviceId: { exact: options.deviceId }, width: { ideal: 640 }, height: { ideal: 480 } }
-          : { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        video: targetId
+          ? { deviceId: { exact: targetId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+          : { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
@@ -40,23 +57,12 @@ export function useCamera(options?: UseCameraOptions): UseCameraReturn {
     }
   }, [options?.deviceId]);
 
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setCameraActive(false);
-  }, []);
-
   const captureFrame = useCallback((): string | null => {
     const video = videoRef.current;
     if (!video) return null;
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
     ctx.drawImage(video, 0, 0);
@@ -65,3 +71,5 @@ export function useCamera(options?: UseCameraOptions): UseCameraReturn {
 
   return { videoRef, streamRef, cameraActive, error, startCamera, stopCamera, captureFrame };
 }
+
+

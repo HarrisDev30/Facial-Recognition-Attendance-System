@@ -1,0 +1,238 @@
+/* ==========================================================================
+   Student Search & Manual Check-In Modal — Unified Spotlight Gate Surface
+   ========================================================================== */
+
+.student-search-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.student-search-input-wrapper {
+  position: relative;
+}
+
+.student-search-results-list {
+  max-height: 380px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.student-search-results-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.student-search-results-list::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+
+.student-search-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  transition: border-color 150ms ease, background-color 150ms ease, transform 150ms var(--craft-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+.student-search-card:hover {
+  border-color: var(--border-hover);
+  background: var(--surface-1);
+}
+
+.student-search-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--brand-primary, #10b981);
+  font-weight: 700;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.student-search-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.student-search-id {
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--brand-primary, #10b981);
+  background: rgba(16, 185, 129, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.student-search-checkin-btn {
+  background: var(--brand-primary, #10b981) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  font-size: 0.75rem !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  transition: transform 150ms ease, opacity 150ms ease !important;
+  flex-shrink: 0;
+}
+
+.student-search-checkin-btn:active {
+  transform: scale(0.94) !important;
+}
+
+.student-search-empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-muted);
+  background: var(--surface-0);
+  border-radius: 12px;
+  border: 1px dashed var(--border-subtle);
+}
+
+/* ─── Step 2: Confirmation & Reason Section ─── */
+.student-search-selected-preview {
+  padding: 14px 16px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.student-search-reason-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.student-search-reason-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.student-search-reason-chip {
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-0);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease, transform 150ms ease;
+  user-select: none;
+}
+
+.student-search-reason-chip:hover {
+  border-color: var(--border-hover);
+  background: var(--surface-1);
+}
+
+.student-search-reason-chip.is-selected {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--brand-primary, #10b981);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.student-search-reason-chip:active {
+  transform: scale(0.96);
+}
+
+.student-search-confirm-btn {
+  background: var(--brand-primary, #10b981) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 12px !important;
+  height: 42px !important;
+  border: none !important;
+  box-shadow: 0 4px 14px var(--brand-glow, rgba(16, 185, 129, 0.28)) !important;
+  transition: transform 150ms ease !important;
+}
+
+.student-search-confirm-btn:active {
+  transform: scale(0.97) !important;
+}
+
+/* ─── Mobile Viewport Rules ─── */
+@media (max-width: 768px) {
+  .student-search-modal-root .mantine-Modal-inner,
+  .marshal-scan-modal-root .mantine-Modal-inner {
+    align-items: flex-end !important;
+    padding: 0 12px calc(80px + env(safe-area-inset-bottom, 0px)) 12px !important;
+  }
+
+  .student-search-modal-root .mantine-Modal-content {
+    border-radius: 20px !important;
+    height: min(80vh, 680px) !important;
+    max-height: calc(100vh - 100px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    margin-bottom: 0 !important;
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.35) !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .student-search-modal-root .mantine-Modal-body {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .student-search-modal-content {
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .student-search-results-list {
+    flex: 1 1 auto !important;
+    max-height: none !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+  }
+
+  .marshal-scan-modal-root .mantine-Modal-content {
+    border-radius: 20px !important;
+    margin-bottom: 0 !important;
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.35) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-search-card {
+    padding: 10px 12px;
+  }
+
+  .student-search-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.8125rem;
+  }
+}

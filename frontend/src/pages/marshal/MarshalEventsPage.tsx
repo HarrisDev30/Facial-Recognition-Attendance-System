@@ -99,7 +99,7 @@ export default function MarshalEventsPage() {
         <div className="events-header-text">
           <Group gap={8} align="center">
             <IconCalendar size={22} color="var(--brand-primary, #10b981)" />
-            <h1 className="events-title">Campus & Department Events</h1>
+            <h1 className="events-title">Events</h1>
           </Group>
           <Text className="events-subtitle">
             Browse institution-wide and department events, manage active gates, and launch live kiosk sessions.

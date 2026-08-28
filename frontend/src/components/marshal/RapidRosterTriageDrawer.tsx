@@ -55,14 +55,14 @@ export function RapidRosterTriageDrawer({
       size="md"
       title={
         <Group gap="xs">
-          <IconUsers size={20} color="var(--mantine-color-blue-filled)" />
-          <Text fw={700}>Gate Roster Rapid Lookup</Text>
+          <IconUsers size={20} color="var(--brand-primary, #10b981)" />
+          <Text fw={700}>Search Students</Text>
         </Group>
       }
     >
       <Stack gap="md" style={{ height: "calc(100vh - 100px)" }}>
         <TextInput
-          placeholder="Search student ID, name, email, department..."
+          placeholder="Search by student name, ID number, or department..."
           leftSection={<IconSearch size={16} />}
           value={query}
           onChange={(e) => setQuery(e.currentTarget.value)}
@@ -71,9 +71,9 @@ export function RapidRosterTriageDrawer({
 
         <Group justify="space-between">
           <Text size="xs" c="dimmed">
-            Showing {filtered.length} matching students
+            {filtered.length} student{filtered.length === 1 ? "" : "s"} found
           </Text>
-          <Badge size="xs" variant="light" color="blue">
+          <Badge size="xs" variant="light" color="teal">
             {attendees.length} Enrolled
           </Badge>
         </Group>
@@ -100,7 +100,7 @@ export function RapidRosterTriageDrawer({
                 >
                   <Group justify="space-between" align="center" wrap="nowrap">
                     <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-                      <Avatar size="md" radius="xl" color="blue">
+                      <Avatar size="md" radius="xl" color="teal">
                         {att.first_name?.[0]}
                         {att.last_name?.[0]}
                       </Avatar>
@@ -109,7 +109,7 @@ export function RapidRosterTriageDrawer({
                           {att.first_name} {att.last_name}
                         </Text>
                         <Group gap={6} mt={2}>
-                          <Text size="xs" ff="monospace" fw={500} c="blue">
+                          <Text size="xs" ff="monospace" fw={500} c="teal">
                             {att.identifier || "No ID"}
                           </Text>
                           {att.department_code && (
@@ -131,7 +131,7 @@ export function RapidRosterTriageDrawer({
                         onClose();
                       }}
                     >
-                      Verify
+                      Check In
                     </Button>
                   </Group>
                 </Paper>

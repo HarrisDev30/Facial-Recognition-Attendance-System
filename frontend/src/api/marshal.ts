@@ -39,6 +39,7 @@ export interface MarshalUpcomingEvent {
   start_date: string;
   end_date: string;
   organization_name: string | null;
+  photo_url?: string | null;
   sessions: UpcomingSessionItem[];
 }
 

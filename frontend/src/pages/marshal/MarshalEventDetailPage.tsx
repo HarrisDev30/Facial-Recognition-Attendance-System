@@ -14,7 +14,6 @@ import { notifications } from "@mantine/notifications";
 import {
   IconCalendarEvent,
   IconMapPin,
-  IconCamera,
   IconDeviceMobile,
   IconPlayerPlay,
   IconScan,
@@ -243,7 +242,7 @@ export default function MarshalEventDetailPage() {
                           leftSection={<IconScan size={12} />}
                           onClick={() => navigate(`/marshal/scanner/${s.id}`)}
                         >
-                          Kiosk
+                          Face Scanner
                         </Button>
                         <Button
                           className="marshal-action-btn-secondary"
@@ -251,15 +250,7 @@ export default function MarshalEventDetailPage() {
                           leftSection={<IconDeviceMobile size={12} />}
                           onClick={() => navigate(`/marshal/scanner/mobile/${s.id}`)}
                         >
-                          Mobile
-                        </Button>
-                        <Button
-                          className="marshal-action-btn-secondary"
-                          size="compact-xs"
-                          leftSection={<IconCamera size={12} />}
-                          onClick={() => navigate(`/scanner/multi/${s.id}`)}
-                        >
-                          Multi-Face
+                          Phone Scanner
                         </Button>
                         <Button
                           className="marshal-action-btn-secondary"
@@ -282,7 +273,7 @@ export default function MarshalEventDetailPage() {
                         loading={actionLoadingId === s.id}
                         onClick={() => handleStartSession(s.id)}
                       >
-                        Start Station Now
+                        Start Session
                       </Button>
                     )}
                   </Group>
