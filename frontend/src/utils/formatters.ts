@@ -34,6 +34,6 @@ export function formatTimeRange(start: string, end: string): string {
 
 export function greeting(name?: string): string {
   const hour = new Date().getHours();
-  const period = hour < 12 ? "morning" : "afternoon";
+  const period = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
   return name ? `Good ${period}, ${name}!` : `Good ${period}!`;
 }

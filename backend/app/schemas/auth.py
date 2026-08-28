@@ -66,6 +66,8 @@ class UserProfileResponse(BaseModel):
     attendee_type: str | None = None
     profile_photo_url: str | None = None
     assigned_org_ids: list[str] = []
+    is_marshal: bool = False
+    marshal_org_ids: list[str] = []
 
     model_config = {"from_attributes": True}
 

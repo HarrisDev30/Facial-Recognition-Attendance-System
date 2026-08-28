@@ -10,7 +10,9 @@ from app.models.attendee import Attendee, AttendeeType
 from app.models.consent import Consent
 from app.models.data_removal_request import DataRemovalRequest
 from app.models.organization import Organization
-from app.models.user import User
+from app.models.organization_staff import OrganizationStaff
+from app.models.user import User, UserRole
+from app.utils.security import hash_password
 from app.schemas.attendee import (
     AttendeeProfileResponse,
     AttendeeProfileUpdate,
@@ -52,6 +54,25 @@ async def get_my_profile(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
+    # Fetch assigned organization leadership roles
+    staff_stmt = (
+        select(OrganizationStaff, Organization)
+        .join(Organization, OrganizationStaff.organization_id == Organization.id)
+        .where(OrganizationStaff.user_id == current_user.id)
+    )
+    staff_res = await session.execute(staff_stmt)
+    assigned_orgs_list = []
+    for staff_entry, org_entry in staff_res.all():
+        org_role_val = staff_entry.org_role.value if hasattr(staff_entry.org_role, "value") else str(staff_entry.org_role)
+        assigned_orgs_list.append({
+            "organization_id": str(org_entry.id),
+            "organization_name": org_entry.name,
+            "organization_code": org_entry.code,
+            "org_role": org_role_val,
+        })
+
+    role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+
     attendee = await _get_attendee_for_user(session, current_user)
     if attendee is None:
         if current_user.role in (UserRole.admin, UserRole.super_admin, UserRole.org_admin, UserRole.marshal):
@@ -62,6 +83,7 @@ async def get_my_profile(
                 last_name=current_user.last_name or "Administrator",
                 identifier=current_user.email.split("@")[0],
                 attendee_type="staff",
+                role=role_val,
                 organization_id=None,
                 department_id=None,
                 department_code="ADMIN",
@@ -71,6 +93,7 @@ async def get_my_profile(
                 num_embeddings=0,
                 consent_given=True,
                 profile_photo_url=None,
+                assigned_organizations=assigned_orgs_list if assigned_orgs_list else None,
             )
         raise HTTPException(status_code=404, detail="Attendee profile not found")
 
@@ -86,6 +109,7 @@ async def get_my_profile(
         last_name=attendee.last_name,
         identifier=attendee.identifier,
         attendee_type=att_type_val,
+        role=role_val,
         organization_id=str(attendee.organization_id),
         department_id=str(attendee.organization_id),
         department_code=org.code if org else None,
@@ -95,6 +119,7 @@ async def get_my_profile(
         num_embeddings=num_emb,
         consent_given=attendee.consent_given,
         profile_photo_url=attendee.profile_photo_url,
+        assigned_organizations=assigned_orgs_list if assigned_orgs_list else None,
     )
 
 
@@ -406,17 +431,20 @@ async def list_attendees(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    query = select(Attendee).order_by(Attendee.last_name, Attendee.first_name)
+    query = (
+        select(Attendee, Organization)
+        .outerjoin(Organization, Attendee.organization_id == Organization.id)
+        .order_by(Attendee.last_name, Attendee.first_name)
+    )
     if current_user.role != UserRole.super_admin:
         if not current_user.institution_id:
             return []
         query = query.where(Attendee.institution_id == current_user.institution_id)
 
     result = await session.execute(query)
-    attendees = result.scalars().all()
+    rows = result.all()
     res = []
-    for a in attendees:
-        org = await session.get(Organization, a.organization_id)
+    for a, org in rows:
         att_type_val = a.attendee_type.value if hasattr(a.attendee_type, "value") else str(a.attendee_type)
         res.append(
             AttendeeResponse(
@@ -477,6 +505,31 @@ async def create_attendee(
     if "department_id" in data:
         del data["department_id"]
     data["attendee_type"] = AttendeeType(body.attendee_type)
+
+    # Auto-provision or link User account for authenticated campus access
+    target_user_id = None
+    if body.email:
+        user_res = await session.execute(select(User).where(User.email == body.email))
+        existing_user = user_res.scalar_one_or_none()
+        if existing_user:
+            target_user_id = existing_user.id
+        else:
+            target_role = UserRole.staff if body.attendee_type in ("faculty", "staff") else UserRole.student
+            new_user = User(
+                email=body.email,
+                password_hash=hash_password("Password123!"),
+                first_name=body.first_name,
+                last_name=body.last_name,
+                role=target_role,
+                institution_id=current_user.institution_id,
+            )
+            session.add(new_user)
+            await session.flush()
+            target_user_id = new_user.id
+
+    if target_user_id:
+        data["user_id"] = target_user_id
+
     attendee = await attendee_service.create_attendee(session, data)
     att_type_val = attendee.attendee_type.value if hasattr(attendee.attendee_type, "value") else str(attendee.attendee_type)
     return AttendeeResponse(

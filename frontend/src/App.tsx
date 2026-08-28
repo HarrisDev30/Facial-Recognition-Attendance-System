@@ -10,39 +10,52 @@ import MarshalLayout from "./components/layout/MarshalLayout";
 import StudentLayout from "./components/layout/StudentLayout";
 import ScannerLayout from "./components/scanner/ScannerLayout";
 import MaintenanceBanner from "./components/shared/MaintenanceBanner";
-import LandingPage from "./pages/LandingPage";
-import CampusPortalPage from "./pages/CampusPortalPage";
-import LoginPage from "./pages/LoginPage";
-import StudentSignUpPage from "./pages/StudentSignUpPage";
-import StudentProfilePage from "./pages/StudentProfilePage";
-import StudentDashboardPage from "./pages/StudentDashboardPage";
-import StudentBiometricRegistration from "./pages/StudentBiometricRegistration";
-import AttendanceHistoryPage from "./pages/AttendanceHistoryPage";
-import UpcomingEventsPage from "./pages/UpcomingEventsPage";
-import EventAttendanceDetailPage from "./pages/EventAttendanceDetailPage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
-import AdminEventsPage from "./pages/AdminEventsPage";
-import AdminEventSessionsPage from "./pages/AdminEventSessionsPage";
-import AdminAttendeesPage from "./pages/AdminAttendeesPage";
-import AdminSessionAttendancePage from "./pages/AdminSessionAttendancePage";
-import AdminEnrollmentPage from "./pages/AdminEnrollmentPage";
-import ScannerDisplay from "./pages/ScannerDisplay";
-import MobileScannerMode from "./pages/MobileScannerMode";
-import DetectionZoneConfig from "./pages/DetectionZoneConfig";
-import AdminScannerDevicesPage from "./pages/AdminScannerDevicesPage";
+// Public / Auth Pages
+import LandingPage from "./pages/public/LandingPage";
+import CampusPortalPage from "./pages/public/CampusPortalPage";
+import LoginPage from "./pages/public/LoginPage";
+import StudentSignUpPage from "./pages/public/StudentSignUpPage";
+import PrivacyPolicyPage from "./pages/public/PrivacyPolicyPage";
+import DataRemovalRequestPage from "./pages/public/DataRemovalRequestPage";
+
+// Student Pages
+import StudentProfilePage from "./pages/student/StudentProfilePage";
+import StudentDashboardPage from "./pages/student/StudentDashboardPage";
+import StudentBiometricRegistration from "./pages/student/StudentBiometricRegistration";
+import AttendanceHistoryPage from "./pages/student/AttendanceHistoryPage";
+import UpcomingEventsPage from "./pages/student/UpcomingEventsPage";
+import EventAttendanceDetailPage from "./pages/student/EventAttendanceDetailPage";
+
+// Marshal Pages
+import MarshalDashboardPage from "./pages/marshal/MarshalDashboardPage";
+import MarshalEventsPage from "./pages/marshal/MarshalEventsPage";
+import MarshalEventDetailPage from "./pages/marshal/MarshalEventDetailPage";
+
+// Admin Pages
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminEventsPage from "./pages/admin/AdminEventsPage";
+import AdminEventSessionsPage from "./pages/admin/AdminEventSessionsPage";
+import AdminAttendeesPage from "./pages/admin/AdminAttendeesPage";
+import AdminSessionAttendancePage from "./pages/admin/AdminSessionAttendancePage";
+import AdminEnrollmentPage from "./pages/admin/AdminEnrollmentPage";
+import AdminScannerDevicesPage from "./pages/admin/AdminScannerDevicesPage";
+import { OrganizationsPage } from "./pages/admin/OrganizationsPage";
+import { OrgMembersPage } from "./pages/admin/OrgMembersPage";
+import AdminStaffDirectoryPage from "./pages/admin/AdminStaffDirectoryPage";
+import InstitutionSettingsPage from "./pages/admin/InstitutionSettingsPage";
+
+// Super Admin Pages
 import SuperAdminDashboardPage from "./pages/super-admin/SuperAdminDashboardPage";
 import SuperAdminInstitutionsPage from "./pages/super-admin/SuperAdminInstitutionsPage";
 import SuperAdminDevicesPage from "./pages/super-admin/SuperAdminDevicesPage";
-import MarshalDashboardPage from "./pages/MarshalDashboardPage";
-import MarshalEventsPage from "./pages/MarshalEventsPage";
-import MarshalEventDetailPage from "./pages/MarshalEventDetailPage";
-import ScannerMultiFace from "./pages/ScannerMultiFace";
-import QRCodeCheckInPage from "./pages/QRCodeCheckInPage";
-import ScannerPairingPage from "./pages/ScannerPairingPage";
-import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
-import DataRemovalRequestPage from "./pages/DataRemovalRequestPage";
-import { OrganizationsPage } from "./pages/admin/OrganizationsPage";
-import { OrgMembersPage } from "./pages/admin/OrgMembersPage";
+
+// Scanner Pages
+import ScannerDisplay from "./pages/scanner/ScannerDisplay";
+import MobileScannerMode from "./pages/scanner/MobileScannerMode";
+import DetectionZoneConfig from "./pages/scanner/DetectionZoneConfig";
+import ScannerMultiFace from "./pages/scanner/ScannerMultiFace";
+import QRCodeCheckInPage from "./pages/scanner/QRCodeCheckInPage";
+import ScannerPairingPage from "./pages/scanner/ScannerPairingPage";
 import { roleHome } from "./utils/routes";
 import { getTenantSlugFromHostname, isReservedSlug } from "./utils/tenant";
 
@@ -151,6 +164,8 @@ export default function App() {
             <Route path="/admin/events" element={<AdminEventsPage />} />
             <Route path="/admin/events/:eventId/sessions" element={<AdminEventSessionsPage />} />
             <Route path="/admin/students" element={<AdminAttendeesPage />} />
+            <Route path="/admin/staff" element={<AdminStaffDirectoryPage />} />
+            <Route path="/admin/settings" element={<InstitutionSettingsPage />} />
             <Route path="/admin/enrollment" element={<AdminEnrollmentPage />} />
             <Route path="/admin/scanner-devices" element={<AdminScannerDevicesPage />} />
             <Route path="/admin/scanner-devices/:deviceId/zone" element={<DetectionZoneConfig />} />

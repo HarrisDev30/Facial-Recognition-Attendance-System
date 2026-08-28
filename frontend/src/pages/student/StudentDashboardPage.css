@@ -1,0 +1,1634 @@
+/* ==========================================================================
+   Student Dashboard — Premium Authoritative Operating Surface
+   Concept 1: Tactile Session Brick Ledger & Restrained Utility
+   ========================================================================== */
+
+html,
+body {
+  overflow-x: hidden !important;
+  width: 100%;
+  max-width: 100vw;
+}
+
+:root {
+  --craft-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --heatmap-cell-empty: rgba(15, 23, 42, 0.08);
+  --heatmap-cell-stroke: rgba(15, 23, 42, 0.1);
+  --heatmap-level-1: rgba(16, 185, 129, 0.35);
+  --heatmap-level-2: rgba(16, 185, 129, 0.65);
+  --heatmap-level-3: #10b981;
+  --heatmap-level-4: #059669;
+}
+
+[data-mantine-color-scheme="dark"] {
+  --heatmap-cell-empty: rgba(255, 255, 255, 0.06);
+  --heatmap-cell-stroke: rgba(255, 255, 255, 0.04);
+  --heatmap-level-1: rgba(16, 185, 129, 0.35);
+  --heatmap-level-2: rgba(16, 185, 129, 0.7);
+  --heatmap-level-3: #10b981;
+  --heatmap-level-4: #34d399;
+}
+
+/* ─── Active Session Alert Banner ─── */
+.premium-live-banner {
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+}
+
+.premium-pulse-beacon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  display: inline-block;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.premium-live-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.premium-btn-live {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  border: none !important;
+  transition: transform 160ms var(--craft-ease-out) !important;
+}
+
+.premium-btn-live:active {
+  transform: scale(0.97) !important;
+}
+
+/* ─── 1. Executive Split Card (Matches Mockup) ─── */
+.premium-header-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 20px 22px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: stretch;
+  gap: 24px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.header-identity-col {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header-greeting-title {
+  font-size: 2.6rem;
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.header-institution-name {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+}
+
+.header-credential-stack {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.header-id-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.header-biometric-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.header-biometric-pill.enrolled {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.header-biometric-pill.pending {
+  background: var(--surface-0);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.header-cta-row.desktop-only {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.premium-btn-primary {
+  background: var(--brand-primary, #171717) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  border: none !important;
+  transition: transform 160ms var(--craft-ease-out), background-color 150ms ease !important;
+}
+
+.premium-btn-primary:active {
+  transform: scale(0.97) !important;
+}
+
+.premium-btn-secondary {
+  border: 1px solid var(--border-subtle) !important;
+  background: var(--surface-0) !important;
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+  border-radius: 10px !important;
+  transition: transform 160ms var(--craft-ease-out), border-color 160ms ease !important;
+}
+
+.premium-btn-secondary:hover {
+  border-color: var(--border-hover) !important;
+}
+
+.premium-btn-secondary:active {
+  transform: scale(0.97) !important;
+}
+
+/* ─── Right Column: Telemetry Frame (Desktop 3-Card Grid) ─── */
+@media (min-width: 641px) {
+  .header-visual-frame {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    overflow: visible;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .visual-carousel-track {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
+    height: 100% !important;
+    transform: none !important;
+  }
+
+  .visual-slide-card {
+    flex: unset !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding: 14px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    background: var(--surface-0) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 16px !important;
+    min-height: 136px !important;
+    transition: transform 160ms var(--craft-ease-out), border-color 160ms ease, box-shadow 160ms ease !important;
+  }
+
+  .visual-slide-card:hover {
+    border-color: var(--border-hover) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+
+  .slide-chart-slot {
+    height: 64px !important;
+    margin: 4px 0 !important;
+  }
+
+  .slide-donut-hero {
+    min-height: 80px !important;
+    padding: 2px 0 !important;
+  }
+
+  .slide-donut-hero .mantine-DonutChart-label {
+    font-size: 1.65rem !important;
+    text-anchor: middle !important;
+    dominant-baseline: central !important;
+    alignment-baseline: central !important;
+  }
+
+  .apple-calendar-tile {
+    width: 90px !important;
+    min-width: 90px !important;
+    border-radius: 16px !important;
+    margin: 0 auto !important;
+  }
+
+  .apple-cal-header {
+    padding: 6px 10px !important;
+  }
+
+  .apple-cal-month {
+    font-size: 0.78rem !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .apple-cal-body {
+    padding: 7px 10px 9px !important;
+  }
+
+  .apple-cal-day {
+    font-size: 2.15rem !important;
+  }
+
+  .apple-cal-weekday {
+    font-size: 0.68rem !important;
+    margin-top: 3px !important;
+  }
+}
+
+.slide-category-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Middle Micro Chart Slot */
+.slide-chart-slot {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  margin: 3px 0 1px;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Hero Centered Donut Slot */
+.slide-donut-hero {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0;
+  width: 100%;
+}
+
+.slide-donut-hero .mantine-DonutChart-root {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto !important;
+}
+
+.slide-donut-hero .mantine-DonutChart-label,
+.mantine-DonutChart-label {
+  font-family: var(--font-mono, "JetBrains Mono", monospace) !important;
+  font-size: 1.45rem !important;
+  font-weight: 800 !important;
+  fill: var(--text-primary) !important;
+  text-anchor: middle !important;
+  dominant-baseline: central !important;
+  alignment-baseline: central !important;
+}
+
+/* ─── Apple-Style Calendar Tear-Off Tile ─── */
+.slide-calendar-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 0;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.apple-calendar-tile {
+  width: 62px;
+  margin: 0 auto;
+  border-radius: 12px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: transform 160ms var(--craft-ease-out), box-shadow 160ms ease;
+  user-select: none;
+}
+
+.apple-calendar-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px -2px rgba(0, 0, 0, 0.35);
+}
+
+.apple-cal-header {
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+  padding: 3px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.apple-cal-header.clear-header {
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+}
+
+.apple-cal-binder-rings {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 10px;
+  pointer-events: none;
+}
+
+.binder-ring {
+  width: 4px;
+  height: 6px;
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.apple-cal-month {
+  font-size: 0.625rem;
+  font-weight: 800;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.apple-cal-body {
+  padding: 4px 6px 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-0);
+}
+
+.apple-cal-day {
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.apple-cal-weekday {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.clearance-micro-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--surface-2, rgba(255, 255, 255, 0.08));
+  overflow: hidden;
+}
+
+.clearance-micro-bar {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  transition: width 400ms var(--craft-ease-out);
+}
+
+.activity-micro-sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 14px;
+  width: 100%;
+}
+
+.spark-bar {
+  flex: 1;
+  border-radius: 2px;
+  background: var(--surface-2, rgba(255, 255, 255, 0.12));
+  transition: height 300ms ease;
+}
+
+.spark-bar.current {
+  background: var(--brand-primary, #38bdf8);
+}
+
+.slide-card-divider {
+  height: 1px;
+  width: 100%;
+  background: var(--border-subtle);
+  margin: 4px 0;
+}
+
+.slide-big-metric {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card 3 Calendar Widget Display */
+.slide-calendar-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 2px;
+}
+
+.slide-calendar-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.cal-month-tag {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #f59e0b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.cal-day-num {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin-top: 3px;
+}
+
+.cal-all-clear {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.visual-carousel-dots {
+  display: none;
+}
+
+/* ─── 2. Full-Width Semester Overview & Bento Card ─── */
+.semester-bento-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+
+.bento-header-responsive {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.semester-bento-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 18px;
+  align-items: stretch;
+  margin-top: 4px;
+}
+
+/* Bento Left: Telemetry & Clearance Runway */
+.bento-telemetry-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  height: 100%;
+}
+
+.telemetry-tile-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.telemetry-tile {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 78px;
+}
+
+.telemetry-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.telemetry-tile-title {
+  font-size: 0.75rem;
+  /* 12px */
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.telemetry-tile-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  margin: 4px 0 2px;
+}
+
+.telemetry-tile-sub {
+  font-size: 0.6875rem;
+  /* 11px */
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.clearance-runway-box {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.runway-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.runway-threshold-tag {
+  font-size: 0.6875rem;
+  /* 11px */
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+}
+
+.runway-chart-wrap {
+  width: 100%;
+  margin: 2px 0;
+  overflow: hidden;
+  border-radius: 8px;
+  position: relative;
+}
+
+.runway-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.runway-rate-text {
+  font-size: 0.75rem;
+  /* 12px */
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+}
+
+/* ─── Bento Right: Concept 1 — Tactile Session Brick Ledger ─── */
+/* ─── Bento Right: Attendance Activity Heatmap Matrix ─── */
+.bento-heatmap-col {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: visible;
+}
+
+.heatmap-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.heatmap-title-group {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.heatmap-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.heatmap-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.heatmap-streak-badge {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 4px 8px;
+}
+
+.heatmap-matrix-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  flex: 1;
+  overflow: visible;
+  margin: 6px 0;
+}
+
+.heatmap-months-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.heatmap-axis-spacer {
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.heatmap-months-track {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 3.5px;
+  flex: 1;
+}
+
+.heatmap-month-cell {
+  min-height: 13px;
+  position: relative;
+}
+
+.heatmap-month-tag {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.heatmap-grid-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.heatmap-weekday-axis {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  gap: 3.5px;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.weekday-tag {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 12px;
+  text-align: right;
+  padding-right: 2px;
+}
+
+.weekday-tag.empty {
+  visibility: hidden;
+}
+
+.heatmap-columns-track {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 3.5px;
+  flex: 1;
+}
+
+.heatmap-week-column {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  gap: 3.5px;
+}
+
+.heatmap-cell {
+  width: 100%;
+  height: 12px;
+  border-radius: 2.5px;
+  background: var(--surface-2, rgba(255, 255, 255, 0.06));
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+  cursor: pointer;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.22);
+  z-index: 5;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.heatmap-cell.level-0 {
+  background: var(--surface-2, rgba(255, 255, 255, 0.05));
+}
+
+.heatmap-cell.level-1 {
+  background: rgba(16, 185, 129, 0.38);
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+.heatmap-cell.level-2 {
+  background: rgba(16, 185, 129, 0.7);
+  border-color: rgba(16, 185, 129, 0.8);
+}
+
+.heatmap-cell.level-3 {
+  background: #10b981;
+  border-color: #34d399;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.35);
+}
+
+.heatmap-cell.is-today {
+  outline: 1.5px solid #38bdf8;
+  outline-offset: 1px;
+}
+
+.heatmap-cell.mini {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  cursor: default;
+}
+
+.heatmap-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.heatmap-footer-meta {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-label {
+  font-size: 0.58rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* ─── Translucent Frosted Glass Chart Tooltips ─── */
+.heatmap-custom-popover {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999999;
+  padding: 4px 9px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #ffffff;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 6px;
+  font-size: 0.71875rem;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  max-width: 90vw;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: popoverFadeIn 100ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-mantine-color-scheme="light"] .heatmap-custom-popover {
+  background: rgba(255, 255, 255, 0.85);
+  color: #0f172a;
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.area-custom-tooltip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 6px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+[data-mantine-color-scheme="light"] .area-custom-tooltip {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.area-tooltip-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-secondary, #94a3b8);
+  text-transform: uppercase;
+}
+
+.area-tooltip-value {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #10b981;
+  font-family: var(--font-mono, monospace);
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -88%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+}
+
+/* ─── 3. Structured 2-Column Dashboard Grid ─── */
+.premium-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.premium-col-main,
+.premium-col-side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ─── Core Card Surface ─── */
+.premium-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.card-heading {
+  font-size: 0.9375rem;
+  /* 15px */
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.card-meta-count {
+  font-size: 0.6875rem;
+  /* 11px */
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 7px;
+  border-radius: 9999px;
+}
+
+.card-badge-pill {
+  font-size: 0.6875rem;
+  /* 11px */
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.card-badge-pill.live {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+/* ─── Next Scheduled Event Ticket ─── */
+.event-ticket-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms var(--craft-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .event-ticket-link:hover {
+    background: var(--surface-2);
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+  }
+}
+
+.event-ticket-link:active {
+  transform: scale(0.985);
+}
+
+.ticket-action-arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  transition: transform 150ms var(--craft-ease-out);
+}
+
+.event-ticket-link:hover .ticket-action-arrow {
+  transform: translateX(2px);
+}
+
+.empty-state-container {
+  padding: 24px;
+  text-align: center;
+  background: var(--surface-0);
+  border-radius: 12px;
+  border: 1px dashed var(--border-subtle);
+}
+
+/* ─── Category Clearance Section ─── */
+.category-list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.category-row-item {
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+}
+
+.category-item-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.category-count-tag {
+  font-size: 0.6875rem;
+  /* 11px */
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.category-count-tag.met {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.category-count-tag.partial {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+}
+
+.category-count-tag.empty {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.category-progress-bg {
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--surface-2);
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.category-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 500ms var(--craft-ease-out);
+}
+
+/* ─── Recent Activity Ledger ─── */
+.premium-btn-link {
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+  font-size: 0.75rem !important;
+  padding: 0 4px !important;
+}
+
+.premium-btn-link:hover {
+  color: var(--text-primary) !important;
+}
+
+.filter-chip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.filter-chip {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  /* 12px */
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms var(--craft-ease-out);
+}
+
+.filter-chip:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.filter-chip:active {
+  transform: scale(0.96);
+}
+
+.filter-chip.active {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-strong, #888888);
+  font-weight: 600;
+}
+
+.activity-rows-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.activity-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  gap: 12px;
+}
+
+.verification-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 0.6875rem;
+  /* 11px */
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ─── Responsive Layout (<960px, <640px, <380px) ─── */
+@media (max-width: 960px) {
+  .premium-header-card {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .semester-bento-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .premium-grid-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .premium-live-banner {
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .premium-header-card {
+    padding: 12px;
+    border-radius: 16px;
+    gap: 10px;
+    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .header-identity-col {
+    width: 100%;
+    min-width: 0;
+    gap: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .header-greeting-title {
+    font-size: 1.65rem;
+    font-weight: 750;
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+  }
+
+  .header-institution-name {
+    font-size: 0.75rem;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-credential-stack {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .header-id-tag {
+    font-size: 0.625rem;
+    padding: 1.5px 5px;
+    border-radius: 4px;
+  }
+
+  .header-biometric-pill {
+    font-size: 0.625rem;
+    padding: 1.5px 5px;
+    border-radius: 4px;
+  }
+
+  .header-cta-row.desktop-only {
+    display: none;
+  }
+
+  /* Right column framed visual carousel on mobile - compact content-fitting frame */
+  .header-visual-frame {
+    width: 100%;
+    min-width: 0;
+    min-height: unset;
+    height: auto;
+    border-radius: 14px;
+    background: var(--surface-0);
+    border: 1px solid var(--border-subtle);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4px 0 6px;
+  }
+
+  .visual-carousel-track {
+    display: flex;
+    grid-template-columns: none;
+    width: 100%;
+    height: auto;
+    will-change: transform;
+  }
+
+  .visual-slide-card {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    padding: 6px 10px 2px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    min-height: unset;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 3px;
+    transform: none !important;
+    box-sizing: border-box;
+  }
+
+  .slide-category-label {
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .slide-chart-slot {
+    height: auto;
+    min-height: 44px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .clearance-micro-track {
+    height: 5px;
+  }
+
+  .slide-donut-hero {
+    padding: 2px 0;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .slide-donut-hero .mantine-DonutChart-label {
+    font-family: var(--font-mono, "JetBrains Mono", monospace) !important;
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+    fill: var(--text-primary) !important;
+    text-anchor: middle !important;
+    dominant-baseline: central !important;
+    alignment-baseline: central !important;
+  }
+
+  .activity-micro-sparkline {
+    height: 14px;
+    gap: 3px;
+  }
+
+  .slide-card-divider {
+    display: none;
+  }
+
+  .slide-big-metric {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: var(--font-mono, "JetBrains Mono", monospace);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .slide-calendar-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 1px;
+  }
+
+  .cal-month-tag {
+    font-size: 0.625rem;
+    font-weight: 700;
+  }
+
+  .cal-day-num {
+    font-size: 1.5rem;
+    margin-top: 1px;
+    line-height: 1;
+  }
+
+  .visual-carousel-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 0 0;
+    gap: 4px;
+  }
+
+  .carousel-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: var(--border-strong, #555555);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: width 260ms cubic-bezier(0.23, 1, 0.32, 1),
+      background-color 200ms ease,
+      opacity 200ms ease;
+  }
+
+  .carousel-dot.active {
+    width: 14px;
+    opacity: 1;
+    background: var(--brand-primary, #38bdf8);
+  }
+
+  /* Full-bleed bento card on mobile */
+  .semester-bento-card {
+    padding: 14px 12px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .bento-header-responsive {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .bento-header-responsive .card-heading {
+    font-size: 0.85rem;
+  }
+
+  .bento-header-responsive .card-meta-count {
+    font-size: 0.625rem;
+    padding: 1px 6px;
+  }
+
+  .semester-bento-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .bento-heatmap-col {
+    order: 1 !important;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+
+  .bento-telemetry-col {
+    order: 2 !important;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .brick-columns-container {
+    gap: 6px;
+    width: 100%;
+  }
+
+  .session-brick {
+    height: 14px;
+    border-radius: 3px;
+  }
+
+  .brick-week-label {
+    font-size: 0.65rem;
+  }
+
+  /* Full-bleed lower grid cards */
+  .premium-grid-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .premium-card {
+    padding: 14px 12px;
+    border-radius: 16px;
+    margin-bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .activity-row-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 10px 12px;
+  }
+
+  .verification-tag {
+    align-self: flex-start;
+  }
+}
+
+/* Extra-small mobile screens (< 380px) */
+@media (max-width: 380px) {
+  .premium-header-card {
+    padding: 10px 8px;
+    gap: 8px;
+    border-radius: 14px;
+    grid-template-columns: auto 1fr;
+  }
+
+  .header-greeting-title {
+    font-size: 1.52rem;
+    line-height: 1.12;
+  }
+
+  .header-id-tag {
+    font-size: 0.58rem;
+    padding: 1px 4px;
+  }
+
+  .header-biometric-pill {
+    font-size: 0.58rem;
+    padding: 1px 4px;
+  }
+
+  .header-visual-frame {
+    width: 100%;
+    min-height: unset;
+    height: auto;
+    border-radius: 12px;
+  }
+
+  .visual-slide-card {
+    padding: 6px 8px;
+  }
+
+  .slide-chart-slot {
+    min-height: 30px;
+  }
+
+  .slide-big-metric {
+    font-size: 1.2rem;
+  }
+
+  .cal-day-num {
+    font-size: 1.5rem;
+  }
+
+  .semester-bento-card {
+    padding: 12px 10px;
+    border-radius: 14px;
+  }
+
+  .telemetry-tile {
+    padding: 8px 10px;
+    min-height: 66px;
+  }
+
+  .telemetry-tile-value {
+    font-size: 1rem;
+  }
+
+  .clearance-runway-box {
+    padding: 8px 10px;
+  }
+
+  .brick-chart-area {
+    padding: 8px 10px;
+  }
+
+  .session-brick {
+    height: 12px;
+  }
+
+  .premium-card {
+    padding: 12px 10px;
+    border-radius: 14px;
+  }
+}

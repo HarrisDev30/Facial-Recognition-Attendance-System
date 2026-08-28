@@ -10,6 +10,7 @@ class AttendeeProfileResponse(BaseModel):
     last_name: str | None = None
     identifier: str | None = None
     attendee_type: str | None = None
+    role: str | None = None
     organization_id: str | None = None
     department_id: str | None = None
     department_code: str | None = None
@@ -19,6 +20,7 @@ class AttendeeProfileResponse(BaseModel):
     num_embeddings: int = 0
     consent_given: bool = False
     profile_photo_url: str | None = None
+    assigned_organizations: list[dict] | None = None
 
     model_config = {"from_attributes": True}
 

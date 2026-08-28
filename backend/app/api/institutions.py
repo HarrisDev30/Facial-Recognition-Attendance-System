@@ -2,9 +2,9 @@ import uuid
 from datetime import datetime
 
 from app.database import get_session
-from app.middleware.auth import require_super_admin
+from app.middleware.auth import get_current_user, require_super_admin
 from app.models.institution import Institution
-from app.models.user import User
+from app.models.user import User, UserRole
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -97,6 +97,77 @@ async def get_institution_by_slug(
     )
 
 
+@router.get("/my-institution", response_model=InstitutionDetailResponse)
+async def get_my_institution(
+    db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user.institution_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User is not associated with an institution",
+        )
+
+    inst = await db.get(Institution, current_user.institution_id)
+    if not inst:
+        raise HTTPException(status_code=404, detail="Institution not found")
+
+    return InstitutionDetailResponse(
+        id=str(inst.id),
+        name=inst.name,
+        code=inst.code,
+        logo_url=inst.logo_url,
+        brand_color=getattr(inst, "brand_color", None) or "#0070f3",
+        is_active=inst.is_active,
+        created_at=inst.created_at.isoformat() if hasattr(inst, "created_at") and inst.created_at else datetime.now().isoformat(),
+    )
+
+
+@router.patch("/my-institution", response_model=InstitutionDetailResponse)
+async def update_my_institution(
+    body: InstitutionUpdateRequest,
+    db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role not in (UserRole.admin, UserRole.super_admin, UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only University Administrators can update campus branding",
+        )
+
+    if not current_user.institution_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User is not associated with an institution",
+        )
+
+    inst = await db.get(Institution, current_user.institution_id)
+    if not inst:
+        raise HTTPException(status_code=404, detail="Institution not found")
+
+    if body.name is not None:
+        inst.name = body.name.strip()
+    if body.logo_url is not None:
+        inst.logo_url = body.logo_url
+    if body.brand_color is not None and hasattr(inst, "brand_color"):
+        inst.brand_color = body.brand_color
+    if body.code is not None and current_user.role == UserRole.super_admin:
+        inst.code = body.code.strip().lower()
+
+    await db.commit()
+    await db.refresh(inst)
+
+    return InstitutionDetailResponse(
+        id=str(inst.id),
+        name=inst.name,
+        code=inst.code,
+        logo_url=inst.logo_url,
+        brand_color=getattr(inst, "brand_color", None) or "#0070f3",
+        is_active=inst.is_active,
+        created_at=inst.created_at.isoformat() if hasattr(inst, "created_at") and inst.created_at else datetime.now().isoformat(),
+    )
+
+
 @router.get("/{institution_id}", response_model=InstitutionDetailResponse)
 async def get_institution_by_id(
     institution_id: str,
@@ -116,6 +187,7 @@ async def get_institution_by_id(
         name=inst.name,
         code=inst.code,
         logo_url=inst.logo_url,
+        brand_color=getattr(inst, "brand_color", None) or "#0070f3",
         is_active=inst.is_active,
         created_at=inst.created_at.isoformat(),
     )

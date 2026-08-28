@@ -4,6 +4,7 @@ export interface ScannerDeviceCreate {
   name: string;
   device_type: "dedicated_scanner" | "mobile_scanner" | "workstation_laptop";
   location?: string;
+  organization_id?: string;
 }
 
 export interface ScannerDevice {
@@ -18,6 +19,9 @@ export interface ScannerDevice {
   face_size_min: number;
   confidence_threshold: number;
   detection_zone: Record<string, number> | null;
+  organization_id?: string | null;
+  organization_name?: string | null;
+  organization_code?: string | null;
   created_at: string;
 }
 
@@ -28,6 +32,9 @@ export interface ScannerDeviceListItem {
   location: string | null;
   last_activity: string | null;
   is_active: boolean;
+  organization_id?: string | null;
+  organization_name?: string | null;
+  organization_code?: string | null;
   created_at: string;
 }
 
@@ -35,6 +42,7 @@ export interface PairingCodeResponse {
   code: string;
   expires_at: string;
   expires_in_seconds: number;
+  organization_id?: string | null;
 }
 
 export interface DevicePairRequest {
@@ -53,10 +61,14 @@ export interface DevicePairResponse {
   institution_id: string;
   institution_name: string;
   institution_code: string;
+  organization_id?: string | null;
+  organization_name?: string | null;
+  organization_code?: string | null;
 }
 
-export async function generatePairingCode(): Promise<PairingCodeResponse> {
-  const { data } = await client.post<PairingCodeResponse>("/api/admin/scanner-devices/generate-pairing-code");
+export async function generatePairingCode(organizationId?: string): Promise<PairingCodeResponse> {
+  const payload = organizationId ? { organization_id: organizationId } : undefined;
+  const { data } = await client.post<PairingCodeResponse>("/api/admin/scanner-devices/generate-pairing-code", payload);
   return data;
 }
 
@@ -72,6 +84,9 @@ export async function verifyDeviceToken(deviceToken: string): Promise<{
   institution_id: string;
   institution_name: string;
   institution_code: string;
+  organization_id?: string | null;
+  organization_name?: string | null;
+  organization_code?: string | null;
 }> {
   const { data } = await client.get(`/api/devices/verify-token/${deviceToken}`);
   return data;
@@ -82,13 +97,21 @@ export async function registerDevice(body: ScannerDeviceCreate): Promise<Scanner
   return data;
 }
 
-export async function listDevices(): Promise<ScannerDeviceListItem[]> {
-  const { data } = await client.get<ScannerDeviceListItem[]>("/api/admin/scanner-devices");
+export async function listDevices(organizationId?: string): Promise<ScannerDeviceListItem[]> {
+  const params = organizationId ? { organization_id: organizationId } : undefined;
+  const { data } = await client.get<ScannerDeviceListItem[]>("/api/admin/scanner-devices", { params });
   return data;
 }
 
 export async function getDevice(id: string): Promise<ScannerDevice> {
   const { data } = await client.get<ScannerDevice>(`/api/admin/scanner-devices/${id}`);
+  return data;
+}
+
+export async function reassignDevice(id: string, organizationId: string | null): Promise<ScannerDevice> {
+  const { data } = await client.patch<ScannerDevice>(`/api/admin/scanner-devices/${id}/reassign`, {
+    organization_id: organizationId,
+  });
   return data;
 }
 

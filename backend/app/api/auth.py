@@ -5,7 +5,7 @@ from app.middleware.auth import get_current_user, require_admin
 from app.models.attendee import Attendee, AttendeeType
 from app.models.institution import Institution
 from app.models.organization import Organization
-from app.models.organization_staff import OrganizationStaff
+from app.models.organization_staff import OrganizationStaff, OrgRole
 from app.models.user import User, UserRole
 from app.schemas.auth import (
     LoginRequest,
@@ -42,11 +42,67 @@ async def _get_assigned_org_ids(session: AsyncSession, user_id: uuid.UUID) -> li
     return org_ids
 
 
+async def _get_marshal_org_ids(session: AsyncSession, user_id: uuid.UUID) -> list[str]:
+    res = await session.execute(
+        select(OrganizationStaff.organization_id).where(
+            OrganizationStaff.user_id == user_id,
+            OrganizationStaff.org_role.in_([OrgRole.MARSHAL, OrgRole.ADMIN]),
+        )
+    )
+    return [str(org_id) for org_id in res.scalars().all()]
+
+
+async def _build_user_profile(
+    session: AsyncSession,
+    user: User,
+    institution: Institution | None = None,
+    attendee: Attendee | None = None,
+) -> UserProfileResponse:
+    assigned_orgs = await _get_assigned_org_ids(session, user.id)
+    marshal_orgs = await _get_marshal_org_ids(session, user.id)
+    is_marshal_role = user.role in (UserRole.marshal, UserRole.admin, UserRole.super_admin, UserRole.org_admin)
+    is_marshal = is_marshal_role or len(marshal_orgs) > 0
+    role_val = user.role.value if hasattr(user.role, "value") else str(user.role)
+
+    inst_id = str(user.institution_id) if user.institution_id else (str(institution.id) if institution else None)
+    inst_name = institution.name if institution else None
+    inst_code = institution.code if institution else None
+
+    return UserProfileResponse(
+        id=str(user.id),
+        email=user.email,
+        first_name=user.first_name or (attendee.first_name if attendee else None),
+        last_name=user.last_name or (attendee.last_name if attendee else None),
+        role=role_val,
+        institution_id=inst_id,
+        institution_name=inst_name,
+        institution_code=inst_code,
+        attendee_id=str(attendee.id) if attendee else None,
+        attendee_type=attendee.attendee_type.value if attendee and hasattr(attendee.attendee_type, "value") else str(attendee.attendee_type) if attendee else None,
+        profile_photo_url=attendee.profile_photo_url if attendee else None,
+        assigned_org_ids=assigned_orgs,
+        is_marshal=is_marshal,
+        marshal_org_ids=marshal_orgs,
+    )
+
+
 @router.post("/login", response_model=TokenResponse)
 async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(User).where(User.email == body.email))
-    user = result.scalar_one_or_none()
-    if user is None or not verify_password(body.password, user.password_hash):
+    result = await session.execute(
+        select(User, Institution, Attendee)
+        .outerjoin(Institution, User.institution_id == Institution.id)
+        .outerjoin(Attendee, User.id == Attendee.user_id)
+        .where(User.email == body.email)
+    )
+    row = result.first()
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email, password, or institution portal.",
+        )
+
+    user, institution, attendee = row
+    if not verify_password(body.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email, password, or institution portal.",
@@ -75,16 +131,7 @@ async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)
                 detail="This account does not belong to this campus portal. Please log in through your institution portal.",
             )
 
-    attendee_result = await session.execute(
-        select(Attendee).where(Attendee.user_id == user.id)
-    )
-    attendee = attendee_result.scalar_one_or_none()
-    assigned_orgs = await _get_assigned_org_ids(session, user.id)
-
-    institution = None
-    if user.institution_id:
-        institution = await session.get(Institution, user.institution_id)
-
+    user_profile = await _build_user_profile(session, user, institution, attendee)
     role_val = user.role.value if hasattr(user.role, "value") else str(user.role)
 
     token = create_access_token(
@@ -95,25 +142,14 @@ async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)
             "institution_id": str(user.institution_id) if user.institution_id else None,
             "institution_code": institution.code if institution else None,
             "attendee_id": str(attendee.id) if attendee else None,
-            "assigned_org_ids": assigned_orgs,
+            "assigned_org_ids": user_profile.assigned_org_ids,
+            "is_marshal": user_profile.is_marshal,
+            "marshal_org_ids": user_profile.marshal_org_ids,
         }
     )
     return TokenResponse(
         access_token=token,
-        user=UserProfileResponse(
-            id=str(user.id),
-            email=user.email,
-            first_name=user.first_name or (attendee.first_name if attendee else None),
-            last_name=user.last_name or (attendee.last_name if attendee else None),
-            role=role_val,
-            institution_id=str(user.institution_id) if user.institution_id else None,
-            institution_name=institution.name if institution else None,
-            institution_code=institution.code if institution else None,
-            attendee_id=str(attendee.id) if attendee else None,
-            attendee_type=attendee.attendee_type.value if attendee and hasattr(attendee.attendee_type, 'value') else str(attendee.attendee_type) if attendee else None,
-            profile_photo_url=attendee.profile_photo_url if attendee else None,
-            assigned_org_ids=assigned_orgs,
-        ),
+        user=user_profile,
     )
 
 
@@ -206,10 +242,11 @@ async def _register_attendee(
         organization_id=dept_id,
     )
     session.add(attendee)
-    assigned_orgs = await _get_assigned_org_ids(session, user.id)
-    role_val = user.role.value if hasattr(user.role, "value") else str(user.role)
+    await session.flush()
 
     institution = await session.get(Institution, institution_id)
+    user_profile = await _build_user_profile(session, user, institution, attendee)
+    role_val = user.role.value if hasattr(user.role, "value") else str(user.role)
 
     token = create_access_token(
         {
@@ -219,26 +256,15 @@ async def _register_attendee(
             "institution_id": str(institution_id),
             "institution_code": institution.code if institution else None,
             "attendee_id": str(attendee.id),
-            "assigned_org_ids": assigned_orgs,
+            "assigned_org_ids": user_profile.assigned_org_ids,
+            "is_marshal": user_profile.is_marshal,
+            "marshal_org_ids": user_profile.marshal_org_ids,
         }
     )
 
     return TokenResponse(
         access_token=token,
-        user=UserProfileResponse(
-            id=str(user.id),
-            email=user.email,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            role=role_val,
-            institution_id=str(institution_id),
-            institution_name=institution.name if institution else None,
-            institution_code=institution.code if institution else None,
-            attendee_id=str(attendee.id),
-            attendee_type=attendee.attendee_type.value if hasattr(attendee.attendee_type, "value") else str(attendee.attendee_type),
-            profile_photo_url=attendee.profile_photo_url,
-            assigned_org_ids=assigned_orgs,
-        ),
+        user=user_profile,
     )
 
 
@@ -294,25 +320,9 @@ async def me(
 ):
     from app.api.attendees import _get_attendee_for_user
     attendee = await _get_attendee_for_user(session, current_user)
-    assigned_orgs = await _get_assigned_org_ids(session, current_user.id)
 
     institution = None
     if current_user.institution_id:
         institution = await session.get(Institution, current_user.institution_id)
 
-    role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
-
-    return UserProfileResponse(
-        id=str(current_user.id),
-        email=current_user.email,
-        first_name=current_user.first_name or (attendee.first_name if attendee else None),
-        last_name=current_user.last_name or (attendee.last_name if attendee else None),
-        role=role_val,
-        institution_id=str(current_user.institution_id) if current_user.institution_id else None,
-        institution_name=institution.name if institution else None,
-        institution_code=institution.code if institution else None,
-        attendee_id=str(attendee.id) if attendee else None,
-        attendee_type=attendee.attendee_type.value if attendee and hasattr(attendee.attendee_type, 'value') else str(attendee.attendee_type) if attendee else None,
-        profile_photo_url=attendee.profile_photo_url if attendee else None,
-        assigned_org_ids=assigned_orgs,
-    )
+    return await _build_user_profile(session, current_user, institution, attendee)

@@ -14,6 +14,9 @@ import AppShellChrome from "./AppShellChrome";
 import StudentMobileNav from "./StudentMobileNav";
 import StudentPassModal from "../student/StudentPassModal";
 
+import { DualPortalModeSwitcher } from "./DualPortalModeSwitcher";
+import { Group } from "@mantine/core";
+
 const navItems = [
   { label: "Dashboard", icon: IconDashboard, to: "/student/dashboard" },
   { label: "Events", icon: IconCalendarEvent, to: "/student/events" },
@@ -48,24 +51,27 @@ export default function StudentLayout() {
         lastName={user?.last_name ?? undefined}
         profilePhotoUrl={user?.profile_photo_url}
         headerRight={
-          <Button
-            size="xs"
-            variant="default"
-            leftSection={<IconQrcode size={14} />}
-            onClick={() => setPassOpened(true)}
-            visibleFrom="xs"
-            style={{
-              borderRadius: "6px",
-              height: "32px",
-              fontWeight: 500,
-              fontSize: "13px",
-              borderColor: "var(--border-subtle)",
-              background: "var(--surface-0)",
-              color: "var(--text-primary)",
-            }}
-          >
-            Digital Pass
-          </Button>
+          <Group gap="xs">
+            <DualPortalModeSwitcher />
+            <Button
+              size="xs"
+              variant="default"
+              leftSection={<IconQrcode size={14} />}
+              onClick={() => setPassOpened(true)}
+              visibleFrom="xs"
+              style={{
+                borderRadius: "6px",
+                height: "32px",
+                fontWeight: 500,
+                fontSize: "13px",
+                borderColor: "var(--border-subtle)",
+                background: "var(--surface-0)",
+                color: "var(--text-primary)",
+              }}
+            >
+              Digital Pass
+            </Button>
+          </Group>
         }
       />
 

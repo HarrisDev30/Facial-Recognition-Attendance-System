@@ -67,3 +67,7 @@ require_super_admin = require_role(UserRole.super_admin)
 require_admin = require_role(UserRole.super_admin, UserRole.admin, UserRole.org_admin)
 require_marshal = require_role(UserRole.marshal, UserRole.super_admin, UserRole.admin)
 require_admin_or_marshal = require_role(UserRole.super_admin, UserRole.admin, UserRole.org_admin, UserRole.marshal)
+
+# Re-export deep DomainScope policy engine
+from app.middleware.domain_scope import DomainScope, get_domain_scope  # noqa: E402, F401
+

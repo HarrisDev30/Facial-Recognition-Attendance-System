@@ -335,6 +335,32 @@ html, body {
   border-color: var(--brand-primary, #38bdf8) !important;
 }
 
+/* ─── Universal Notification Popover Dropdown ─── */
+.notification-popover-dropdown {
+  background: var(--surface-1) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-shadow: 0 14px 36px -4px rgba(0, 0, 0, 0.32) !important;
+  border-radius: 16px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  z-index: 1000 !important;
+}
+
+@media (max-width: 640px) {
+  .notification-popover-dropdown {
+    position: fixed !important;
+    top: 58px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100vw - 24px) !important;
+    max-width: 380px !important;
+    margin: 0 auto !important;
+    box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.45) !important;
+  }
+}
+
 /* ─── Universal Brand Logo Mark (Crisp Stark White) ─── */
 .brand-logo-mark {
   width: 30px;

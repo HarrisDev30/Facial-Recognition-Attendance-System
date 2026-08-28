@@ -283,21 +283,8 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ theme = 
       {/* Subtle Coordinate Grid Overlay */}
       <div className="bg-grid-overlay" />
 
-      {/* Fluid Liquid Aura (Velocity-deforming organic shimmer) */}
-      <div ref={spotlightRef} className="cursor-fluid-liquid-aura">
-        <div className="fluid-inner-core" />
-        <div className="fluid-outer-glow" />
-      </div>
-
-      {/* Parallax Orbs Wrapper (drifts gently with mouse movement) */}
+      {/* Parallax Orbs Wrapper */}
       <div ref={parallaxOrbsRef} className="parallax-orbs-wrapper">
-        {/* Layer 1: Hero Atmosphere */}
-        <div ref={heroLayerRef} className="bg-section-layer bg-layer-hero">
-          <div className="mesh-orb hero-orb-1" />
-          <div className="mesh-orb hero-orb-2" />
-          <div className="mesh-orb hero-orb-3" />
-        </div>
-
         {/* Layer 2: Pipeline Atmosphere */}
         <div ref={pipelineLayerRef} className="bg-section-layer bg-layer-pipeline">
           <div className="mesh-orb pipeline-orb-hud" />

@@ -16,6 +16,12 @@ class ScannerDevice(Base):
     institution_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     device_type: Mapped[str] = mapped_column(String(50), nullable=False)
     device_token: Mapped[uuid.UUID] = mapped_column(
@@ -37,6 +43,8 @@ class ScannerDevice(Base):
     )
 
     institution = relationship("Institution", back_populates="scanner_devices")
+    organization = relationship("Organization")
+    creator = relationship("User")
 
 
 class ScannerPairingCode(Base):
@@ -47,6 +55,9 @@ class ScannerPairingCode(Base):
     )
     institution_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
     )
     created_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
@@ -59,4 +70,5 @@ class ScannerPairingCode(Base):
     )
 
     institution = relationship("Institution")
+    organization = relationship("Organization")
     user = relationship("User")

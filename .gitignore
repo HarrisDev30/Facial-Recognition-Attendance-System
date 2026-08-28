@@ -67,5 +67,7 @@ graphify-out/
 backend/models/insightface/models/buffalo_l/
 backend/models/insightface/models/buffalo_l.zip
 
-# Uploads
+# Uploads & Root Artifacts
 backend/uploads/
+*.png
+tasks/

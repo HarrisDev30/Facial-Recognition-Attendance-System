@@ -5,6 +5,7 @@ import "@fontsource/jetbrains-mono/400.css";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import "@mantine/notifications/styles.css";
+import "@mantine/charts/styles.css";
 import "./theme/globals.css";
 
 import React from "react";

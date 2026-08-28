@@ -34,6 +34,15 @@ export interface UserProfileResponse {
   attendee_type: string | null;
   profile_photo_url: string | null;
   assigned_org_ids?: string[];
+  is_marshal?: boolean;
+  marshal_org_ids?: string[];
+}
+
+export interface AssignedOrganizationInfo {
+  organization_id: string;
+  organization_name: string;
+  organization_code: string;
+  org_role: string;
 }
 
 export interface AttendeeProfileResponse {
@@ -43,6 +52,7 @@ export interface AttendeeProfileResponse {
   last_name: string | null;
   identifier: string | null;
   attendee_type: string | null;
+  role?: string | null;
   department_id: string | null;
   department_code: string | null;
   department_name: string | null;
@@ -51,6 +61,7 @@ export interface AttendeeProfileResponse {
   num_embeddings: number;
   consent_given: boolean;
   profile_photo_url: string | null;
+  assigned_organizations?: AssignedOrganizationInfo[] | null;
 }
 
 export interface ConsentStatusResponse {

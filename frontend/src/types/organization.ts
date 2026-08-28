@@ -9,6 +9,10 @@ export interface Organization {
   org_type: OrgType;
   description?: string;
   member_count: number;
+  parent_id?: string | null;
+  parent_name?: string | null;
+  parent_code?: string | null;
+  children_count?: number;
 }
 
 export interface OrganizationCreatePayload {
@@ -16,6 +20,7 @@ export interface OrganizationCreatePayload {
   code: string;
   org_type: OrgType;
   description?: string;
+  parent_id?: string | null;
 }
 
 export interface OrgMember {
@@ -26,6 +31,8 @@ export interface OrgMember {
   email?: string;
   attendee_type: MemberType;
   role: string;
+  home_department_name?: string | null;
+  home_department_code?: string | null;
   joined_at?: string;
 }
 

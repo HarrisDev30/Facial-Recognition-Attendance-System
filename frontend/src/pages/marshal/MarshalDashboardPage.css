@@ -1,0 +1,332 @@
+/* ==========================================================================
+   Marshal Dashboard — Premium Authoritative Gate Operations Surface
+   Parity with Student Dashboard Design System & Aesthetic Foundation
+   ========================================================================== */
+
+:root {
+  --craft-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --marshal-card-radius: 20px;
+  --marshal-subcard-radius: 16px;
+}
+
+/* ─── 1. Executive Split Header Card (Student Parity, Zero Gradient Bar) ─── */
+.marshal-header-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--marshal-card-radius);
+  padding: 22px 24px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: stretch;
+  gap: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card, 0 2px 8px rgba(0, 0, 0, 0.04));
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.marshal-header-card:hover {
+  border-color: var(--border-hover);
+}
+
+.marshal-avatar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.marshal-avatar-box {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: var(--surface-0);
+  border: 2px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-primary, #10b981);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.marshal-identity-col {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.marshal-greeting-title {
+  font-size: 2.2rem;
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.marshal-institution-subtext {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+}
+
+.marshal-credential-stack {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.marshal-chip-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.marshal-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.marshal-status-pill.online {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.marshal-status-pill.offline {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.marshal-status-pill.badge-student {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.marshal-status-pill.badge-staff {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+/* ─── 2. Metric Bento Grid (Matches Student Dashboard Metrics) ─── */
+.marshal-metric-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--marshal-subcard-radius);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 160ms var(--craft-ease-out), border-color 160ms ease, box-shadow 160ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.marshal-metric-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+.marshal-metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.marshal-metric-value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.marshal-metric-subtext {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* ─── 3. Section Container Cards ─── */
+.marshal-section-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--marshal-card-radius);
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card, 0 2px 8px rgba(0, 0, 0, 0.04));
+  transition: border-color 0.2s ease;
+}
+
+.marshal-section-card:hover {
+  border-color: var(--border-hover);
+}
+
+.marshal-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.marshal-section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+/* ─── 4. Live Station Card (Pulsating Beacon & Action Bar) ─── */
+.marshal-station-item {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--marshal-subcard-radius);
+  padding: 20px;
+  margin-bottom: 14px;
+  transition: transform 160ms var(--craft-ease-out), border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.marshal-station-item:hover {
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.marshal-live-beacon {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  display: inline-block;
+  flex-shrink: 0;
+  animation: marshal-pulse 2s infinite ease-in-out;
+}
+
+@keyframes marshal-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.marshal-action-btn-primary {
+  background: var(--brand-primary, #10b981) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  border: none !important;
+  transition: transform 160ms var(--craft-ease-out) !important;
+}
+
+.marshal-action-btn-primary:active {
+  transform: scale(0.97) !important;
+}
+
+.marshal-action-btn-secondary {
+  border: 1px solid var(--border-subtle) !important;
+  background: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+  border-radius: 10px !important;
+  transition: transform 160ms var(--craft-ease-out), border-color 160ms ease !important;
+}
+
+.marshal-action-btn-secondary:hover {
+  border-color: var(--border-hover) !important;
+}
+
+.marshal-action-btn-secondary:active {
+  transform: scale(0.97) !important;
+}
+
+/* ─── 5. Hardware Hub Item ─── */
+.marshal-hardware-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+/* ─── 6. Mobile Responsiveness ─── */
+@media (max-width: 768px) {
+  .marshal-header-card {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 18px 16px;
+  }
+
+  .marshal-avatar-col {
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+
+  .marshal-avatar-box {
+    width: 52px;
+    height: 52px;
+  }
+
+  .marshal-greeting-title {
+    font-size: 1.75rem;
+  }
+
+  .marshal-section-card {
+    padding: 16px 14px;
+  }
+}

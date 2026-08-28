@@ -10,8 +10,10 @@ import {
   StaffAddPayload,
 } from '../types/organization';
 
-export const getOrganizations = async (orgType?: OrgType): Promise<Organization[]> => {
-  const params = orgType ? { org_type: orgType } : {};
+export const getOrganizations = async (orgType?: OrgType, parentId?: string): Promise<Organization[]> => {
+  const params: Record<string, string> = {};
+  if (orgType) params.org_type = orgType;
+  if (parentId) params.parent_id = parentId;
   const response = await client.get<Organization[]>('/organizations', { params });
   return response.data;
 };

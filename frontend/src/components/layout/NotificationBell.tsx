@@ -10,6 +10,7 @@ import {
   ScrollArea,
   Popover,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { IconBell } from "@tabler/icons-react";
 import {
   getMyNotifications,
@@ -21,6 +22,7 @@ import { timeAgo } from "../../utils/formatters";
 
 export default function NotificationBell() {
   const navigate = useNavigate();
+  const isMobile = useMediaQuery("(max-width: 640px)");
   const [opened, setOpened] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -88,12 +90,15 @@ export default function NotificationBell() {
     <Popover
       opened={opened}
       onChange={setOpened}
-      position="bottom-end"
-      offset={8}
+      position={isMobile ? "bottom" : "bottom-end"}
+      offset={isMobile ? 12 : 8}
       shadow="md"
-      width={320}
+      width={isMobile ? "calc(100vw - 24px)" : 320}
       withinPortal
-      transitionProps={{ transition: "pop-top-right", duration: 160 }}
+      transitionProps={{
+        transition: isMobile ? "fade" : "pop-top-right",
+        duration: 160,
+      }}
     >
       <Popover.Target>
         <button
@@ -108,18 +113,7 @@ export default function NotificationBell() {
         </button>
       </Popover.Target>
 
-      <Popover.Dropdown
-        style={{
-          background: "var(--surface-1)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid var(--border-subtle)",
-          boxShadow: "0 12px 32px -4px rgba(0, 0, 0, 0.28)",
-          borderRadius: "14px",
-          padding: 0,
-          overflow: "hidden",
-          maxWidth: "calc(100vw - 24px)",
-        }}
-      >
+      <Popover.Dropdown className="notification-popover-dropdown">
         {/* Header Row */}
         <Group
           justify="space-between"

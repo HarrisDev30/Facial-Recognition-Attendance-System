@@ -26,10 +26,10 @@ export default function AdminLayout() {
     },
     { label: "Events", icon: IconCalendarEvent, to: "/admin/events" },
     { label: "Attendees", icon: IconUsers, to: "/admin/students" },
+    { label: "Staff & Marshals", icon: IconUsers, to: "/admin/staff" },
     { label: "Biometrics", icon: IconCameraSelfie, to: "/admin/enrollment" },
-    ...(!isOrgAdmin
-      ? [{ label: "Scanner Devices", icon: IconDeviceCctv, to: "/admin/scanner-devices" }]
-      : []),
+    { label: "Scanner Devices", icon: IconDeviceCctv, to: "/admin/scanner-devices" },
+    ...(!isOrgAdmin ? [{ label: "Campus Settings", icon: IconBuildingCommunity, to: "/admin/settings" }] : []),
     { label: "Profile", icon: IconUser, to: "/admin/profile" },
   ];
 

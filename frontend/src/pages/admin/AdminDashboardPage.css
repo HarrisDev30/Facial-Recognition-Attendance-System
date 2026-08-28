@@ -1,0 +1,389 @@
+/* ==========================================================================
+   Admin Command Center Styles — Next-Gen University Operating Deck
+   ========================================================================== */
+
+.admin-command-container {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* ─── Hero Header & Real-Time Influx Bar ─── */
+.admin-command-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-hero-title-group h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.admin-hero-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* ─── Campus College Filter Scope ─── */
+.campus-filter-container {
+  padding: 4px 0 8px;
+}
+
+.campus-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  transition: all 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
+}
+
+.campus-filter-pill:hover {
+  background: var(--surface-2);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.campus-filter-pill.active {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  font-weight: 700;
+}
+
+/* ─── Core Bento Card Surface ─── */
+.admin-bento-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  overflow: hidden;
+}
+
+.admin-bento-card:hover {
+  border-color: var(--border-hover);
+}
+
+.admin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-card-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-card-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.admin-card-heading {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.admin-card-subheading {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.admin-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+/* ─── Fleet Kiosk Tiles ─── */
+.kiosk-station-tile {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  transition: all 120ms ease;
+}
+
+.kiosk-station-tile.is-online {
+  border-color: rgba(16, 185, 129, 0.25);
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.02) 0%, var(--surface-0) 100%);
+}
+
+.kiosk-station-tile.is-offline {
+  opacity: 0.75;
+}
+
+.kiosk-tile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kiosk-tile-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.kiosk-tile-location {
+  font-size: 0.725rem;
+  color: var(--text-secondary);
+}
+
+.kiosk-tile-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.fleet-beacon-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+  display: inline-block;
+}
+
+.fleet-beacon-dot.online {
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+/* ─── Live Check-In Ticker Stream ─── */
+.live-stream-empty-standby {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 16px;
+}
+
+.radar-ping-container {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-ping-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  animation: radarPulse 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.radar-ping-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+}
+
+@keyframes radarPulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.live-stream-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.live-stream-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  transition: background 120ms ease;
+}
+
+.live-stream-row:hover {
+  background: var(--surface-2);
+}
+
+.live-attendee-avatar {
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.live-stream-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.live-stream-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.live-stream-dept {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.live-stream-method-badge {
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  font-size: 0.6875rem;
+}
+
+.live-stream-timestamp {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.admin-velocity-badge {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Clearance Ring & Bands ─── */
+.band-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.bg-teal {
+  background: #10b981;
+}
+
+.bg-blue {
+  background: #3b82f6;
+}
+
+.bg-red {
+  background: #ef4444;
+}
+
+.clearance-band-item {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+}
+
+/* ─── Security Audit Metric Box ─── */
+.security-metric-box {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* ─── Department Matrix ─── */
+.department-matrix-row {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+}
+
+/* ─── At Risk Table ─── */
+.at-risk-table {
+  width: 100%;
+}
+
+.at-risk-table tr {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Helper Text Classes */
+.text-teal {
+  color: #10b981 !important;
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+.text-primary {
+  color: var(--text-primary) !important;
+  font-weight: 600;
+}
+
+/* ─── Responsive Media Queries ─── */
+@media (max-width: 768px) {
+  .admin-command-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .admin-hero-title-group h1 {
+    font-size: 1.4rem;
+  }
+
+  .live-stream-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}

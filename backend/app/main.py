@@ -2,6 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from app.api import (
+    analytics,
     attendance,
     attendees,
     auth,
@@ -158,6 +159,7 @@ app.include_router(devices.router)
 app.include_router(marshal.router)
 app.include_router(privacy.router)
 app.include_router(notifications.router)
+app.include_router(analytics.router)
 app.include_router(super_admin.router)
 
 

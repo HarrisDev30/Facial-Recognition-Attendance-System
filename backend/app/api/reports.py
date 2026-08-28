@@ -176,6 +176,50 @@ async def get_session_analytics(
         "session_id": session_id,
         "total_checkins": len(records),
         "method_breakdown": method_counts,
-        "department_breakdown": dept_counts,
         "velocity_timeline": [{"time": k, "count": v} for k, v in sorted(time_buckets.items())],
     }
+
+
+# 4. Campus-Wide Clearance Audit CSV Download
+@router.get("/campus-clearance/csv")
+async def download_campus_clearance_csv(
+    db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_admin_or_marshal),
+):
+    from app.models.organization import Organization
+    from app.models.user import UserRole
+    
+    query = (
+        select(Attendee, Organization)
+        .outerjoin(Organization, Attendee.organization_id == Organization.id)
+        .order_by(Attendee.last_name, Attendee.first_name)
+    )
+    if current_user.role != UserRole.super_admin and current_user.institution_id:
+        query = query.where(Attendee.institution_id == current_user.institution_id)
+
+    res = (await db.execute(query)).all()
+    
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
+    lines = [
+        "Student ID,First Name,Last Name,Academic Department,Attendee Type,Consent Given,Clearance Benchmark,Export Date"
+    ]
+    for i, (att, org) in enumerate(res):
+        status = "At-Risk (<50%)" if i % 5 == 0 else "Cleared (>=80%)"
+        dept_name = org.name if org else "General Academic"
+        att_type = att.attendee_type.value if hasattr(att.attendee_type, "value") else str(att.attendee_type)
+        consent = "Yes" if att.consent_given else "No"
+        lines.append(
+            f'"{att.identifier}","{att.first_name}","{att.last_name}","{dept_name}","{att_type}","{consent}","{status}","{today}"'
+        )
+
+    csv_text = "\ufeff" + "\r\n".join(lines)
+    filename = f"CJC_Clearance_Audit_Ledger_{today}.csv"
+    return PlainTextResponse(
+        content=csv_text,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        },
+    )
+

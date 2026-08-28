@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 
 from app.database import get_session
-from app.middleware.auth import get_current_user, require_admin_or_marshal
+from app.middleware.auth import DomainScope, get_current_user, get_domain_scope, require_admin_or_marshal
 from app.models.attendance_log import AttendanceLog, VerificationMethod
 from app.models.attendance_session import AttendanceSession
 from app.models.attendee import Attendee
@@ -243,10 +243,19 @@ async def get_my_event_attendance(
 async def check_in(
     body: CheckInRequest,
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    if not scope.is_admin_or_higher and not scope.is_marshal:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Marshal or Admin privileges required to check in attendees",
+        )
+
     sess_id = uuid.UUID(body.session_id)
     att_id = uuid.UUID(body.attendee_id)
+
+    # Enforce session operational rights (checks department ownership and co-host assignments)
+    await scope.assert_can_operate_session(sess_id, session)
 
     att_session = await attendance_service.get_session_for_attendance(session, sess_id)
     if att_session is None:
@@ -257,7 +266,7 @@ async def check_in(
         raise HTTPException(status_code=404, detail="Attendee not found")
 
     method = VerificationMethod(body.verification_method)
-    marshal_id = current_user.id if method == VerificationMethod.marshal_override else None
+    marshal_id = scope.user.id if method == VerificationMethod.marshal_override else None
 
     log = await attendance_service.log_attendance(
         session=session,

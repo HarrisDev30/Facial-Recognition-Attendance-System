@@ -32,11 +32,16 @@ class Organization(Base):
         Enum(OrgType, native_enum=False), default=OrgType.COLLEGE, nullable=False
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    parent_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
 
     institution = relationship("Institution", back_populates="organizations")
+    parent = relationship("Organization", remote_side=[id], back_populates="children")
+    children = relationship("Organization", back_populates="parent", cascade="all, delete-orphan")
     attendees = relationship("Attendee", back_populates="organization")
     events = relationship("Event", back_populates="organization")
     memberships = relationship("Membership", back_populates="organization", cascade="all, delete-orphan")

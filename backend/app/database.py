@@ -16,7 +16,15 @@ if "neon.tech" in settings.database_url or "ssl" in settings.database_url:
     ssl_context.verify_mode = ssl.CERT_NONE
     connect_args["ssl"] = ssl_context
 
-engine = create_async_engine(settings.database_url, echo=False, pool_size=10, max_overflow=20, connect_args=connect_args)
+engine = create_async_engine(
+    settings.database_url,
+    echo=False,
+    pool_size=20,
+    max_overflow=30,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    connect_args=connect_args,
+)
 
 async_session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 

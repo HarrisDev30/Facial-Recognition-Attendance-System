@@ -8,6 +8,7 @@ class ScannerDeviceCreate(BaseModel):
     name: str
     device_type: str
     location: str | None = None
+    organization_id: UUID | None = None
 
 
 class ScannerDeviceResponse(BaseModel):
@@ -21,6 +22,9 @@ class ScannerDeviceResponse(BaseModel):
     detection_zone: dict | None
     face_size_min: int | None
     confidence_threshold: float | None
+    organization_id: UUID | None = None
+    organization_name: str | None = None
+    organization_code: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -33,6 +37,9 @@ class ScannerDeviceListItem(BaseModel):
     location: str | None
     last_activity: datetime | None
     is_active: bool
+    organization_id: UUID | None = None
+    organization_name: str | None = None
+    organization_code: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

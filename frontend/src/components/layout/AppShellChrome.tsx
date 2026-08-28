@@ -169,7 +169,7 @@ export default function AppShellChrome({
       <AppShell
         header={{ height: 64 }}
         navbar={{ width: navbarWidth, breakpoint: "sm", collapsed: { mobile: !opened } }}
-        padding="lg"
+        padding={{ base: "12px", sm: "md" }}
       >
         <AppShell.Header
           style={{

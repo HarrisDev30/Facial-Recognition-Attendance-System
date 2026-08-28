@@ -179,7 +179,14 @@ export const OrgMembersPage: React.FC = () => {
             Back
           </Button>
           <div>
-            <Title order={2}>{org?.name || 'Organization'}</Title>
+            <Group gap="xs" align="center">
+              <Title order={2}>{org?.name || 'Organization'}</Title>
+              {org?.parent_name && (
+                <Badge color="gray" variant="outline" size="sm">
+                  Parent: {org.parent_name} ({org.parent_code})
+                </Badge>
+              )}
+            </Group>
             <Text c="dimmed" size="sm">
               Code: {org?.code} &bull; Type: {org?.org_type?.toUpperCase()}
             </Text>
@@ -297,6 +304,7 @@ export const OrgMembersPage: React.FC = () => {
               <Table.Tr>
                 <Table.Th>Member Name</Table.Th>
                 <Table.Th>ID / Identifier</Table.Th>
+                <Table.Th>Home Department</Table.Th>
                 <Table.Th>Type</Table.Th>
                 <Table.Th>Role</Table.Th>
                 <Table.Th>Joined Date</Table.Th>
@@ -306,7 +314,7 @@ export const OrgMembersPage: React.FC = () => {
             <Table.Tbody>
               {(activeTab === 'students' ? studentMembers : facultyMembers).length === 0 ? (
                 <Table.Tr>
-                  <Table.Td colSpan={6} style={{ textAlign: 'center', color: '#909296' }}>
+                  <Table.Td colSpan={7} style={{ textAlign: 'center', color: '#909296' }}>
                     No {activeTab} listed in this roster yet.
                   </Table.Td>
                 </Table.Tr>
@@ -331,6 +339,15 @@ export const OrgMembersPage: React.FC = () => {
                     </Table.Td>
                     <Table.Td>
                       <Text size="sm">{m.identifier}</Text>
+                    </Table.Td>
+                    <Table.Td>
+                      {m.home_department_code ? (
+                        <Badge variant="light" color="indigo" size="xs">
+                          {m.home_department_code}
+                        </Badge>
+                      ) : (
+                        <Text size="xs" c="dimmed">Campus</Text>
+                      )}
                     </Table.Td>
                     <Table.Td>
                       <Badge color={m.attendee_type === 'faculty' ? 'violet' : 'blue'}>

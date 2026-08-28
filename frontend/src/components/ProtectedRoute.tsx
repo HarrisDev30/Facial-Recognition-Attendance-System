@@ -21,12 +21,27 @@ export default function ProtectedRoute({ children, roles }: Props) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (roles && user && !roles.includes(user.role)) {
-    const home = roleHome(user.role);
-    if (home === location.pathname) {
-      return <NotAuthorized />;
+  if (roles && user) {
+    const isSuperOrAdmin = user.role === "super_admin" || user.role === "admin";
+    const isMarshal =
+      user.role === "marshal" ||
+      user.is_marshal === true ||
+      (user.marshal_org_ids && user.marshal_org_ids.length > 0);
+    const isStudent = user.role === "student" || !!user.attendee_id;
+
+    const hasAccess =
+      roles.includes(user.role) ||
+      (roles.includes("marshal") && (isMarshal || isSuperOrAdmin)) ||
+      (roles.includes("student") && isStudent) ||
+      (roles.includes("admin") && isSuperOrAdmin);
+
+    if (!hasAccess) {
+      const home = roleHome(user.role);
+      if (home === location.pathname) {
+        return <NotAuthorized />;
+      }
+      return <Navigate to={home} replace />;
     }
-    return <Navigate to={home} replace />;
   }
 
   return children ? <>{children}</> : <Outlet />;

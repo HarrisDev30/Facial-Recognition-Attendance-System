@@ -145,7 +145,7 @@ async def update_session(
 async def activate_session(
     session_id: uuid.UUID,
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_admin_or_marshal),
 ):
     att_session = await service_activate_session(db, session_id)
     if att_session is None:
@@ -172,7 +172,7 @@ async def activate_session(
 async def deactivate_session(
     session_id: uuid.UUID,
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_admin_or_marshal),
 ):
     att_session = await service_deactivate_session(db, session_id)
     if att_session is None:
