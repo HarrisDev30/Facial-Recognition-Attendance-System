@@ -15,14 +15,19 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column(
-        'events',
-        sa.Column('target_scope', sa.String(50), nullable=False, server_default='department_only')
-    )
-    op.add_column(
-        'events',
-        sa.Column('co_host_dept_ids', sa.JSON(), nullable=True)
-    )
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    columns = [c['name'] for c in inspector.get_columns('events')]
+    if 'target_scope' not in columns:
+        op.add_column(
+            'events',
+            sa.Column('target_scope', sa.String(50), nullable=False, server_default='department_only')
+        )
+    if 'co_host_dept_ids' not in columns:
+        op.add_column(
+            'events',
+            sa.Column('co_host_dept_ids', sa.JSON(), nullable=True)
+        )
 
 
 def downgrade():

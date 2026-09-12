@@ -1,0 +1,518 @@
+/* ==========================================================================
+   Campus Operators & Marshals Directory — Student Dashboard Architecture Parity
+   Concept: Tactile Operator Ledger, Restrained Utility, High-Craft Bento
+   ========================================================================== */
+
+:root {
+  --craft-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.staff-container {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* ─── 1. Executive Split Header Card (Student Dashboard Parity) ─── */
+.admin-staff-header-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 22px 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(480px, 1.25fr);
+  align-items: stretch;
+  gap: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1060px) {
+  .admin-staff-header-card {
+    grid-template-columns: 1fr;
+    padding: 18px 20px;
+    gap: 20px;
+  }
+}
+
+.staff-identity-col {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.staff-title-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.staff-eyebrow {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  margin-bottom: 3px;
+}
+
+.staff-title {
+  font-size: clamp(1.35rem, 2.1vw, 1.95rem);
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  margin: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.staff-institution-name {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+}
+
+.staff-credential-stack {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.staff-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.staff-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.staff-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.staff-btn-primary {
+  background: var(--text-primary) !important;
+  color: var(--surface-0) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  transition: transform 160ms var(--craft-ease-out), opacity 150ms ease !important;
+}
+
+.staff-btn-primary:active {
+  transform: scale(0.97) !important;
+}
+
+.staff-btn-secondary {
+  background: var(--surface-0) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  transition: transform 160ms var(--craft-ease-out), background-color 150ms ease !important;
+}
+
+.staff-btn-secondary:hover {
+  background: var(--surface-2) !important;
+}
+
+.staff-btn-secondary:active {
+  transform: scale(0.97) !important;
+}
+
+/* ─── Header Visual Telemetry Slides ─── */
+.staff-visual-frame {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  align-items: stretch;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .staff-visual-frame {
+    grid-template-columns: 1fr;
+  }
+}
+
+.staff-visual-slide {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: transform 160ms var(--craft-ease-out), border-color 160ms ease;
+}
+
+.staff-visual-slide:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.staff-slide-category {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+.staff-slide-big-metric {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin: 4px 0 2px 0;
+}
+
+.staff-slide-subtext {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+/* ─── 2. Filter Tabs & Search Toolbar ─── */
+.staff-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.staff-tab-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  padding: 4px;
+  border-radius: 12px;
+  flex-wrap: wrap;
+}
+
+.staff-tab-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, transform 160ms var(--craft-ease-out);
+}
+
+.staff-tab-pill:hover {
+  color: var(--text-primary);
+  background: var(--surface-0);
+}
+
+.staff-tab-pill:active {
+  transform: scale(0.97);
+}
+
+.staff-tab-pill.active {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.staff-tab-count {
+  font-size: 0.6875rem;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.staff-tab-pill.active .staff-tab-count {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.staff-search-wrap {
+  min-width: 260px;
+  flex-grow: 1;
+  max-width: 360px;
+}
+
+@media (max-width: 640px) {
+  .staff-search-wrap {
+    min-width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* ─── 3. Staff Ledger Table Card ─── */
+.staff-ledger-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.staff-card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.staff-card-heading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.staff-card-meta-count {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+.staff-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-0);
+}
+
+.staff-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.825rem;
+}
+
+.staff-table th {
+  padding: 10px 14px;
+  background: var(--surface-1);
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.staff-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.staff-table tr:last-child td {
+  border-bottom: none;
+}
+
+.staff-table tbody tr {
+  transition: background-color 120ms ease;
+}
+
+.staff-table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.staff-identity-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.staff-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.staff-subtext {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+/* ─── Role Badges ─── */
+.operator-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.operator-role-badge.admin {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.operator-role-badge.student-marshal {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.operator-role-badge.marshal {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.operator-unit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.operator-id-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.operator-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-1);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: transform 160ms var(--craft-ease-out), color 120ms ease, background-color 120ms ease, border-color 120ms ease;
+}
+
+.operator-action-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  background: var(--surface-2);
+}
+
+.operator-action-btn:active {
+  transform: scale(0.92);
+}
+
+/* ─── 4. Empty State ─── */
+.staff-empty-state {
+  padding: 36px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.staff-empty-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+/* ─── 5. Pagination & Footer Row ─── */
+.staff-pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 4px 2px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.staff-count-summary {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}

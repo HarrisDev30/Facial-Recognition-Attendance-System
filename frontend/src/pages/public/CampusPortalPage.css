@@ -16,20 +16,20 @@
 
 /* ─── Light Mode Tokens ─── */
 .campus-portal-container[data-theme="light"] {
-  --portal-bg: #fafafa;
+  --portal-bg: #fdfafe;
   --portal-surface: #ffffff;
-  --portal-surface-subtle: #f5f5f5;
+  --portal-surface-subtle: #fdfafe;
   --portal-border: #ebebeb;
   --portal-border-strong: #d4d4d4;
   --portal-text-heading: #171717;
   --portal-text-body: #4d4d4d;
   --portal-text-muted: #888888;
-  --portal-nav-bg: rgba(250, 250, 250, 0.85);
-  --portal-card-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
+  --portal-nav-bg: rgba(253, 250, 254, 0.85);
+  --portal-card-shadow: 0 4px 24px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
   --portal-btn-primary-bg: #171717;
   --portal-btn-primary-text: #ffffff;
-  --portal-card-bg: rgba(255, 255, 255, 0.95);
-  --portal-card-border: rgba(0, 0, 0, 0.08);
+  --portal-card-bg: #ffffff;
+  --portal-card-border: #ebebeb;
   background-color: var(--portal-bg);
   color: var(--portal-text-body);
 }
@@ -80,6 +80,11 @@
   will-change: transform;
 }
 
+.campus-portal-container[data-theme="light"] .portal-mesh-orb,
+.campus-portal-container[data-theme="light"] .portal-grid-overlay {
+  display: none;
+}
+
 .campus-portal-container[data-theme="light"] .portal-mesh-orb.orb-1 {
   top: -10%;
   left: 30%;
@@ -116,8 +121,7 @@
   opacity: 0.12;
 }
 
-/* ─── Sticky Navbar ─── */
-/* ─── Sticky Navbar (Exact 1:1 Pixel Match with Landing Page) ─── */
+/* ─── Sticky Navbar (Exact 1:1 Pixel Match with Landing Page & LoginPage) ─── */
 .campus-portal-nav {
   position: sticky;
   top: 0;
@@ -126,8 +130,8 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   background: var(--portal-nav-bg);
-  border-bottom: 2px solid var(--campus-brand, #0070f3);
-  box-shadow: 0 4px 20px var(--campus-brand-subtle, rgba(0, 112, 243, 0.06));
+  border-bottom: 1px solid var(--portal-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -177,6 +181,18 @@
   color: var(--portal-text-heading);
 }
 
+.brand-version-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--portal-surface-subtle);
+  border: 1px solid var(--portal-border);
+  color: var(--portal-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.02em;
+}
+
 .portal-nav-divider {
   color: var(--portal-text-muted);
   font-size: 0.95rem;
@@ -185,13 +201,13 @@
 
 .portal-campus-code {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--campus-brand, #0070f3);
-  background: var(--campus-brand-subtle, rgba(0, 112, 243, 0.1));
-  padding: 3px 10px;
+  color: var(--portal-text-heading);
+  background: var(--portal-surface-subtle);
+  padding: 2px 8px;
   border-radius: 6px;
-  border: 1px solid var(--campus-brand-glow, rgba(0, 112, 243, 0.25));
+  border: 1px solid var(--portal-border);
   letter-spacing: 0.5px;
 }
 
@@ -236,22 +252,26 @@
 }
 
 .btn-all-campuses {
-  color: var(--portal-text-body) !important;
-  background: var(--portal-surface) !important;
-  border: 1px solid var(--portal-border) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem !important;
+  font-weight: 500 !important;
+  color: var(--portal-text-muted) !important;
+  text-decoration: none;
+  padding: 6px 12px !important;
   border-radius: 8px !important;
   height: 34px !important;
-  padding: 0 14px !important;
-  font-weight: 500 !important;
-  font-size: 0.82rem !important;
-  transition: all 0.2s ease !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease !important;
 }
 
 .btn-all-campuses:hover {
-  background: var(--portal-surface-subtle) !important;
   color: var(--portal-text-heading) !important;
-  border-color: var(--portal-border-strong) !important;
-  transform: translateY(-1px);
+  background: var(--portal-surface-subtle) !important;
+  border-color: var(--portal-border) !important;
+  transform: none !important;
 }
 
 /* ─── Main Content Layout (Clean Centered) ─── */
@@ -272,31 +292,31 @@
 /* ─── University Hero Branding ─── */
 .campus-clean-hero {
   text-align: center;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .campus-hero-crest {
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
   background: var(--portal-surface);
-  border: 2px solid var(--campus-brand-glow, rgba(0, 112, 243, 0.3));
-  box-shadow: 0 8px 24px var(--campus-brand-subtle, rgba(0, 112, 243, 0.12));
-  padding: 10px;
+  border: 1px solid var(--portal-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
 }
 
 .campus-hero-crest img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 .campus-hero-badge {
@@ -305,19 +325,19 @@
   gap: 6px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--campus-brand, #0070f3);
-  letter-spacing: 0.8px;
+  font-weight: 600;
+  color: var(--portal-text-muted);
+  letter-spacing: 0.5px;
   margin-bottom: 6px;
 }
 
 .campus-hero-title {
-  font-size: 1.85rem;
-  font-weight: 800;
-  letter-spacing: -0.7px;
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   color: var(--portal-text-heading);
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .campus-hero-subtitle {
@@ -329,14 +349,15 @@
 /* ─── Focused Auth Card ─── */
 .campus-clean-card {
   width: 100%;
+  max-width: 440px;
   background: var(--portal-card-bg);
   border: 1px solid var(--portal-card-border);
   box-shadow: var(--portal-card-shadow);
-  border-radius: 18px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: 2.25rem;
+  border-radius: 14px;
+  padding: 2.25rem 2rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  z-index: 1;
 }
 
 /* ─── Inputs: Light & Dark Overrides ─── */
@@ -344,11 +365,12 @@
 .campus-portal-container[data-theme="light"] .campus-clean-card .mantine-TextInput-input,
 .campus-portal-container[data-theme="light"] .campus-clean-card .mantine-PasswordInput-input {
   background-color: #ffffff !important;
-  border: 1px solid #d4d4d4 !important;
+  border: 1px solid #ebebeb !important;
   color: #171717 !important;
   border-radius: 8px !important;
   height: 42px !important;
   font-size: 0.875rem !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
 .campus-portal-container .mantine-PasswordInput-innerInput {
@@ -411,22 +433,23 @@
 .campus-clean-card input:focus,
 .campus-clean-card .mantine-PasswordInput-input:focus-within {
   border-color: var(--campus-brand, #0070f3) !important;
-  box-shadow: 0 0 0 3px var(--campus-brand-glow, rgba(0, 112, 243, 0.2)) !important;
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.15) !important;
 }
 
 /* ─── Submit Button ─── */
 .btn-portal-submit {
-  background: var(--campus-brand, #0070f3) !important;
+  background: var(--campus-brand, #171717) !important;
   color: #ffffff !important;
   font-weight: 600 !important;
-  height: 44px !important;
-  border-radius: 10px !important;
-  box-shadow: 0 4px 16px var(--campus-brand-glow, rgba(0, 112, 243, 0.3)) !important;
-  transition: opacity 0.2s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1) !important;
+  height: 42px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+  transition: opacity 0.15s ease, transform 0.1s ease !important;
 }
 
 .btn-portal-submit:hover {
-  opacity: 0.94 !important;
+  opacity: 0.92 !important;
   transform: translateY(-1px);
 }
 
@@ -460,15 +483,16 @@
 /* ─── Register Button ─── */
 .btn-portal-register {
   height: 42px !important;
-  border-radius: 10px !important;
+  border-radius: 8px !important;
   font-weight: 500 !important;
-  border-color: var(--portal-border) !important;
-  background: var(--portal-surface-subtle) !important;
+  border: 1px solid var(--portal-border) !important;
+  background: #ffffff !important;
   color: var(--portal-text-heading) !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.15s ease !important;
 }
 
 .btn-portal-register:hover {
+  background: var(--portal-surface-subtle) !important;
   border-color: var(--portal-border-strong) !important;
   transform: translateY(-1px);
 }

@@ -1,13 +1,15 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef } from "react";
 import {
   IconScan,
-  IconCpu,
-  IconServer,
-  IconDatabase,
+  IconShieldCheck,
   IconBolt,
-  IconCheck,
-  IconRadar,
-  IconLockCheck,
+  IconCircleCheck,
+  IconLock,
+  IconUserCheck,
+  IconFocus2,
+  IconEyeOff,
+  IconClock,
+  IconShieldLock,
 } from "@tabler/icons-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -15,212 +17,104 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
+interface PipelineStage {
+  id: number;
+  title: string;
+  description: string;
+  highlights: string[];
+  videoUrl?: string;
+}
+
+const STAGES: PipelineStage[] = [
+  {
+    id: 1,
+    title: "Doorway Focus & Crowd Filtering",
+    description:
+      "As attendees approach the entrance, intelligent spatial zoning focuses exclusively on individuals passing through the doorway threshold, filtering out background passersby and distant crowd faces.",
+    highlights: [
+      "Active doorway boundary tracking",
+      "Filters out passersby and hallway traffic",
+      "Instant walking-speed detection",
+    ],
+  },
+  {
+    id: 2,
+    title: "Mathematical Vectorization",
+    description:
+      "Facial geometry is converted into an encrypted mathematical vector in volatile memory. The raw camera photo is wiped immediately to ensure strict student privacy compliance.",
+    highlights: [
+      "Zero raw photos stored to disk",
+      "Volatile RAM-only vectorization",
+      "Complies with institutional data privacy",
+    ],
+  },
+  {
+    id: 3,
+    title: "Instant Student Identification",
+    description:
+      "The secure vector is matched against the verified student roster in under 10 milliseconds, confirming enrollment even across university directories with tens of thousands of records.",
+    highlights: [
+      "Sub-10ms match latency",
+      "High-accuracy vector indexing",
+      "Frictionless walking-pace verification",
+    ],
+  },
+  {
+    id: 4,
+    title: "Verified Log & Duplicate Lock",
+    description:
+      "Attendance records sync immediately with the institutional database. Smart cooldown locks automatically prevent duplicate check-ins if a student passes by the entrance multiple times.",
+    highlights: [
+      "Instant database transaction sync",
+      "Intelligent duplicate cooldown locks",
+      "Real-time marshal & kiosk confirmation",
+    ],
+  },
+];
+
 export const ScrollPipelineSection: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const hudRef = useRef<HTMLDivElement>(null);
-  const visualRef = useRef<HTMLDivElement>(null);
-  const beamFillRef = useRef<HTMLDivElement>(null);
-  const [activeStage, setActiveStage] = useState(1);
-  const activeStageRef = useRef(1);
 
-  const stages = [
-    {
-      number: 1,
-      tag: "ENTRANCE CAPTURE",
-      title: "Doorway Focus & Crowd Filtering",
-      icon: <IconScan size={22} />,
-      desc: "As attendees approach the entrance kiosk, the camera focuses exclusively on individuals passing through the active doorway, automatically ignoring background passersby and distant crowd faces.",
-      metricTitle: "ACCURACY FILTER",
-      metricValue: "Filters Out Background Passersby",
-    },
-    {
-      number: 2,
-      tag: "SECURE CONVERSION",
-      title: "Facial Geometry Verification",
-      icon: <IconCpu size={22} />,
-      desc: "The system instantly converts facial features into a secure, mathematical code in temporary server memory. The original camera picture is deleted immediately to protect student privacy.",
-      metricTitle: "PRIVACY PROTECTION",
-      metricValue: "Zero Photos Saved to Disk",
-    },
-    {
-      number: 3,
-      tag: "HIGH-SPEED MATCH",
-      title: "Instant Student Identification",
-      icon: <IconServer size={22} />,
-      desc: "The mathematical code is matched against the university's student roster in milliseconds, accurately confirming the student's identity even across large campus enrollments.",
-      metricTitle: "MATCH SPEED",
-      metricValue: "Under 10ms Verification Time",
-    },
-    {
-      number: 4,
-      tag: "VERIFIED LOG",
-      title: "Verified Log & Duplicate Prevention",
-      icon: <IconDatabase size={22} />,
-      desc: "Attendance is officially recorded in the institutional database while automatically preventing duplicate check-ins if a student passes by the entrance multiple times.",
-      metricTitle: "RECORDS INTEGRITY",
-      metricValue: "Instant Sync • No Duplicate Logs",
-    },
-  ];
-
-  // Throttled stage setter to prevent React state thrashing during rapid scroll
-  const handleStageChange = useCallback((newStage: number) => {
-    if (activeStageRef.current !== newStage) {
-      activeStageRef.current = newStage;
-      setActiveStage(newStage);
-    }
-  }, []);
-
-  // Smoothly scroll and glide into target stage on pill or telemetry visual click
-  const handlePillClick = useCallback((stageNumber: number) => {
-    handleStageChange(stageNumber);
-
-    const targetCard = document.getElementById(`pipeline-stage-${stageNumber}`);
-    if (targetCard) {
-      targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [handleStageChange]);
-
-  const isFirstRender = useRef(true);
-
-  // Choreographed GSAP Timeline for Telemetry Visual Morphing (only on actual stage change)
+  // Simple, elegant GSAP ScrollTrigger reveals for each stage row
   useGSAP(
     () => {
-      if (isFirstRender.current) {
-        isFirstRender.current = false;
-        return;
-      }
+      const rows = gsap.utils.toArray<HTMLElement>(".pipeline-scroll-row");
 
-      if (visualRef.current) {
-        gsap.fromTo(
-          visualRef.current,
-          { opacity: 0.7, scale: 0.98 },
+      rows.forEach((row) => {
+        const copyCol = row.querySelector(".pipeline-copy-col");
+        const mediaCol = row.querySelector(".pipeline-media-col");
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: row,
+            start: "top 82%",
+            toggleActions: "play none none reverse",
+          },
+        });
+
+        tl.fromTo(
+          copyCol,
+          { opacity: 0, y: 36 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.75,
+            ease: "power2.out",
+            force3D: true,
+          }
+        ).fromTo(
+          mediaCol,
+          { opacity: 0, scale: 0.96, y: 28 },
           {
             opacity: 1,
             scale: 1,
-            duration: 0.28,
+            y: 0,
+            duration: 0.85,
             ease: "power2.out",
             force3D: true,
-            overwrite: "auto",
-          }
+          },
+          "-=0.45"
         );
-      }
-    },
-    { dependencies: [activeStage], scope: hudRef }
-  );
-
-  // GSAP ScrollTrigger setup: Stage Cards & Inertial Data Beam
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-      const cards = gsap.utils.toArray<HTMLElement>(".pipeline-stage-card");
-
-      // Desktop & Tablet (>= 769px): Full Pinned Telemetry & Scrub Animations
-      mm.add("(min-width: 769px)", () => {
-        // 1. Unified Bidirectional Pipeline In-Out Timeline (Hero -> Pipeline -> Hardware)
-        if (containerRef.current && hudRef.current) {
-          const sectionTl = gsap.timeline({
-            scrollTrigger: {
-              trigger: containerRef.current,
-              start: "top 95%",
-              end: "bottom 15%",
-              scrub: 1,
-              invalidateOnRefresh: true,
-            },
-          });
-
-          sectionTl
-            // Phase 1: Entrance Fade from Hero (0% - 18% of scroll)
-            .fromTo(
-              [".section-header-center", hudRef.current, ".pipeline-cards-column"],
-              { opacity: 0, y: 45 },
-              { opacity: 1, y: 0, duration: 0.18, ease: "power1.out", force3D: true, stagger: 0.04 }
-            )
-            // Phase 2: Active Pipeline Stages (18% - 82% of scroll)
-            .to([".section-header-center", hudRef.current, ".pipeline-cards-column"], {
-              opacity: 1,
-              duration: 0.64,
-            })
-            // Phase 3: Exit Fade into Hardware (82% - 100% of scroll)
-            .to([".section-header-center", hudRef.current, ".pipeline-cards-column"], {
-              opacity: 0,
-              y: -45,
-              duration: 0.18,
-              ease: "power1.in",
-              force3D: true,
-            });
-        }
-
-        // 2. Smooth Inertial Data-Flow Beam
-        if (beamFillRef.current && containerRef.current) {
-          gsap.fromTo(
-            beamFillRef.current,
-            { scaleY: 0 },
-            {
-              scaleY: 1,
-              ease: "none",
-              transformOrigin: "top center",
-              force3D: true,
-              scrollTrigger: {
-                trigger: ".pipeline-cards-column",
-                start: "top 60%",
-                end: "bottom 70%",
-                scrub: 0.8,
-              },
-            }
-          );
-        }
-
-        // 3. Stage Card ScrollTriggers with smooth entry transitions
-        cards.forEach((card, index) => {
-          ScrollTrigger.create({
-            trigger: card,
-            start: "top 55%",
-            end: "bottom 55%",
-            onEnter: () => handleStageChange(index + 1),
-            onEnterBack: () => handleStageChange(index + 1),
-          });
-
-          gsap.fromTo(
-            card,
-            { opacity: 0, y: 35 },
-            {
-              opacity: 1,
-              y: 0,
-              duration: 0.7,
-              ease: "power3.out",
-              force3D: true,
-              overwrite: "auto",
-              scrollTrigger: {
-                trigger: card,
-                start: "top 85%",
-                toggleActions: "play none none reverse",
-              },
-            }
-          );
-        });
-      });
-
-      // Mobile (<= 768px): Ultra-Lightweight Direct Stagger Reveal (No Heavy Scrub/Pinning)
-      mm.add("(max-width: 768px)", () => {
-        cards.forEach((card) => {
-          gsap.fromTo(
-            card,
-            { opacity: 0, y: 20 },
-            {
-              opacity: 1,
-              y: 0,
-              duration: 0.5,
-              ease: "power2.out",
-              force3D: true,
-              scrollTrigger: {
-                trigger: card,
-                start: "top 90%",
-                toggleActions: "play none none none",
-                once: true,
-              },
-            }
-          );
-        });
       });
     },
     { scope: containerRef }
@@ -228,183 +122,193 @@ export const ScrollPipelineSection: React.FC = () => {
 
   return (
     <section ref={containerRef} id="pipeline" className="pipeline-section">
-      <div className="section-header-center">
-        <div className="section-eyebrow">
-          <IconBolt size={14} />
-          <span>TECHNICAL ARCHITECTURE</span>
-        </div>
-        <h2 className="section-title">The 4-Stage Biometric Pipeline</h2>
-        <p className="section-subtitle">
-          How video frames transform into verified institutional attendance in milliseconds.
-          Engineered for high accuracy and total privacy.
-        </p>
-      </div>
-
-      <div className="pipeline-grid">
-        {/* Sticky Visual HUD with Smooth GSAP Pinning (Left Column) */}
-        <div className="pipeline-hud-wrapper">
-          <div ref={hudRef} className="pipeline-sticky-hud">
-            <div className="hud-header">
-              <div className="hud-header-left">
-                <span className="hud-status-dot pulse-active" />
-                <span className="hud-title">ACTIVE PROCESSING STAGE</span>
-              </div>
-              <span className="hud-stage-counter">STAGE 0{activeStage} / 04</span>
-            </div>
-
-            {/* Dynamic Stage Visual Indicator with Smooth 3D Flip Perspective */}
-            <div
-              ref={visualRef}
-              className="hud-stage-visual hud-stage-3d-perspective interactive-telemetry-window"
-              onClick={() => handlePillClick((activeStage % 4) + 1)}
-              title="Click to jump to next stage"
-            >
-              {activeStage === 1 && (
-                <div className="hud-visual-state state-opencv">
-                  <div className="visual-scan-box">
-                    <span className="zone-tag">DOORWAY_ROI_ZONE</span>
-                    <div className="filter-crosshair" />
-                    <div className="reticle-corner tl" />
-                    <div className="reticle-corner tr" />
-                    <div className="reticle-corner bl" />
-                    <div className="reticle-corner br" />
-                  </div>
-                  <div className="visual-caption-box">
-                    <IconRadar size={14} color="#00dfd8" />
-                    <span className="visual-caption">OpenCV Spatial Entrance Zone [Active]</span>
-                  </div>
-                </div>
-              )}
-
-              {activeStage === 2 && (
-                <div className="hud-visual-state state-insightface">
-                  <div className="visual-vector-graphic">
-                    <div className="vector-nodes-grid">
-                      {[...Array(16)].map((_, i) => (
-                        <span key={i} className="vector-node-dot" />
-                      ))}
-                    </div>
-                    <div className="laser-sweep-bar" />
-                  </div>
-                  <div className="visual-caption-box">
-                    <IconCpu size={14} color="#38bdf8" />
-                    <span className="visual-caption">InsightFace Buffalo_L 512D Vectorization</span>
-                  </div>
-                </div>
-              )}
-
-              {activeStage === 3 && (
-                <div className="hud-visual-state state-faiss">
-                  <div className="visual-faiss-index">
-                    <div className="faiss-cluster">
-                      <span className="cluster-center" />
-                      <span className="query-node active-pulse" />
-                      <span className="cluster-satellite sat-1" />
-                      <span className="cluster-satellite sat-2" />
-                    </div>
-                    <div className="faiss-latency-meter">
-                      <span>FAISS LATENCY: 7.2ms</span>
-                      <span className="text-cyan">COSINE MATCH: 0.82</span>
-                    </div>
-                  </div>
-                  <div className="visual-caption-box">
-                    <IconServer size={14} color="#00dfd8" />
-                    <span className="visual-caption">Sub-linear Partitioned Nearest-Neighbor</span>
-                  </div>
-                </div>
-              )}
-
-              {activeStage === 4 && (
-                <div className="hud-visual-state state-database">
-                  <div className="visual-db-success">
-                    <div className="success-pulse-circle">
-                      <IconCheck size={32} color="#10b981" />
-                    </div>
-                    <div className="db-tags-group">
-                      <span className="cooldown-active-tag">COOLDOWN_LOCK: 10s</span>
-                      <span className="acid-guarantee-tag">ACID VERIFIED</span>
-                    </div>
-                  </div>
-                  <div className="visual-caption-box">
-                    <IconLockCheck size={14} color="#10b981" />
-                    <span className="visual-caption">PostgreSQL Transaction Committed</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Active Stage Quick Progress Pills */}
-            <div className="hud-stage-progress-pills">
-              {stages.map((stg) => (
-                <div
-                  key={stg.number}
-                  className={`progress-pill-item ${activeStage === stg.number ? "active" : ""} ${
-                    activeStage > stg.number ? "completed" : ""
-                  }`}
-                  onClick={() => handlePillClick(stg.number)}
-                  title={`Jump to Stage ${stg.number}: ${stg.title}`}
-                >
-                  <span className="pill-dot" />
-                  <span className="pill-text">Stage {stg.number}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+      <div className="pipeline-container">
+        {/* Editorial Section Header (Unified with Hardware Showroom Typography) */}
+        <div className="pipeline-header-center">
+          <h2 className="pipeline-main-title">How it works.</h2>
+          <p className="pipeline-main-subtitle">
+            From doorway entrance to verified campus attendance in milliseconds.
+            Engineered for high accuracy and total privacy.
+          </p>
         </div>
 
-        {/* Scrolling Stage Cards with Data-Flow Beam Spine (Right Column) */}
-        <div className="pipeline-cards-wrapper">
-          {/* Vertical Illuminated Data-Flow Beam Spine */}
-          <div className="pipeline-beam-spine" aria-hidden="true">
-            {/* Background Track Line */}
-            <div className="beam-track-line" />
+        {/* Apple-Style Natural Scrollable Sequence (Alternating 2-Column Rows) */}
+        <div className="pipeline-scroll-list">
+          {STAGES.map((stage, index) => {
+            const isReversed = index % 2 === 1;
 
-            {/* Glowing Active Beam Fill (GPU scaleY accelerated) */}
-            <div ref={beamFillRef} className="beam-fill-glow" />
-
-            {/* 4 Node Connectors */}
-            {stages.map((stg) => (
+            return (
               <div
-                key={stg.number}
-                className={`beam-stage-node node-${stg.number} ${
-                  activeStage >= stg.number ? "active" : ""
-                } ${activeStage === stg.number ? "current-pulse" : ""}`}
-                onClick={() => handlePillClick(stg.number)}
-                style={{ cursor: "pointer" }}
+                key={stage.id}
+                className={`pipeline-scroll-row ${isReversed ? "is-reversed" : ""}`}
               >
-                <div className="node-inner-dot" />
-                <div className="node-halo-ring" />
-              </div>
-            ))}
-          </div>
+                {/* Copy Column */}
+                <div className="pipeline-copy-col">
+                  <h3 className="pipeline-stage-title">{stage.title}</h3>
+                  <p className="pipeline-stage-desc">{stage.description}</p>
 
-          <div className="pipeline-cards-column">
-            {stages.map((stage) => (
-              <div
-                key={stage.number}
-                id={`pipeline-stage-${stage.number}`}
-                className={`pipeline-stage-card ${activeStage === stage.number ? "is-focused" : ""}`}
-                onMouseEnter={() => handleStageChange(stage.number)}
-                onClick={() => handlePillClick(stage.number)}
-              >
-                <div className="stage-card-header">
-                  <div className="stage-card-icon-box">{stage.icon}</div>
-                  <div className="stage-card-tags">
-                    <span className="stage-tag-code">{stage.tag}</span>
-                    <span className="stage-number-badge">0{stage.number}</span>
+                  <div className="pipeline-highlights-list">
+                    {stage.highlights.map((h, i) => (
+                      <div key={i} className="pipeline-highlight-item">
+                        <div className="pipeline-highlight-icon">
+                          <IconCircleCheck size={16} />
+                        </div>
+                        <span className="pipeline-highlight-text">{h}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <h3 className="stage-card-title">{stage.title}</h3>
-                <p className="stage-card-desc">{stage.desc}</p>
+                {/* Media Column (Video or Coded High-Craft Showcase Preview) */}
+                <div className="pipeline-media-col">
+                  <div className="pipeline-media-viewport">
+                    {stage.videoUrl ? (
+                      <video
+                        key={stage.videoUrl}
+                        src={stage.videoUrl}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="pipeline-feature-video"
+                      />
+                    ) : (
+                      /* High-Craft Coded Showcase Previews (Matching 4-Part Storyboard) */
+                      <div className={`pipeline-preview-stage stage-${stage.id}`}>
+                        {/* STAGE 1: Doorway Focus Aperture */}
+                        {stage.id === 1 && (
+                          <div className="stage-preview-doorway">
+                            <div className="doorway-camera-frame">
+                              <div className="aperture-bracket tl" />
+                              <div className="aperture-bracket tr" />
+                              <div className="aperture-bracket bl" />
+                              <div className="aperture-bracket br" />
 
-                <div className="stage-metric-footer">
-                  <span className="metric-tag">{stage.metricTitle}</span>
-                  <span className="metric-result">{stage.metricValue}</span>
+                              <div className="doorway-focus-box">
+                                <div className="doorway-focus-ring">
+                                  <IconFocus2 size={32} />
+                                </div>
+                                <span className="doorway-status-tag">DOORWAY LOCKED</span>
+                              </div>
+
+                              <div className="doorway-passerby-indicator">
+                                <IconEyeOff size={14} />
+                                <span>Passerby Filtered</span>
+                              </div>
+                            </div>
+
+                            <div className="stage-preview-caption">
+                              <IconScan size={15} />
+                              <span>Real-time entrance perimeter active</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* STAGE 2: Privacy Cryptographic Hash Token */}
+                        {stage.id === 2 && (
+                          <div className="stage-preview-privacy">
+                            <div className="privacy-token-display">
+                              <div className="privacy-shield-orb">
+                                <IconShieldLock size={36} />
+                              </div>
+
+                              <div className="privacy-hash-capsule">
+                                <span className="hash-label">RAM VECTOR</span>
+                                <span className="hash-code">#7F9A:e48b:91c0:d22f:8041</span>
+                              </div>
+
+                              <div className="privacy-wiped-pill">
+                                <span className="wiped-dot" />
+                                <span>Raw camera photo wiped from memory</span>
+                              </div>
+                            </div>
+
+                            <div className="stage-preview-caption">
+                              <IconLock size={15} />
+                              <span>Zero biometric images saved to disk</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* STAGE 3: Sub-Second Student Roster Match */}
+                        {stage.id === 3 && (
+                          <div className="stage-preview-roster">
+                            <div className="roster-match-card">
+                              <div className="roster-avatar-box">
+                                <IconUserCheck size={28} />
+                              </div>
+
+                              <div className="roster-student-info">
+                                <span className="roster-student-name">Alex Chen</span>
+                                <span className="roster-student-dept">
+                                  BS Computer Science • ID #2024-8842
+                                </span>
+                              </div>
+
+                              <div className="roster-verified-pill">
+                                <IconCircleCheck size={14} />
+                                <span>Verified</span>
+                              </div>
+                            </div>
+
+                            <div className="roster-latency-strip">
+                              <div className="latency-metric">
+                                <IconBolt size={14} />
+                                <span>
+                                  Match Latency: <strong>6.8ms</strong>
+                                </span>
+                              </div>
+                              <span className="latency-divider">•</span>
+                              <span className="latency-status">High Confidence (99.4%)</span>
+                            </div>
+
+                            <div className="stage-preview-caption">
+                              <IconClock size={15} />
+                              <span>Sub-linear nearest-neighbor index lookup</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* STAGE 4: Verified Log & Duplicate Lock */}
+                        {stage.id === 4 && (
+                          <div className="stage-preview-clearance">
+                            <div className="clearance-wallet-card">
+                              <div className="clearance-header">
+                                <span className="clearance-inst-name">Attendify Campus Clearance</span>
+                                <span className="clearance-timestamp">8:45 AM • Gate A</span>
+                              </div>
+
+                              <div className="clearance-body">
+                                <div className="clearance-check-ring">
+                                  <IconCircleCheck size={36} />
+                                </div>
+                                <span className="clearance-title">Attendance Logged</span>
+                                <span className="clearance-room">Auditorium East • Session #104</span>
+                              </div>
+
+                              <div className="clearance-footer-pills">
+                                <span className="cooldown-pill">
+                                  <IconLock size={12} /> Cooldown Locked: 10s
+                                </span>
+                                <span className="sync-pill">
+                                  <IconShieldCheck size={12} /> Synced Live
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="stage-preview-caption">
+                              <IconShieldCheck size={15} />
+                              <span>Database transaction committed & duplicate-protected</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>

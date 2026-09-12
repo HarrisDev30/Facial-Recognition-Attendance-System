@@ -97,18 +97,52 @@ async def create_event(
     data["institution_id"] = user.institution_id
     target_org_id = body.organization_id or body.department_id
     if target_org_id:
-        org = await session.get(Organization, uuid.UUID(target_org_id))
+        try:
+            target_uuid = uuid.UUID(target_org_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid organization ID format")
+        org = await session.get(Organization, target_uuid)
         if org is None or (user.role != UserRole.super_admin and org.institution_id != user.institution_id):
             raise HTTPException(status_code=404, detail="Department not found for this campus")
-        data["organization_id"] = uuid.UUID(target_org_id)
+        if user.role == UserRole.org_admin:
+            from app.models.organization_staff import OrganizationStaff
+            staff_res = await session.execute(
+                select(OrganizationStaff.organization_id).where(
+                    OrganizationStaff.user_id == user.id,
+                    OrganizationStaff.organization_id == target_uuid,
+                ).limit(1)
+            )
+            is_staff = staff_res.scalar_one_or_none()
+            if not is_staff:
+                att_res = await session.execute(
+                    select(Attendee.organization_id).where(
+                        Attendee.user_id == user.id,
+                        Attendee.organization_id == target_uuid,
+                    ).limit(1)
+                )
+                is_staff = att_res.scalar_one_or_none()
+            if not is_staff:
+                raise HTTPException(status_code=403, detail="You are not authorized to create events for this organization.")
+        data["organization_id"] = target_uuid
     else:
-        res = await session.execute(
-            select(Organization).where(Organization.institution_id == user.institution_id).limit(1)
-        )
-        first_org = res.scalar_one_or_none()
-        if not first_org:
-            raise HTTPException(status_code=400, detail="No organization exists for this campus to assign event")
-        data["organization_id"] = first_org.id
+        # For org_admin, resolve their assigned organization
+        if user.role == UserRole.org_admin:
+            from app.models.organization_staff import OrganizationStaff
+            staff_res = await session.execute(
+                select(OrganizationStaff.organization_id).where(OrganizationStaff.user_id == user.id).limit(1)
+            )
+            assigned_org_id = staff_res.scalar_one_or_none()
+            if not assigned_org_id:
+                att_res = await session.execute(
+                    select(Attendee.organization_id).where(Attendee.user_id == user.id).limit(1)
+                )
+                assigned_org_id = att_res.scalar_one_or_none()
+            if assigned_org_id:
+                data["organization_id"] = assigned_org_id
+            else:
+                raise HTTPException(status_code=400, detail="Please select an organization to host this event.")
+        else:
+            raise HTTPException(status_code=400, detail="Please select an organization to host this event.")
 
     if "department_id" in data:
         del data["department_id"]

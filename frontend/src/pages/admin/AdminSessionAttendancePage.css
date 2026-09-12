@@ -1,0 +1,553 @@
+/* ==========================================================================
+   Admin Session Attendance Page — Strictly Aligned to Student Dashboard Architecture
+   Concept: Tactile Attendance Ledger, Truthful Telemetry, No AI-Slop
+   ========================================================================== */
+
+:root {
+  --craft-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.attendance-page-container {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* ─── 1. Executive Split Header Card (Student Dashboard Parity) ─── */
+.session-attendance-header-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 22px 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(480px, 1.25fr);
+  align-items: stretch;
+  gap: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1060px) {
+  .session-attendance-header-card {
+    grid-template-columns: 1fr;
+    padding: 18px 20px;
+    gap: 20px;
+  }
+}
+
+.attendance-identity-col {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.attendance-back-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 160ms var(--craft-ease-out), background-color 150ms ease, border-color 150ms ease;
+}
+
+.attendance-back-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.attendance-back-btn:active {
+  transform: scale(0.97);
+}
+
+.attendance-title-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.attendance-eyebrow {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  margin-bottom: 3px;
+}
+
+.attendance-title {
+  font-size: clamp(1.35rem, 2.1vw, 1.95rem);
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  margin: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.attendance-institution-name {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.attendance-credential-stack {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.attendance-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.attendance-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+
+.attendance-status-pill.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.attendance-status-pill.completed {
+  background: var(--surface-0);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.attendance-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.attendance-btn-primary {
+  background: var(--text-primary) !important;
+  color: var(--surface-0) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  transition: transform 160ms var(--craft-ease-out), opacity 150ms ease !important;
+}
+
+.attendance-btn-primary:active {
+  transform: scale(0.97) !important;
+}
+
+.attendance-btn-secondary {
+  background: var(--surface-0) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  transition: transform 160ms var(--craft-ease-out), background-color 150ms ease !important;
+}
+
+.attendance-btn-secondary:hover {
+  background: var(--surface-2) !important;
+}
+
+.attendance-btn-secondary:active {
+  transform: scale(0.97) !important;
+}
+
+/* ─── Header Visual Telemetry Slides ─── */
+.attendance-visual-frame {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  align-items: stretch;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .attendance-visual-frame {
+    grid-template-columns: 1fr;
+  }
+}
+
+.attendance-visual-slide {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: transform 160ms var(--craft-ease-out), border-color 160ms ease;
+}
+
+.attendance-visual-slide:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.attendance-slide-category {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+.attendance-slide-big-metric {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin: 4px 0 2px 0;
+}
+
+.attendance-slide-subtext {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.attendance-donut-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 58px;
+  margin: 2px 0;
+}
+
+.attendance-method-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.attendance-method-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.6875rem;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.attendance-method-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+/* ─── 2. Filter Tabs & Search Toolbar ─── */
+.attendance-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.attendance-filter-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.attendance-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, transform 160ms var(--craft-ease-out);
+}
+
+.attendance-chip-btn:hover {
+  color: var(--text-primary);
+  background: var(--surface-0);
+}
+
+.attendance-chip-btn:active {
+  transform: scale(0.97);
+}
+
+.attendance-chip-btn.active {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.attendance-chip-count {
+  font-size: 0.6875rem;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.attendance-chip-btn.active .attendance-chip-count {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.attendance-search-wrap {
+  min-width: 260px;
+  flex-grow: 1;
+  max-width: 360px;
+}
+
+@media (max-width: 640px) {
+  .attendance-search-wrap {
+    min-width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* ─── 3. Attendance Ledger Table Card ─── */
+.attendance-ledger-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.card-heading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.card-meta-count {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+.attendance-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-0);
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.825rem;
+}
+
+.attendance-table th {
+  padding: 10px 14px;
+  background: var(--surface-1);
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.attendance-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.attendance-table tr:last-child td {
+  border-bottom: none;
+}
+
+.attendance-table tbody tr {
+  transition: background-color 120ms ease;
+}
+
+.attendance-table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.attendance-identity-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attendee-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.attendee-subtext {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.attendance-id-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.status-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+
+.status-badge-pill.present {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.status-badge-pill.absent {
+  background: var(--surface-1);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.verification-method-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+.verification-method-pill.face {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.verification-method-pill.qr {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.verification-method-pill.marshal {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.attendance-empty-state {
+  padding: 36px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.empty-state-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}

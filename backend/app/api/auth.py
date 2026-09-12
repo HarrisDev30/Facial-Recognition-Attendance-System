@@ -68,6 +68,16 @@ async def _build_user_profile(
     inst_name = institution.name if institution else None
     inst_code = institution.code if institution else None
 
+    photo_url = attendee.profile_photo_url if attendee else None
+    if not photo_url:
+        from pathlib import Path
+        from app.config import settings
+        dir_path = Path(settings.profile_photo_dir)
+        check_id = attendee.id if attendee else user.id
+        matches = list(dir_path.glob(f"{check_id}*"))
+        if matches:
+            photo_url = f"/api/attendees/{check_id}/profile-photo"
+
     return UserProfileResponse(
         id=str(user.id),
         email=user.email,
@@ -79,7 +89,7 @@ async def _build_user_profile(
         institution_code=inst_code,
         attendee_id=str(attendee.id) if attendee else None,
         attendee_type=attendee.attendee_type.value if attendee and hasattr(attendee.attendee_type, "value") else str(attendee.attendee_type) if attendee else None,
-        profile_photo_url=attendee.profile_photo_url if attendee else None,
+        profile_photo_url=photo_url,
         assigned_org_ids=assigned_orgs,
         is_marshal=is_marshal,
         marshal_org_ids=marshal_orgs,
@@ -102,6 +112,10 @@ async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)
         )
 
     user, institution, attendee = row
+    if attendee is None:
+        from app.api.attendees import _get_attendee_for_user
+        attendee = await _get_attendee_for_user(session, user)
+
     if not verify_password(body.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

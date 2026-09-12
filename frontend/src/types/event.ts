@@ -9,6 +9,7 @@ export interface EventResponse {
   status: string;
   department_id: string | null;
   department_code: string | null;
+  organization_id?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -25,6 +26,7 @@ export interface EventCreate {
   start_date: string;
   end_date: string;
   department_id?: string | null;
+  organization_id?: string | null;
   target_scope?: string;
   co_host_dept_ids?: string[] | null;
 }
@@ -38,6 +40,7 @@ export interface EventUpdate {
   end_date?: string;
   status?: string;
   department_id?: string | null;
+  organization_id?: string | null;
   target_scope?: string;
   co_host_dept_ids?: string[] | null;
 }

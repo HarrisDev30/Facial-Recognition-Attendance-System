@@ -93,8 +93,8 @@ export const HardwareCanvasSequence: React.FC = () => {
       const imgRatio = sourceW / sourceH;
       const canvasRatio = canvas.width / canvas.height;
 
-      // ⚖️ Balanced Proportions: Laptop uses 86% scale, Phone uses 94% scale
-      const FIT_SCALE = deviceType === "laptop" ? 0.86 : 0.94;
+      // ⚖️ Balanced Proportions: Laptop uses 90% scale, Phone uses 96% scale
+      const FIT_SCALE = deviceType === "laptop" ? 0.90 : 0.96;
       let drawW: number;
       let drawH: number;
 

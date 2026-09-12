@@ -380,6 +380,7 @@ export const theme: MantineThemeOverride = {
           borderBottom: `1px solid ${borderSubtle}`,
           padding: "16px 20px",
           marginBottom: 0,
+          flexShrink: 0,
         },
         title: {
           fontSize: "17px",
@@ -392,12 +393,18 @@ export const theme: MantineThemeOverride = {
           padding: "20px",
           backgroundColor: surface1,
           color: textSecondary,
+          overflowY: "auto",
+          flex: "1 1 auto",
+          maxHeight: "calc(100dvh - 140px)",
         },
         content: {
           backgroundColor: surface1,
           border: `1px solid ${borderSubtle}`,
           boxShadow: "0 20px 48px -10px rgba(0, 0, 0, 0.35)",
           borderRadius: "16px",
+          maxHeight: "calc(100dvh - 48px)",
+          display: "flex",
+          flexDirection: "column",
           overflow: "hidden",
         },
         close: {

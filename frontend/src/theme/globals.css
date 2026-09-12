@@ -485,3 +485,22 @@ html, body {
   background-color: #dc2626 !important;
 }
 
+/* ─── Universal Mantine Modal Scroll & Flex Containment ─── */
+.mantine-Modal-content {
+  max-height: calc(100dvh - 48px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.mantine-Modal-header {
+  flex-shrink: 0 !important;
+}
+
+.mantine-Modal-body {
+  overflow-y: auto !important;
+  flex: 1 1 auto !important;
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(100dvh - 140px);
+}
+

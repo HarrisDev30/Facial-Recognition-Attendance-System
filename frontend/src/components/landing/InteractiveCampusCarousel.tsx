@@ -2,7 +2,6 @@ import { useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@mantine/core";
 import {
-  IconBuildingArch,
   IconArrowRight,
   IconSparkles,
   IconRosetteDiscountCheckFilled,
@@ -311,10 +310,6 @@ export function InteractiveCampusCarousel({ institutions, onOnboardClick }: Prop
   return (
     <section id="campuses" ref={carouselContainerRef} className="campus-showcase-section">
       <div className="section-header-center">
-        <div className="section-eyebrow">
-          <IconBuildingArch size={14} />
-          <span>ACTIVE CAMPUS NETWORK</span>
-        </div>
         <h2 className="section-title">Connected University Portals</h2>
         <p className="section-subtitle">
           Select your institution to access real-time attendance logging, enroll student biometrics, or launch scanner gates.

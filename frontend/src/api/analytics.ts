@@ -17,21 +17,38 @@ export async function getCollegesComparison(): Promise<CollegeAttendanceBenchmar
   return res.data;
 }
 
-export async function getHourlyTrafficDistribution(days: number = 7): Promise<HourlyTrafficEntry[]> {
+export async function getHourlyTrafficDistribution(
+  days: number = 7,
+  organization_id?: string,
+): Promise<HourlyTrafficEntry[]> {
+  const params: Record<string, any> = { days };
+  if (organization_id) params.organization_id = organization_id;
   const res = await client.get<HourlyTrafficEntry[]>("/api/analytics/institution/traffic-hourly", {
-    params: { days },
+    params,
   });
   return res.data;
 }
 
-export async function getVerificationBreakdown(): Promise<VerificationMethodMetric[]> {
-  const res = await client.get<VerificationMethodMetric[]>("/api/analytics/institution/verification-breakdown");
+export async function getVerificationBreakdown(
+  organization_id?: string,
+): Promise<VerificationMethodMetric[]> {
+  const params: Record<string, any> = {};
+  if (organization_id) params.organization_id = organization_id;
+  const res = await client.get<VerificationMethodMetric[]>("/api/analytics/institution/verification-breakdown", {
+    params,
+  });
   return res.data;
 }
 
-export async function getAtRiskStudents(thresholdPct: number = 75, limit: number = 20): Promise<AtRiskStudentEntry[]> {
+export async function getAtRiskStudents(
+  thresholdPct: number = 75,
+  limit: number = 20,
+  organization_id?: string,
+): Promise<AtRiskStudentEntry[]> {
+  const params: Record<string, any> = { threshold_pct: thresholdPct, limit };
+  if (organization_id) params.organization_id = organization_id;
   const res = await client.get<AtRiskStudentEntry[]>("/api/analytics/institution/at-risk", {
-    params: { threshold_pct: thresholdPct, limit },
+    params,
   });
   return res.data;
 }

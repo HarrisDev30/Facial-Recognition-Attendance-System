@@ -1,6 +1,5 @@
 import React, { useRef } from "react";
 import {
-  IconShieldLock,
   IconDatabaseOff,
   IconUserCheck,
   IconTrashX,
@@ -17,31 +16,10 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export const PrivacyVaultSection: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const shieldPathRef = useRef<SVGPathElement>(null);
 
   useGSAP(
     () => {
-      // 1. Animated SVG Shield Outline Draw on Scroll
-      if (shieldPathRef.current) {
-        const length = shieldPathRef.current.getTotalLength();
-        gsap.set(shieldPathRef.current, {
-          strokeDasharray: length,
-          strokeDashoffset: length,
-        });
-
-        gsap.to(shieldPathRef.current, {
-          strokeDashoffset: 0,
-          duration: 1.6,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 75%",
-            toggleActions: "play none none reverse",
-          },
-        });
-      }
-
-      // 2. Card Fan-Out Dealing Animation
+      // 1. Card Fan-Out Dealing Animation
       const cards = gsap.utils.toArray<HTMLElement>(".privacy-pillar-card");
       const fanAngles = [-3, -1, 1, 3];
 
@@ -73,7 +51,7 @@ export const PrivacyVaultSection: React.FC = () => {
         );
       });
 
-      // 3. Scanline sweep on trust seal bar
+      // 2. Scanline sweep on trust seal bar
       gsap.fromTo(
         ".privacy-trust-seal-bar",
         { opacity: 0, y: 16 },
@@ -99,24 +77,6 @@ export const PrivacyVaultSection: React.FC = () => {
   return (
     <section ref={sectionRef} id="privacy" className="privacy-vault-section">
       <div className="section-header-center">
-        {/* Animated Security Vault Shield Emblem */}
-        <div className="vault-shield-emblem">
-          <svg className="vault-shield-svg" width="48" height="54" viewBox="0 0 48 54" fill="none">
-            <path
-              ref={shieldPathRef}
-              d="M24 3L6 11V25C6 37 14 47 24 51C34 47 42 37 42 25V11L24 3Z"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle cx="24" cy="24" r="6" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-        </div>
-
-        <div className="section-eyebrow">
-          <IconShieldLock size={14} />
-          <span>DATA PRIVACY ACT OF 2012 COMPLIANT (RA 10173)</span>
-        </div>
         <h2 className="section-title">Student Privacy by Design</h2>
         <p className="section-subtitle">
           Engineered from the ground up to protect student identity and data rights. We store mathematical code keys, never permanent facial photos.

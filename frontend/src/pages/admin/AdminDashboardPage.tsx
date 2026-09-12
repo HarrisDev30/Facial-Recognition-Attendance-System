@@ -63,6 +63,7 @@ import { CampusCollegeBenchmarkChart } from "../../components/admin/analytics/Ca
 import { GateTrafficHourlyHeatmap } from "../../components/admin/analytics/GateTrafficHourlyHeatmap";
 import { BiometricIntelligenceCard } from "../../components/admin/analytics/BiometricIntelligenceCard";
 import { AtRiskEarlyWarningTable } from "../../components/admin/analytics/AtRiskEarlyWarningTable";
+import { OrgAdminDashboardView } from "../../components/admin/OrgAdminDashboardView";
 import { useAuthStore } from "../../store/authStore";
 import { EVENT_TYPE_COLORS, EVENT_TYPE_LABELS } from "../../utils/constants";
 import { formatDate, formatTime } from "../../utils/formatters";
@@ -72,6 +73,10 @@ export default function AdminDashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const isOrgAdmin = user?.role === "org_admin";
+
+  if (isOrgAdmin) {
+    return <OrgAdminDashboardView />;
+  }
 
   const [viewMode, setViewMode] = useState<"analytics" | "operations">("analytics");
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);

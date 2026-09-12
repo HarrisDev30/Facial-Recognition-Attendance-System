@@ -1,0 +1,535 @@
+/* ==========================================================================
+   Organizations & Academic Units Management — Redesigned Styles
+   Emil Kowalski Design Engineering:
+   - 4px/8px rhythm, clean visual hierarchy, zero cognitive overload
+   - Calm monochromatic & themed summary ribbon
+   - Smooth custom easings: cubic-bezier(0.23, 1, 0.32, 1)
+   - Tactile feedback: scale(0.97) on buttons, scale(0.985) on cards
+   ========================================================================== */
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.orgs-page-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ─── 1. Header Row ─── */
+.orgs-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.orgs-header-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.orgs-title-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.orgs-page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.orgs-page-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 600px;
+}
+
+.orgs-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── 2. Calm 4-Stat Metric Ribbon ─── */
+.orgs-stats-ribbon {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 960px) {
+  .orgs-stats-ribbon {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .orgs-stats-ribbon {
+    grid-template-columns: 1fr;
+  }
+}
+
+.orgs-stat-box {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.orgs-stat-box:hover {
+  border-color: var(--border-hover);
+}
+
+.orgs-stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.orgs-stat-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-family: "JetBrains Mono", monospace;
+}
+
+.orgs-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.orgs-stat-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  transition: transform 200ms var(--ease-out);
+}
+
+.orgs-stat-box:hover .orgs-stat-icon {
+  transform: scale(1.05);
+}
+
+.orgs-stat-icon.blue {
+  background: rgba(59, 130, 246, 0.08);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.orgs-stat-icon.teal {
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.orgs-stat-icon.purple {
+  background: rgba(139, 92, 246, 0.08);
+  color: #8b5cf6;
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.orgs-stat-icon.amber {
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+/* ─── 3. Unified Filter & Controls Bar ─── */
+.orgs-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+
+.orgs-pill-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 4px;
+  flex-wrap: wrap;
+}
+
+.orgs-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.orgs-pill:hover {
+  color: var(--text-primary);
+  background: var(--surface-2);
+}
+
+.orgs-pill:active {
+  transform: scale(0.97);
+}
+
+.orgs-pill.active {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.orgs-pill-count {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.orgs-pill.active .orgs-pill-count {
+  background: var(--brand-surface, rgba(59, 130, 246, 0.15));
+  color: var(--brand-primary, #3b82f6);
+}
+
+.orgs-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 280px;
+}
+
+.orgs-search-input {
+  min-width: 200px;
+  max-width: 320px;
+  flex: 1;
+}
+
+/* ─── 4. Bento Grid & Unit Cards ─── */
+.orgs-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 16px;
+}
+
+.orgs-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: transform 160ms var(--ease-out), border-color 150ms ease, box-shadow 150ms ease;
+  box-shadow: var(--shadow-card);
+  position: relative;
+}
+
+.orgs-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+}
+
+.orgs-card:active {
+  transform: scale(0.985);
+}
+
+/* Card Header */
+.orgs-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.orgs-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.orgs-card-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
+  font-size: 1rem;
+}
+
+.orgs-card-avatar.college {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.orgs-card-avatar.club {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.orgs-card-avatar.office {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.orgs-card-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.orgs-card-name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orgs-card-code-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.orgs-card-code-tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--border-subtle);
+}
+
+.orgs-card-type-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+
+.orgs-card-type-tag.college {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.orgs-card-type-tag.club {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.orgs-card-type-tag.office {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+/* Parent Department Badge */
+.orgs-card-parent-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 3px 8px;
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Card Body Description */
+.orgs-card-desc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.35em;
+}
+
+/* Card Footer */
+.orgs-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: auto;
+}
+
+.orgs-card-member-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.orgs-card-member-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* Tactile Buttons */
+.orgs-btn-primary {
+  background: var(--text-primary);
+  color: var(--surface-0);
+  border: none;
+  font-weight: 600;
+  transition: transform 140ms var(--ease-out), opacity 150ms ease;
+}
+
+.orgs-btn-primary:hover {
+  opacity: 0.92;
+}
+
+.orgs-btn-primary:active {
+  transform: scale(0.97);
+}
+
+.orgs-btn-secondary {
+  transition: transform 140ms var(--ease-out), background-color 150ms ease;
+}
+
+.orgs-btn-secondary:active {
+  transform: scale(0.97);
+}
+
+.orgs-roster-btn {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  transition: transform 140ms var(--ease-out), background-color 150ms ease;
+}
+
+.orgs-roster-btn:hover {
+  transform: translateX(2px);
+}
+
+.orgs-roster-btn:active {
+  transform: scale(0.97);
+}
+
+/* ─── Empty & Loading States ─── */
+.orgs-empty-state {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.orgs-empty-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+/* ─── Mobile Adaptations ─── */
+@media (max-width: 640px) {
+  .orgs-card {
+    padding: 14px 16px;
+    border-radius: 12px;
+  }
+
+  .orgs-stat-box {
+    padding: 12px 14px;
+  }
+
+  .orgs-stat-value {
+    font-size: 1.25rem;
+  }
+
+  .orgs-page-title {
+    font-size: 1.25rem;
+  }
+
+  .orgs-controls-right {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .orgs-search-input {
+    max-width: none;
+  }
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Container,
   Group,
@@ -31,11 +31,20 @@ import ConfirmDialog from "../../components/shared/ConfirmDialog";
 import EventFormModal from "../../components/forms/EventFormModal";
 import PageHeader from "../../components/layout/PageHeader";
 import EmptyState from "../../components/EmptyState";
+import { useAuthStore } from "../../store/authStore";
 import { formatDate } from "../../utils/formatters";
 
 const PAGE_SIZE = 12;
 
 export default function AdminEventsPage() {
+  const { user } = useAuthStore();
+  const [searchParams] = useSearchParams();
+  const orgIdParam =
+    searchParams.get("org_id") ||
+    (user?.role === "org_admin" ? localStorage.getItem("attendify_org_admin_selected_org_id") : null) ||
+    null;
+  const shouldCreate = searchParams.get("create") === "true";
+
   const [editingEvent, setEditingEvent] = useState<EventResponse | null>(null);
   const [opened, setOpened] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -50,14 +59,20 @@ export default function AdminEventsPage() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   useEffect(() => {
+    if (shouldCreate) {
+      setOpened(true);
+    }
+  }, [shouldCreate]);
+
+  useEffect(() => {
     loadEvents();
-  }, [page]);
+  }, [page, orgIdParam]);
 
   const loadEvents = async () => {
     setLoading(true);
     try {
       const skip = (page - 1) * PAGE_SIZE;
-      const res = await eventsApi.getEvents(skip, PAGE_SIZE);
+      const res = await eventsApi.getEvents(skip, PAGE_SIZE, orgIdParam || undefined);
       setEvents(res.items);
 
       const counts: Record<string, number> = {};
@@ -337,6 +352,7 @@ export default function AdminEventsPage() {
         photoBlob={photoBlob}
         onPhotoChange={setPhotoBlob}
         onRemovePhoto={() => setPhotoRemoved(true)}
+        defaultOrgId={orgIdParam}
       />
 
       <ConfirmDialog

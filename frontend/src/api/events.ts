@@ -10,9 +10,12 @@ import type {
 export async function getEvents(
   skip = 0,
   limit = 100,
+  organization_id?: string,
 ): Promise<EventListResponse> {
+  const params: Record<string, any> = { skip, limit };
+  if (organization_id) params.organization_id = organization_id;
   const { data } = await client.get<EventListResponse>("/events", {
-    params: { skip, limit },
+    params,
   });
   return data;
 }

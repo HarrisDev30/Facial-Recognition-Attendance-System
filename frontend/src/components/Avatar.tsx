@@ -13,13 +13,13 @@ interface AvatarProps {
 const SIZE_MAP = { sm: 40, md: 80, lg: 120 };
 const FONT_SIZES = { sm: 14, md: 28, lg: 40 };
 
-const DEFAULT_API_URL = "https://silver-spork-jrj976w6xwggf799-8000.app.github.dev";
+const DEFAULT_API_URL = "http://localhost:8000";
 const envUrl = import.meta.env.VITE_API_URL as string | undefined;
 const BASE_URL = (envUrl && envUrl.trim() !== "") ? envUrl.trim() : DEFAULT_API_URL;
 
 function resolveImageUrl(url?: string | null): string | null {
   if (!url) return null;
-  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) {
     return url;
   }
   const cleanBase = BASE_URL.replace(/\/+$/, "");

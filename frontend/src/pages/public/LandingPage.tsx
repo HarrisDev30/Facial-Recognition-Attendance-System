@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Button, Badge } from "@mantine/core";
+import { Button } from "@mantine/core";
 import {
   IconScan,
   IconArrowRight,
@@ -290,65 +290,46 @@ export default function LandingPage() {
         onOnboardClick={() => setModalOpened(true)}
       />
 
-      {/* Luminous Section Divider */}
-      <div className="section-luminous-divider" />
-
       {/* 4-Stage Biometric Processing Pipeline (GSAP ScrollTrigger Pinned Section) */}
       <ScrollPipelineSection />
-
-      {/* Luminous Section Divider */}
-      <div className="section-luminous-divider" />
 
       {/* Hardware Freedom: 240-Frame Dual-Canvas Scroll Showroom */}
       <HardwareCanvasSequence />
 
-      {/* Luminous Section Divider */}
-      <div className="section-luminous-divider" />
-
       {/* Privacy Vault Section */}
       <PrivacyVaultSection />
 
-      {/* Global Landing Footer */}
+      {/* Global Landing Footer (Minimal, Quiet, Slop-Free) */}
       <footer className="landing-global-footer">
         <div className="footer-inner-content">
-          <div className="footer-top-row">
-            <div className="footer-brand-col">
-              <div className="landing-brand">
+          <div className="footer-simple-layout">
+            <div className="footer-brand-side">
+              <Link to="/" className="landing-brand">
                 <div className="brand-logo-mark">
                   <IconScan size={18} color="#ffffff" stroke={2.5} />
                 </div>
                 <span className="brand-title">Attendify</span>
-              </div>
-              <p className="footer-tagline">
-                Automated biometric attendance intelligence for educational institutions. Designed for fast queues, high accuracy, and strict student data privacy.
+                <span className="brand-version-badge">v2.0</span>
+              </Link>
+              <p className="footer-simple-note">
+                Frictionless campus attendance & clearance.
               </p>
             </div>
 
-            <div className="footer-links-col">
-              <span className="footer-col-title">TECHNOLOGY</span>
-              <a href="#pipeline">Real-Time Processing</a>
-              <a href="#pipeline">High-Speed Lookup</a>
-              <a href="#hardware">Multi-Device Mesh</a>
-              <a href="#privacy">Anti-Spoofing & Liveness</a>
-            </div>
-
-            <div className="footer-links-col">
-              <span className="footer-col-title">DATA PRIVACY</span>
-              <a href="#privacy">Philippine DPA (RA 10173)</a>
-              <a href="#privacy">Zero Photo Storage</a>
-              <a href="#privacy">Secure Code Keys</a>
-              <a href="#privacy">On-Premises Ready</a>
-            </div>
+            <nav className="footer-simple-nav">
+              <a href="#pipeline" onClick={(e) => scrollToSection(e, "pipeline")}>Pipeline</a>
+              <a href="#hardware" onClick={(e) => scrollToSection(e, "hardware")}>Scanners</a>
+              <a href="#privacy" onClick={(e) => scrollToSection(e, "privacy")}>Privacy</a>
+              <a href="#campuses" onClick={(e) => scrollToSection(e, "campuses")}>Campuses</a>
+              <Link to="/login">Sign In</Link>
+              <Link to="/privacy">Privacy Policy</Link>
+            </nav>
           </div>
 
-          <div className="footer-bottom-row">
+          <div className="footer-bottom-simple">
             <span className="footer-legal">
-              &copy; {new Date().getFullYear()} Attendify Inc. All rights reserved. Capstone Project.
+              &copy; {new Date().getFullYear()} Attendify. All rights reserved.
             </span>
-            <div className="footer-badges">
-              <Badge variant="dot" color="teal">NPC DPA Compliant</Badge>
-              <Badge variant="dot" color="blue">Secure In-Memory</Badge>
-            </div>
           </div>
         </div>
       </footer>

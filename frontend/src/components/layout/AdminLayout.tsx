@@ -7,6 +7,7 @@ import {
   IconDeviceCctv,
   IconBuildingCommunity,
   IconUser,
+  IconShieldCheck,
 } from "@tabler/icons-react";
 import { useAuthStore } from "../../store/authStore";
 import AppShellChrome from "./AppShellChrome";
@@ -18,7 +19,7 @@ export default function AdminLayout() {
   const isOrgAdmin = user?.role === "org_admin";
 
   const navItems = [
-    { label: "Dashboard", icon: IconDashboard, to: "/admin" },
+    { label: "Dashboard", icon: IconDashboard, to: "/admin/dashboard" },
     {
       label: isOrgAdmin ? "My Organization" : "Organizations & Clubs",
       icon: IconBuildingCommunity,
@@ -26,7 +27,7 @@ export default function AdminLayout() {
     },
     { label: "Events", icon: IconCalendarEvent, to: "/admin/events" },
     { label: "Attendees", icon: IconUsers, to: "/admin/students" },
-    { label: "Staff & Marshals", icon: IconUsers, to: "/admin/staff" },
+    { label: "Operators & Marshals", icon: IconShieldCheck, to: "/admin/staff" },
     { label: "Biometrics", icon: IconCameraSelfie, to: "/admin/enrollment" },
     { label: "Scanner Devices", icon: IconDeviceCctv, to: "/admin/scanner-devices" },
     ...(!isOrgAdmin ? [{ label: "Campus Settings", icon: IconBuildingCommunity, to: "/admin/settings" }] : []),

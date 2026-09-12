@@ -120,6 +120,7 @@ export interface AttendeeResponse {
   department_code: string | null;
   consent_given: boolean;
   consent_given_at: string | null;
+  profile_photo_url?: string | null;
   created_at: string;
 }
 

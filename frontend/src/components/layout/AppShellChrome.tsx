@@ -52,10 +52,19 @@ export default function AppShellChrome({
   const [logoutOpen, { open: openLogout, close: closeLogout }] = useDisclosure(false);
   const location = useLocation();
 
-  const isActive = (to: string) =>
-    to === "/"
-      ? location.pathname === "/"
-      : location.pathname.startsWith(to + "/") || location.pathname === to;
+  const isActive = (to: string) => {
+    if (location.pathname === to) return true;
+    if (to === "/admin/dashboard" && (location.pathname === "/admin" || location.pathname === "/admin/")) return true;
+    if (to === "/super-admin/dashboard" && (location.pathname === "/super-admin" || location.pathname === "/super-admin/")) return true;
+    if (to === "/student/dashboard" && (location.pathname === "/student" || location.pathname === "/student/")) return true;
+    if (to === "/marshal/dashboard" && (location.pathname === "/marshal" || location.pathname === "/marshal/")) return true;
+
+    if (to === "/" || to === "/admin" || to === "/student" || to === "/marshal" || to === "/super-admin") {
+      return false;
+    }
+
+    return location.pathname.startsWith(to + "/");
+  };
 
   const links = (
     <Stack gap={0}>

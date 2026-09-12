@@ -12,11 +12,15 @@ import {
   Radio,
   Text,
   Paper,
+  Badge,
 } from "@mantine/core";
 import { IconPhoto, IconX, IconGlobe, IconBuilding, IconUsers } from "@tabler/icons-react";
 import type { EventResponse, EventCreate } from "../../types/event";
 import { getDepartments } from "../../api/departments";
+import { getOrganizations } from "../../api/organizations";
 import type { DepartmentResponse } from "../../types/auth";
+import type { Organization } from "../../types/organization";
+import { useAuthStore } from "../../store/authStore";
 import { EVENT_TYPE_LABELS } from "../../utils/constants";
 import PhotoCropper from "../PhotoCropper";
 
@@ -29,6 +33,7 @@ interface EventFormModalProps {
   photoBlob?: Blob | null;
   onPhotoChange?: (blob: Blob | null) => void;
   onRemovePhoto?: () => void;
+  defaultOrgId?: string | null;
 }
 
 function EventFormModal({
@@ -39,7 +44,11 @@ function EventFormModal({
   loading,
   onPhotoChange,
   onRemovePhoto,
+  defaultOrgId,
 }: EventFormModalProps) {
+  const { user } = useAuthStore();
+  const isOrgAdmin = user?.role === "org_admin";
+
   const [name, setName] = useState("");
   const [eventType, setEventType] = useState("seminar");
   const [description, setDescription] = useState("");
@@ -50,6 +59,7 @@ function EventFormModal({
   const [targetScope, setTargetScope] = useState<string>("department_only");
   const [coHostDeptIds, setCoHostDeptIds] = useState<string[]>([]);
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [cropperOpen, setCropperOpen] = useState(false);
@@ -58,7 +68,8 @@ function EventFormModal({
 
   useEffect(() => {
     if (opened) {
-      getDepartments().then((res) => setDepartments(res.items));
+      getDepartments().then((res) => setDepartments(res.items || [])).catch(() => {});
+      getOrganizations().then((res) => setOrganizations(res || [])).catch(() => {});
     }
   }, [opened]);
 
@@ -70,7 +81,16 @@ function EventFormModal({
       setVenue(initial?.venue ?? "");
       setStartDate(initial?.start_date ?? "");
       setEndDate(initial?.end_date ?? "");
-      setDepartmentId((initial as any)?.department_id ?? null);
+
+      const prefilledOrg =
+        initial?.organization_id ??
+        (initial as any)?.department_id ??
+        defaultOrgId ??
+        (isOrgAdmin ? localStorage.getItem("attendify_org_admin_selected_org_id") : null) ??
+        (isOrgAdmin && user?.assigned_org_ids?.[0]) ??
+        null;
+      setDepartmentId(prefilledOrg);
+
       setTargetScope(initial?.target_scope ?? "department_only");
       setCoHostDeptIds(initial?.co_host_dept_ids ?? []);
 
@@ -82,7 +102,7 @@ function EventFormModal({
         if (onPhotoChange) onPhotoChange(null);
       }
     }
-  }, [opened, initial]);
+  }, [opened, initial, defaultOrgId, isOrgAdmin, user]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,6 +119,7 @@ function EventFormModal({
       start_date: startDate,
       end_date: endDate,
       department_id: departmentId || null,
+      organization_id: departmentId || null,
       target_scope: targetScope,
       co_host_dept_ids: coHostDeptIds,
     };
@@ -132,6 +153,8 @@ function EventFormModal({
     if (onPhotoChange) onPhotoChange(null);
   };
 
+  const selectedOrg = organizations.find((o) => o.id === departmentId);
+
   return (
     <>
       <Modal
@@ -160,6 +183,39 @@ function EventFormModal({
               }))}
               required
             />
+
+            {/* Host Organization / Department Selector */}
+            {isOrgAdmin && user?.assigned_org_ids && user.assigned_org_ids.length === 1 ? (
+              <Paper p="sm" radius="md" withBorder style={{ background: "var(--surface-1)" }}>
+                <Group justify="space-between" align="center">
+                  <div>
+                    <Text size="xs" c="dimmed" fw={500}>Host Organization / Department</Text>
+                    <Text size="sm" fw={600} c="var(--text-primary)">
+                      {organizations.find((o) => o.id === user.assigned_org_ids?.[0])?.name || "Your Assigned Unit"} ({organizations.find((o) => o.id === user.assigned_org_ids?.[0])?.code || "DEPT"})
+                    </Text>
+                  </div>
+                  <Badge variant="light" color="blue" size="xs">Your Assigned Unit</Badge>
+                </Group>
+              </Paper>
+            ) : (
+              <Select
+                label="Host Organization / Department"
+                description="The academic college or student club organizing this event"
+                placeholder="Select hosting organization..."
+                data={(isOrgAdmin && user?.assigned_org_ids && user.assigned_org_ids.length > 0
+                  ? organizations.filter((o) => user.assigned_org_ids?.includes(o.id))
+                  : organizations
+                ).map((org) => ({
+                  value: org.id,
+                  label: `${org.name} (${org.code})`,
+                }))}
+                value={departmentId}
+                onChange={setDepartmentId}
+                required
+                searchable
+              />
+            )}
+
             <Textarea
               label="Description"
               value={description}
@@ -191,7 +247,11 @@ function EventFormModal({
                     label={
                       <Group gap="xs">
                         <IconBuilding size={16} />
-                        <Text size="sm">My Department Only (Restricted to Home College)</Text>
+                        <Text size="sm">
+                          {selectedOrg?.code
+                            ? `Host Unit Only (Restricted to ${selectedOrg.code})`
+                            : "Host Unit Only (Restricted to Home College)"}
+                        </Text>
                       </Group>
                     }
                   />

@@ -24,6 +24,7 @@ class AttendeeResponse(BaseModel):
     department_code: str | None = None
     consent_given: bool
     consent_given_at: datetime | None
+    profile_photo_url: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

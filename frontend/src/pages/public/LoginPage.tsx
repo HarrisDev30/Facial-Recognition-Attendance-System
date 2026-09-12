@@ -14,8 +14,7 @@ import {
   IconMail,
   IconLock,
   IconArrowRight,
-  IconSun,
-  IconMoon,
+  IconArrowLeft,
   IconAlertCircle,
   IconEye,
   IconEyeOff,
@@ -37,46 +36,12 @@ export default function LoginPage() {
   const { token, user, login } = useAuthStore();
   const navigate = useNavigate();
 
-  // Dual-Theme Engine (matching Landing Page)
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    const saved = localStorage.getItem("attendify_landing_theme");
-    if (saved === "light" || saved === "dark") return saved;
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
-  });
-
-  const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    localStorage.setItem("attendify_landing_theme", nextTheme);
-
-    // Smooth GSAP spin & pop on the theme toggle icon
-    gsap.fromTo(
-      ".auth-theme-toggle svg",
-      { rotate: -90, scale: 0.6, opacity: 0 },
-      { rotate: 0, scale: 1, opacity: 1, duration: 0.35, ease: "back.out(1.6)" },
-    );
-  };
-
   useGSAP(
     () => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-      tl.from(".auth-mesh-orb", {
-        scale: 0.85,
-        opacity: 0,
-        duration: 1.0,
-        stagger: 0.15,
-        ease: "power2.out",
-        clearProps: "scale",
-      })
-        .from(".auth-top-nav", { y: -16, opacity: 0, duration: 0.5, clearProps: "all" }, "-=0.8")
-        .from(
-          [".auth-brand-link", ".auth-theme-toggle"],
-          { scale: 0.92, opacity: 0, duration: 0.35, stagger: 0.05, ease: "back.out(1.2)", clearProps: "all" },
-          "-=0.3",
-        )
-        .from(".auth-glass-card", { y: 24, scale: 0.97, opacity: 0, duration: 0.7, clearProps: "all" }, "-=0.4");
+      tl.from(".auth-top-nav", { y: -16, opacity: 0, duration: 0.5, clearProps: "all" })
+        .from(".auth-nav-inner > *", { scale: 0.96, opacity: 0, duration: 0.35, stagger: 0.05, ease: "power2.out", clearProps: "all" }, "-=0.3")
+        .from(".auth-glass-card", { y: 20, scale: 0.98, opacity: 0, duration: 0.6, ease: "power3.out", clearProps: "all" }, "-=0.3");
     },
     { scope: pageRef },
   );
@@ -108,14 +73,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div ref={pageRef} className="auth-page-container" data-theme={theme}>
-      {/* Background Atmosphere Orbs */}
-      <div className="auth-bg-atmosphere" aria-hidden="true">
-        <div className="auth-mesh-orb orb-1" />
-        <div className="auth-mesh-orb orb-2" />
-        <div className="auth-grid-overlay" />
-      </div>
-
+    <div ref={pageRef} className="auth-page-container" data-theme="light">
       {/* Top Navbar */}
       <header className="auth-top-nav">
         <div className="auth-nav-inner">
@@ -127,14 +85,10 @@ export default function LoginPage() {
             <span className="brand-version-badge">v2.0</span>
           </Link>
 
-          <button
-            className="theme-toggle-btn auth-theme-toggle"
-            onClick={toggleTheme}
-            title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
-            aria-label="Toggle theme mode"
-          >
-            {theme === "dark" ? <IconSun size={17} /> : <IconMoon size={17} />}
-          </button>
+          <Link to="/" className="auth-nav-back-btn">
+            <IconArrowLeft size={15} />
+            <span>Back to Home</span>
+          </Link>
         </div>
       </header>
 

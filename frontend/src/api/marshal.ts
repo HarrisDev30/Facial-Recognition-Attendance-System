@@ -20,6 +20,7 @@ export interface ActiveSession {
   end_time: string;
   checked_in_count: number | null;
   total_registered: number | null;
+  organization_id?: string | null;
 }
 
 export interface UpcomingSessionItem {
@@ -48,8 +49,12 @@ export async function getMyOverrides(): Promise<MarshalOverride[]> {
   return data;
 }
 
-export async function getActiveSessions(): Promise<ActiveSession[]> {
-  const { data } = await client.get<ActiveSession[]>("/api/marshal/sessions/active");
+export async function getActiveSessions(organization_id?: string): Promise<ActiveSession[]> {
+  const params: Record<string, any> = {};
+  if (organization_id) params.organization_id = organization_id;
+  const { data } = await client.get<ActiveSession[]>("/api/marshal/sessions/active", {
+    params,
+  });
   return data;
 }
 

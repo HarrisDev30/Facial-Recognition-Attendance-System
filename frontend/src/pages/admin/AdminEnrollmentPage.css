@@ -1,0 +1,672 @@
+/* ==========================================================================
+   Admin Biometrics & Face Profiles Page — Student Dashboard Architecture Parity
+   Concept: Master-Detail Biometric Hub, 5-Angle Reticle, Vector Dossier
+   ========================================================================== */
+
+:root {
+  --craft-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.enrollment-container {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* ─── 1. Executive Split Header Card (Parity with Student Dashboard) ─── */
+.admin-enrollment-header-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 22px 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(480px, 1.25fr);
+  align-items: stretch;
+  gap: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1060px) {
+  .admin-enrollment-header-card {
+    grid-template-columns: 1fr;
+    padding: 18px 20px;
+    gap: 20px;
+  }
+}
+
+.enrollment-identity-col {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.enrollment-title-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.enrollment-eyebrow {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  margin-bottom: 3px;
+}
+
+.enrollment-title {
+  font-size: clamp(1.35rem, 2.1vw, 1.95rem);
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  margin: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.enrollment-institution-name {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+}
+
+.enrollment-credential-stack {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.enrollment-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.enrollment-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.enrollment-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.enrollment-btn-primary {
+  background: var(--text-primary) !important;
+  color: var(--surface-0) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  transition: transform 160ms var(--craft-ease-out), opacity 150ms ease !important;
+}
+
+.enrollment-btn-primary:active {
+  transform: scale(0.97) !important;
+}
+
+.enrollment-btn-secondary {
+  background: var(--surface-0) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  transition: transform 160ms var(--craft-ease-out), background-color 150ms ease !important;
+}
+
+.enrollment-btn-secondary:hover {
+  background: var(--surface-2) !important;
+}
+
+.enrollment-btn-secondary:active {
+  transform: scale(0.97) !important;
+}
+
+/* ─── Header Visual Telemetry Slides ─── */
+.enrollment-visual-frame {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  align-items: stretch;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .enrollment-visual-frame {
+    grid-template-columns: 1fr;
+  }
+}
+
+.enrollment-visual-slide {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: transform 160ms var(--craft-ease-out), border-color 160ms ease;
+}
+
+.enrollment-visual-slide:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.enrollment-slide-category {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+.enrollment-slide-big-metric {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin: 4px 0 2px 0;
+}
+
+.enrollment-slide-subtext {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+/* ─── 2. Master-Detail Layout Grid ─── */
+.enrollment-master-detail-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .enrollment-master-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Left Panel: Attendee Roster Master ─── */
+.enrollment-roster-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roster-tab-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 3px;
+  border-radius: 10px;
+  width: 100%;
+}
+
+.roster-tab-pill {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, transform 160ms var(--craft-ease-out);
+}
+
+.roster-tab-pill:hover {
+  color: var(--text-primary);
+}
+
+.roster-tab-pill.active {
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.roster-list-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: calc(100dvh - 340px);
+  min-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.roster-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-0);
+  cursor: pointer;
+  transition: transform 160ms var(--craft-ease-out), border-color 150ms ease, background-color 150ms ease;
+  text-align: left;
+  width: 100%;
+}
+
+.roster-item:hover {
+  background: var(--surface-2);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.roster-item:active {
+  transform: scale(0.98);
+}
+
+.roster-item.active {
+  background: var(--surface-2);
+  border-color: var(--brand-primary, #3b82f6);
+  box-shadow: 0 0 0 1px var(--brand-primary, #3b82f6);
+}
+
+.roster-item-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.roster-item-text {
+  min-width: 0;
+}
+
+.roster-item-name {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roster-item-sub {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+.roster-item-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+}
+
+.roster-item-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.roster-item-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.roster-item-avatar-dot {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--surface-0);
+}
+
+.roster-item.active .roster-item-avatar-dot {
+  border-color: var(--surface-2);
+}
+
+.roster-item-avatar-dot.enrolled {
+  background: #10b981;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3);
+}
+
+.roster-item-avatar-dot.pending {
+  background: var(--text-muted);
+  opacity: 0.6;
+}
+
+.roster-item-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.roster-item-status-dot.enrolled {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.roster-item-status-dot.pending {
+  background: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* ─── Right Panel: Selected Biometric Dossier ─── */
+.enrollment-dossier-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Dossier Profile Header */
+.dossier-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.dossier-photo-frame {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  border: 2px solid var(--border-subtle);
+  background: var(--surface-0);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.dossier-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dossier-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+.dossier-identity-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.dossier-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.dossier-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.dossier-id-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+/* ─── 5-Angle Biometric Coverage Reticle ─── */
+.reticle-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reticle-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reticle-heading {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.reticle-coverage-badge {
+  font-size: 0.6875rem;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.reticle-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .reticle-tiles-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.reticle-tile {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  transition: transform 160ms var(--craft-ease-out), border-color 150ms ease;
+}
+
+.reticle-tile.captured {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.reticle-tile.missing {
+  border-style: dashed;
+  opacity: 0.7;
+}
+
+.reticle-tile-angle {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  color: var(--text-secondary);
+}
+
+.reticle-tile-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.reticle-tile-status.captured {
+  color: #10b981;
+}
+
+.reticle-tile-status.missing {
+  color: var(--text-muted);
+}
+
+/* ─── Saved Embeddings Table ─── */
+.embeddings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dossier-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-0);
+}
+
+.dossier-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.8125rem;
+}
+
+.dossier-table th {
+  padding: 9px 12px;
+  background: var(--surface-1);
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.dossier-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.dossier-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ─── Empty States ─── */
+.dossier-empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.dossier-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}

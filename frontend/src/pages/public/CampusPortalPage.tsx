@@ -17,8 +17,6 @@ import {
   IconAlertCircle,
   IconLock,
   IconMail,
-  IconSun,
-  IconMoon,
   IconScan,
   IconArrowRight,
   IconRosetteDiscountCheckFilled,
@@ -71,28 +69,6 @@ export default function CampusPortalPage() {
   const [loading, setLoading] = useState(!initialInstitution);
   const [notFound, setNotFound] = useState(false);
 
-  // Dual Theme Engine
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    const saved = localStorage.getItem("attendify_landing_theme");
-    if (saved === "light" || saved === "dark") return saved;
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
-  });
-
-  const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    localStorage.setItem("attendify_landing_theme", nextTheme);
-
-    // Smooth GSAP spin & pop on the theme toggle icon
-    gsap.fromTo(
-      ".portal-theme-toggle-btn svg",
-      { rotate: -90, scale: 0.6, opacity: 0 },
-      { rotate: 0, scale: 1, opacity: 1, duration: 0.35, ease: "back.out(1.6)" },
-    );
-  };
-
   // Form State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -139,40 +115,30 @@ export default function CampusPortalPage() {
       if (!loading && institution) {
         const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-        // 1. Ambient Background Mesh
-        tl.from(".portal-mesh-orb", {
-          scale: 0.85,
-          opacity: 0,
-          duration: 0.9,
-          stagger: 0.12,
-          ease: "power2.out",
-          clearProps: "scale",
-        })
-          // 2. Seamless Header Elements (Badge & All Campuses button glide into persistent navbar)
+        // 1. Seamless Header Elements (Badge & All Campuses button glide into persistent navbar)
+        tl.from(
+          [".portal-nav-divider", ".portal-campus-code"],
+          {
+            x: -12,
+            opacity: 0,
+            duration: 0.45,
+            ease: "power2.out",
+            clearProps: "all",
+          },
+          0
+        )
           .from(
-            [".portal-nav-divider", ".portal-campus-code"],
+            ".btn-all-campuses",
             {
-              x: -12,
               opacity: 0,
-              duration: 0.45,
+              scale: 0.96,
+              duration: 0.38,
               ease: "power2.out",
               clearProps: "all",
             },
-            "-=0.7",
+            "<"
           )
-          .from(
-            [".portal-theme-toggle-btn", ".btn-all-campuses"],
-            {
-              opacity: 0,
-              scale: 0.92,
-              duration: 0.38,
-              stagger: 0.05,
-              ease: "back.out(1.2)",
-              clearProps: "all",
-            },
-            "<",
-          )
-          // 3. Campus Hero Branding & Centered Card
+          // 2. Campus Hero Branding & Centered Card
           .from(
             ".campus-hero-crest",
             {
@@ -183,7 +149,7 @@ export default function CampusPortalPage() {
               ease: "back.out(1.4)",
               clearProps: "all",
             },
-            "-=0.3",
+            "-=0.2"
           )
           .from(
             [".campus-hero-badge", ".campus-hero-title", ".campus-hero-subtitle"],
@@ -194,18 +160,18 @@ export default function CampusPortalPage() {
               stagger: 0.07,
               clearProps: "all",
             },
-            "-=0.35",
+            "-=0.35"
           )
           .from(
             ".campus-clean-card",
             {
-              y: 22,
+              y: 20,
               scale: 0.98,
               opacity: 0,
-              duration: 0.65,
+              duration: 0.6,
               clearProps: "all",
             },
-            "-=0.35",
+            "-=0.35"
           )
           .from(
             ".campus-clean-footer",
@@ -215,7 +181,7 @@ export default function CampusPortalPage() {
               duration: 0.45,
               clearProps: "all",
             },
-            "-=0.25",
+            "-=0.25"
           );
       }
     },
@@ -244,7 +210,7 @@ export default function CampusPortalPage() {
 
   if (loading && !institution) {
     return (
-      <div className="campus-portal-container" data-theme={theme} style={{ justifyContent: "center", alignItems: "center" }}>
+      <div className="campus-portal-container" data-theme="light" style={{ justifyContent: "center", alignItems: "center" }}>
         <Loader size="lg" color="blue" />
         <Text mt="md" c="dimmed" size="sm">
           Loading campus gateway...
@@ -255,7 +221,7 @@ export default function CampusPortalPage() {
 
   if (notFound || !institution) {
     return (
-      <div className="campus-portal-container" data-theme={theme} style={{ justifyContent: "center", alignItems: "center", padding: "2rem" }}>
+      <div className="campus-portal-container" data-theme="light" style={{ justifyContent: "center", alignItems: "center", padding: "2rem" }}>
         <Stack align="center" gap="md" style={{ maxWidth: 440, textAlign: "center" }}>
           <IconAlertCircle size={44} color="#ef4444" />
           <Title order={3} style={{ color: "var(--portal-text-heading)" }}>
@@ -280,7 +246,7 @@ export default function CampusPortalPage() {
     <div
       ref={pageRef}
       className="campus-portal-container"
-      data-theme={theme}
+      data-theme="light"
       style={
         {
           "--campus-brand": brandColor,
@@ -289,13 +255,6 @@ export default function CampusPortalPage() {
         } as React.CSSProperties
       }
     >
-      {/* Ambient Atmosphere Orbs */}
-      <div className="portal-bg-atmosphere" aria-hidden="true">
-        <div className="portal-mesh-orb orb-1" />
-        <div className="portal-mesh-orb orb-2" />
-        <div className="portal-grid-overlay" />
-      </div>
-
       {/* Sticky Top Navbar (1:1 Pixel-Aligned with Landing Page) */}
       <header className="campus-portal-nav">
         <div className="campus-nav-inner">
@@ -305,30 +264,17 @@ export default function CampusPortalPage() {
                 <IconScan size={20} color="#ffffff" stroke={2.5} />
               </div>
               <span className="brand-title">Attendify</span>
+              <span className="brand-version-badge">v2.0</span>
             </Link>
             <span className="portal-nav-divider">/</span>
             <span className="portal-campus-code">{institution.code.toUpperCase()}</span>
           </div>
 
           <div className="nav-actions-cluster">
-            <button
-              className="portal-theme-toggle-btn"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
-              aria-label="Toggle theme mode"
-            >
-              {theme === "dark" ? <IconSun size={17} /> : <IconMoon size={17} />}
-            </button>
-
-            <Button
-              component={Link}
-              to="/"
-              size="xs"
-              leftSection={<IconArrowLeft size={14} />}
-              className="btn-all-campuses"
-            >
+            <Link to="/" className="btn-all-campuses">
+              <IconArrowLeft size={14} />
               <span className="btn-all-campuses-text">All Campuses</span>
-            </Button>
+            </Link>
           </div>
         </div>
       </header>

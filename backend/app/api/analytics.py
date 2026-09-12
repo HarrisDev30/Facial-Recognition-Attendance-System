@@ -232,6 +232,7 @@ async def get_colleges_attendance_comparison(
 @router.get("/institution/traffic-hourly", response_model=list[HourlyTrafficEntry])
 async def get_hourly_traffic_distribution(
     days: int = Query(7, ge=1, le=30),
+    organization_id: uuid.UUID | None = Query(None),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
@@ -250,6 +251,12 @@ async def get_hourly_traffic_distribution(
         stmt = stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
                    .join(Event, AttendanceSession.event_id == Event.id)\
                    .where(Event.institution_id == inst_id)
+        if organization_id:
+            stmt = stmt.where(Event.organization_id == organization_id)
+    elif organization_id:
+        stmt = stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
+                   .join(Event, AttendanceSession.event_id == Event.id)\
+                   .where(Event.organization_id == organization_id)
 
     res = await session.execute(stmt)
     logs = res.all()
@@ -296,6 +303,7 @@ async def get_hourly_traffic_distribution(
 
 @router.get("/institution/verification-breakdown", response_model=list[VerificationMethodMetric])
 async def get_verification_breakdown(
+    organization_id: uuid.UUID | None = Query(None),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
@@ -314,6 +322,12 @@ async def get_verification_breakdown(
         stmt = stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
                    .join(Event, AttendanceSession.event_id == Event.id)\
                    .where(Event.institution_id == inst_id)
+        if organization_id:
+            stmt = stmt.where(Event.organization_id == organization_id)
+    elif organization_id:
+        stmt = stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
+                   .join(Event, AttendanceSession.event_id == Event.id)\
+                   .where(Event.organization_id == organization_id)
 
     res = await session.execute(stmt)
     rows = res.all()
@@ -356,6 +370,7 @@ async def get_verification_breakdown(
 async def get_at_risk_students(
     threshold_pct: float = Query(75.0, ge=10.0, le=100.0),
     limit: int = Query(20, ge=1, le=100),
+    organization_id: uuid.UUID | None = Query(None),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
@@ -368,6 +383,8 @@ async def get_at_risk_students(
     total_ev_stmt = select(func.count(Event.id)).where(Event.status != EventStatus.cancelled)
     if inst_id and current_user.role != UserRole.super_admin:
         total_ev_stmt = total_ev_stmt.where(Event.institution_id == inst_id)
+    if organization_id:
+        total_ev_stmt = total_ev_stmt.where(Event.organization_id == organization_id)
     total_ev_res = await session.execute(total_ev_stmt)
     total_events_available = max(1, total_ev_res.scalar() or 1)
 
@@ -387,6 +404,8 @@ async def get_at_risk_students(
 
     if inst_id and current_user.role != UserRole.super_admin:
         query = query.where(Attendee.institution_id == inst_id)
+    if organization_id:
+        query = query.where(Attendee.organization_id == organization_id)
 
     res = await session.execute(query)
     rows = res.all()

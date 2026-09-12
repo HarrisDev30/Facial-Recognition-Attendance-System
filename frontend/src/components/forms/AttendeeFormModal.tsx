@@ -101,12 +101,13 @@ export default function AttendeeFormModal({
             maxLength={255}
           />
           <Select
-            label="Type"
+            label="Attendee Classification"
+            description="Select whether this attendee is an enrolled student or faculty/university personnel."
             value={attendeeType}
             onChange={(v) => setAttendeeType(v ?? "student")}
             data={[
               { value: "student", label: "Student" },
-              { value: "staff", label: "Staff" },
+              { value: "staff", label: "Faculty / University Personnel" },
             ]}
             required
           />

@@ -1,0 +1,451 @@
+/* ==========================================================================
+   OrgAdmin Dashboard Styles — Strictly Aligned to Student Dashboard Architecture
+   Concept: Tactile Session Brick Ledger, Restrained Utility, No AI-Slop Badges
+   ========================================================================== */
+
+:root {
+  --craft-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.orgadmin-container {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* ─── 1. Executive Split Header Card (Strictly Matching Student Dashboard) ─── */
+.orgadmin-header-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 22px 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(480px, 1.25fr);
+  align-items: stretch;
+  gap: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1060px) {
+  .orgadmin-header-card {
+    grid-template-columns: 1fr;
+    padding: 18px 20px;
+    gap: 20px;
+  }
+}
+
+.orgadmin-identity-col {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.orgadmin-title-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.orgadmin-eyebrow {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  margin-bottom: 3px;
+}
+
+.orgadmin-greeting-title {
+  font-size: clamp(1.35rem, 2.1vw, 1.95rem);
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  margin: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.orgadmin-institution-name {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+}
+
+.orgadmin-credential-stack {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.orgadmin-id-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.orgadmin-dept-select {
+  width: 120px;
+}
+
+.orgadmin-dept-select .mantine-Select-input {
+  font-family: var(--font-mono, "JetBrains Mono", monospace) !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.02em !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  line-height: 24px !important;
+  padding-left: 28px !important;
+  padding-right: 22px !important;
+  background: var(--surface-0) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 5px !important;
+  color: var(--text-primary) !important;
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 120ms var(--craft-ease-out) !important;
+}
+
+.orgadmin-dept-select .mantine-Select-input:hover {
+  border-color: var(--border-strong) !important;
+}
+
+.orgadmin-dept-select .mantine-Select-input:focus {
+  border-color: var(--brand-primary, #6366f1) !important;
+}
+
+.orgadmin-dept-select .mantine-Select-input:active {
+  transform: scale(0.98);
+}
+
+.orgadmin-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.orgadmin-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.orgadmin-btn-primary {
+  background: var(--text-primary) !important;
+  color: var(--surface-0) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  transition: transform 160ms var(--craft-ease-out), opacity 150ms ease !important;
+}
+
+.orgadmin-btn-primary:active {
+  transform: scale(0.97) !important;
+}
+
+.orgadmin-btn-secondary {
+  background: var(--surface-0) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  transition: transform 160ms var(--craft-ease-out), background-color 150ms ease !important;
+}
+
+.orgadmin-btn-secondary:hover {
+  background: var(--surface-2) !important;
+}
+
+.orgadmin-btn-secondary:active {
+  transform: scale(0.97) !important;
+}
+
+/* ─── Header Visual Telemetry Slides ─── */
+.orgadmin-visual-frame {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  align-items: stretch;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .orgadmin-visual-frame {
+    grid-template-columns: 1fr;
+  }
+}
+
+.orgadmin-visual-slide {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.orgadmin-slide-category {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+.orgadmin-slide-chart {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  margin: 2px 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.orgadmin-slide-big-metric {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.orgadmin-slide-subtext {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+/* ─── 2. Semester Bento Cards (Matching Student Dashboard .semester-bento-card) ─── */
+.orgadmin-bento-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+
+.orgadmin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.orgadmin-card-heading-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.orgadmin-card-heading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  text-transform: capitalize;
+  margin: 0;
+}
+
+.orgadmin-card-subheading {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.orgadmin-card-meta-count {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-weight: 600;
+}
+
+/* ─── Telemetry Duo & Inset Boxes (Strictly Matching Student Dashboard) ─── */
+.orgadmin-telemetry-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 500px) {
+  .orgadmin-telemetry-duo {
+    grid-template-columns: 1fr;
+  }
+}
+
+.orgadmin-telemetry-tile {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 78px;
+}
+
+.orgadmin-telemetry-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.orgadmin-telemetry-tile-title {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.orgadmin-telemetry-tile-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  margin: 4px 0 2px;
+}
+
+.orgadmin-telemetry-tile-sub {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Runway & Chart Wrappers ─── */
+.orgadmin-runway-box {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.orgadmin-runway-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.orgadmin-runway-threshold-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+}
+
+/* ─── Pulse Indicator for Live Kiosks & Sessions ─── */
+.orgadmin-pulse-beacon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  display: inline-block;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  animation: orgadmin-pulse 2s infinite;
+}
+
+@keyframes orgadmin-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* ─── Roster and Event Rows (Matching Student Dashboard Ledger) ─── */
+.orgadmin-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  transition: transform 140ms var(--craft-ease-out), background-color 140ms ease;
+  cursor: pointer;
+  gap: 12px;
+}
+
+.orgadmin-row-item:hover {
+  background: var(--surface-2);
+  transform: translateX(2px);
+}
+
+.orgadmin-row-item:active {
+  transform: scale(0.99);
+}
+
+/* ─── Mobile Adaptations ─── */
+@media (max-width: 640px) {
+  .orgadmin-bento-card {
+    padding: 14px 16px;
+    border-radius: 14px;
+  }
+
+  .orgadmin-greeting-title {
+    font-size: 1.65rem;
+  }
+}

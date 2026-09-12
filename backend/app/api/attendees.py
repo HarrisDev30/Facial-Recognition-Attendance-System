@@ -43,7 +43,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/api/attendees", tags=["attendees"])
@@ -235,7 +235,7 @@ async def upload_profile_photo(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    attendee = await _get_attendee_for_user(session, current_user)
+    attendee = await _get_attendee_for_user(session, current_user, create_if_missing=True)
     if attendee is None:
         raise HTTPException(status_code=404, detail="Attendee profile not found")
 
@@ -277,8 +277,10 @@ async def upload_profile_photo(
 
 @router.get("/photos/{filename}")
 async def get_profile_photo(filename: str):
-    filepath = Path(settings.profile_photo_dir) / filename
-    if not filepath.exists():
+    clean_name = os.path.basename(filename)
+    base_dir = Path(settings.profile_photo_dir).resolve()
+    filepath = (base_dir / clean_name).resolve()
+    if not filepath.is_relative_to(base_dir) or not filepath.exists() or not filepath.is_file():
         raise HTTPException(status_code=404, detail="Photo not found")
     return FileResponse(filepath)
 
@@ -408,17 +410,27 @@ async def reset_my_registration(
 
 
 @router.get("/{attendee_id}/profile-photo")
-async def get_profile_photo(
+async def get_attendee_profile_photo(
     attendee_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
 ):
     attendee = await session.get(Attendee, attendee_id)
-    if attendee is None or not attendee.profile_photo_url:
-        raise HTTPException(status_code=404, detail="Photo not found")
+    if attendee and attendee.profile_photo_url and attendee.profile_photo_url.startswith("data:image/"):
+        import base64
+        try:
+            header, b64data = attendee.profile_photo_url.split(",", 1)
+            media_type = header.split(";")[0].replace("data:", "")
+            image_bytes = base64.b64decode(b64data)
+            from fastapi import Response
+            return Response(content=image_bytes, media_type=media_type)
+        except Exception:
+            pass
 
     dir_path = Path(settings.profile_photo_dir)
-    pattern = f"{attendee.id}_*"
-    matches = list(dir_path.glob(pattern))
+    matches = list(dir_path.glob(f"{attendee_id}*"))
+    if not matches and attendee and attendee.user_id:
+        matches = list(dir_path.glob(f"{attendee.user_id}*"))
+
     if not matches:
         raise HTTPException(status_code=404, detail="Photo file not found")
 
@@ -444,8 +456,16 @@ async def list_attendees(
     result = await session.execute(query)
     rows = result.all()
     res = []
+    dir_path = Path(settings.profile_photo_dir)
+    has_photo_cache: set[str] | None = None
     for a, org in rows:
         att_type_val = a.attendee_type.value if hasattr(a.attendee_type, "value") else str(a.attendee_type)
+        photo_url = a.profile_photo_url
+        if not photo_url:
+            if has_photo_cache is None:
+                has_photo_cache = {p.name.split("_")[0] for p in dir_path.glob("*")} if dir_path.exists() else set()
+            if str(a.id) in has_photo_cache or (a.user_id and str(a.user_id) in has_photo_cache):
+                photo_url = f"/api/attendees/{a.id}/profile-photo"
         res.append(
             AttendeeResponse(
                 id=str(a.id),
@@ -459,6 +479,7 @@ async def list_attendees(
                 department_code=org.code if org else None,
                 consent_given=a.consent_given,
                 consent_given_at=a.consent_given_at,
+                profile_photo_url=photo_url,
                 created_at=a.created_at,
             )
         )
@@ -544,6 +565,7 @@ async def create_attendee(
         department_code=org.code if org else None,
         consent_given=attendee.consent_given,
         consent_given_at=attendee.consent_given_at,
+        profile_photo_url=attendee.profile_photo_url,
         created_at=attendee.created_at,
     )
 
@@ -562,6 +584,11 @@ async def get_attendee(
 
     org = await session.get(Organization, attendee.organization_id)
     att_type_val = attendee.attendee_type.value if hasattr(attendee.attendee_type, "value") else str(attendee.attendee_type)
+    photo_url = attendee.profile_photo_url
+    if not photo_url:
+        disk_matches = list(Path(settings.profile_photo_dir).glob(f"{attendee.id}*"))
+        if disk_matches:
+            photo_url = f"/api/attendees/{attendee.id}/profile-photo"
     return AttendeeResponse(
         id=str(attendee.id),
         identifier=attendee.identifier,
@@ -574,6 +601,7 @@ async def get_attendee(
         department_code=org.code if org else None,
         consent_given=attendee.consent_given,
         consent_given_at=attendee.consent_given_at,
+        profile_photo_url=photo_url,
         created_at=attendee.created_at,
     )
 
@@ -612,6 +640,7 @@ async def update_attendee(
         department_code=org.code if org else None,
         consent_given=attendee.consent_given,
         consent_given_at=attendee.consent_given_at,
+        profile_photo_url=attendee.profile_photo_url,
         created_at=attendee.created_at,
     )
 
@@ -638,8 +667,48 @@ from app.models.organization_staff import OrganizationStaff
 from app.models.user import UserRole
 
 
-async def _get_attendee_for_user(session: AsyncSession, user: User) -> Attendee | None:
+async def _get_attendee_for_user(
+    session: AsyncSession,
+    user: User,
+    create_if_missing: bool = False,
+) -> Attendee | None:
     result = await session.execute(
         select(Attendee).where(Attendee.user_id == user.id)
     )
-    return result.scalar_one_or_none()
+    att = result.scalar_one_or_none()
+    if att is None and user.email:
+        res2 = await session.execute(
+            select(Attendee).where(func.lower(Attendee.email) == user.email.lower())
+        )
+        att = res2.scalar_one_or_none()
+        if att and att.user_id is None:
+            att.user_id = user.id
+            await session.commit()
+            await session.refresh(att)
+
+    if att is None and create_if_missing:
+        att_type = AttendeeType.student if user.role == UserRole.student else AttendeeType.staff
+        inst_id = user.institution_id
+        org_id = None
+        if inst_id:
+            org_res = await session.execute(
+                select(Organization.id).where(Organization.institution_id == inst_id).limit(1)
+            )
+            org_id = org_res.scalar_one_or_none()
+
+        att = Attendee(
+            user_id=user.id,
+            first_name=user.first_name or "User",
+            last_name=user.last_name or "",
+            email=user.email,
+            identifier=user.email.split("@")[0].upper() if user.email else f"U-{str(user.id)[:8]}",
+            attendee_type=att_type,
+            institution_id=inst_id,
+            organization_id=org_id,
+            consent_given=True,
+        )
+        session.add(att)
+        await session.commit()
+        await session.refresh(att)
+
+    return att

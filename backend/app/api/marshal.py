@@ -1,4 +1,5 @@
 from datetime import datetime
+import uuid
 
 from app.database import get_session
 from app.middleware.auth import DomainScope, get_domain_scope, require_marshal
@@ -7,7 +8,7 @@ from app.models.attendance_session import AttendanceSession, SessionStatus
 from app.models.attendee import Attendee
 from app.models.event import Event, EventStatus, EventTargetScope
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,6 +39,7 @@ class ActiveSessionResponse(BaseModel):
     end_time: datetime
     checked_in_count: int | None = None
     total_registered: int | None = None
+    organization_id: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -94,7 +96,7 @@ async def get_marshal_upcoming_events(
         if scope.assigned_org_ids:
             from sqlalchemy import String, cast
             cohost_clauses = [
-                cast(Event.cohost_org_ids, String).like(f"%{org_id}%")
+                cast(Event.co_host_dept_ids, String).like(f"%{org_id}%")
                 for org_id in scope.assigned_org_ids
             ]
             query = query.where(
@@ -138,6 +140,7 @@ async def get_marshal_upcoming_events(
 
 @router.get("/sessions/active", response_model=list[ActiveSessionResponse])
 async def get_active_sessions(
+    organization_id: uuid.UUID | None = Query(None),
     db: AsyncSession = Depends(get_session),
     scope: DomainScope = Depends(get_domain_scope),
 ):
@@ -189,6 +192,10 @@ async def get_active_sessions(
                 )
             )
 
+    # 3. Enforce explicit organization filter if requested
+    if organization_id:
+        query = query.where(Event.organization_id == organization_id)
+
     query = query.order_by(Event.start_date.desc(), AttendanceSession.start_time)
     result = await db.execute(query)
     rows = result.all()
@@ -196,6 +203,10 @@ async def get_active_sessions(
     att_count_q = select(func.count(Attendee.id))
     if not scope.is_super_admin and scope.institution_id:
         att_count_q = att_count_q.where(Attendee.institution_id == scope.institution_id)
+    if organization_id:
+        att_count_q = att_count_q.where(Attendee.organization_id == organization_id)
+    elif (scope.is_marshal or scope.is_org_admin) and scope.assigned_org_ids:
+        att_count_q = att_count_q.where(Attendee.organization_id.in_(scope.assigned_org_ids))
     total_registered_result = await db.execute(att_count_q)
     total_registered_val = total_registered_result.scalar() or 0
 
@@ -211,6 +222,7 @@ async def get_active_sessions(
             end_time=row[0].end_time,
             checked_in_count=row[2] or 0,
             total_registered=total_registered_val,
+            organization_id=str(row[1].organization_id) if row[1].organization_id else None,
         )
         for row in rows
     ]
