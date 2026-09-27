@@ -123,7 +123,7 @@ export default function AttendeeFormModal({
             <Button variant="default" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" loading={loading}>
+            <Button type="submit" loading={loading} className="btn-brand">
               {initial ? "Save Changes" : "Add Attendee"}
             </Button>
           </Group>

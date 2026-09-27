@@ -101,6 +101,32 @@ export async function getGlobalDevices(): Promise<GlobalDeviceItem[]> {
   return data;
 }
 
+export async function createGlobalDevice(body: {
+  institution_id: string;
+  name: string;
+  device_type: string;
+  location?: string;
+  is_active?: boolean;
+}): Promise<{ success: boolean; id: string; name: string; device_token: string }> {
+  const { data } = await client.post("/api/super-admin/devices", body);
+  return data;
+}
+
+export async function toggleGlobalDeviceActive(deviceId: string): Promise<{ success: boolean; id: string; is_active: boolean }> {
+  const { data } = await client.patch(`/api/super-admin/devices/${deviceId}/toggle-active`);
+  return data;
+}
+
+export async function pingGlobalDevice(deviceId: string): Promise<{ success: boolean; id: string; last_activity: string }> {
+  const { data } = await client.post(`/api/super-admin/devices/${deviceId}/ping`);
+  return data;
+}
+
+export async function deleteGlobalDevice(deviceId: string): Promise<{ success: boolean; id: string }> {
+  const { data } = await client.delete(`/api/super-admin/devices/${deviceId}`);
+  return data;
+}
+
 export async function getSystemStatus(): Promise<SystemStatus> {
   const { data } = await client.get<SystemStatus>("/api/public/system-status");
   return data;
@@ -179,3 +205,15 @@ export async function clearSystemStatus(): Promise<SystemStatus> {
   const { data } = await client.post<SystemStatus>("/api/super-admin/system-status/clear");
   return data;
 }
+
+export async function batchToggleInstitutionsActive(
+  institutionIds: string[],
+  isActive: boolean
+): Promise<{ success: boolean; updated_count: number; is_active: boolean }> {
+  const { data } = await client.post("/api/super-admin/institutions/batch-active", {
+    institution_ids: institutionIds,
+    is_active: isActive,
+  });
+  return data;
+}
+

@@ -115,7 +115,7 @@ export default function MarshalLayout() {
       <StudentSearchModal
         opened={studentsModalOpen}
         onClose={() => setStudentsModalOpen(false)}
-        sessionId={activeSessions[0]?.session_id}
+        activeSessions={activeSessions}
         attendees={attendees}
       />
     </>

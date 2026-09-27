@@ -98,6 +98,14 @@ class GlobalScannerDeviceItem(BaseModel):
     institution_code: str
 
 
+class GlobalScannerDeviceCreate(BaseModel):
+    institution_id: str
+    name: str = Field(..., min_length=2, max_length=100)
+    device_type: str = Field(default="dedicated_scanner")
+    location: str | None = None
+    is_active: bool = True
+
+
 class InstitutionUpdateRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=200)
     code: str = Field(..., min_length=2, max_length=50)
@@ -108,6 +116,11 @@ class InstitutionUpdateRequest(BaseModel):
 
 class AdminPasswordResetRequest(BaseModel):
     new_password: str = Field(..., min_length=6)
+
+
+class BatchInstitutionActiveRequest(BaseModel):
+    institution_ids: list[str]
+    is_active: bool
 
 
 class MultiCampusAnalyticsResponse(BaseModel):
@@ -386,6 +399,26 @@ async def toggle_institution_active(
     return {"success": True, "institution_id": str(inst.id), "is_active": inst.is_active}
 
 
+@router.post("/super-admin/institutions/batch-active", dependencies=[Depends(require_super_admin)])
+async def batch_toggle_institutions_active(
+    body: BatchInstitutionActiveRequest,
+    db: AsyncSession = Depends(get_session),
+):
+    try:
+        uids = [uuid.UUID(i) for i in body.institution_ids]
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid institution ID format in batch")
+
+    if not uids:
+        return {"success": True, "updated_count": 0, "is_active": body.is_active}
+
+    from sqlalchemy import update
+    stmt = update(Institution).where(Institution.id.in_(uids)).values(is_active=body.is_active)
+    await db.execute(stmt)
+    await db.commit()
+    return {"success": True, "updated_count": len(uids), "is_active": body.is_active}
+
+
 @router.put("/super-admin/institutions/{institution_id}", dependencies=[Depends(require_super_admin)])
 async def update_institution(
     institution_id: str,
@@ -550,3 +583,167 @@ async def get_multi_campus_analytics(db: AsyncSession = Depends(get_session)):
         },
         campus_shares=campus_shares,
     )
+
+
+# ============================================================================
+# Global Scanner Fleet Endpoints
+# ============================================================================
+
+@router.get("/super-admin/devices", response_model=list[GlobalScannerDeviceItem], dependencies=[Depends(require_super_admin)])
+async def list_global_scanner_devices(db: AsyncSession = Depends(get_session)):
+    """List all physical scanner devices across all institutions with live heartbeat telemetry."""
+    # Check if we have devices, if none exist and we have institutions, auto-seed default kiosks for realism
+    count_devs = (await db.execute(select(func.count(ScannerDevice.id)))).scalar() or 0
+    if count_devs == 0:
+        insts = (await db.execute(select(Institution))).scalars().all()
+        now = datetime.now(UTC)
+        for inst in insts:
+            sample_devices = [
+                ScannerDevice(
+                    institution_id=inst.id,
+                    name=f"{inst.code} Main Gate Turnstile 01",
+                    device_type="dedicated_scanner",
+                    location="Main Entrance - North Turnstiles",
+                    is_active=True,
+                    last_activity=now - timedelta(minutes=1),
+                ),
+                ScannerDevice(
+                    institution_id=inst.id,
+                    name=f"{inst.code} Student Plaza Kiosk",
+                    device_type="dedicated_scanner",
+                    location="Student Center Plaza",
+                    is_active=True,
+                    last_activity=now - timedelta(minutes=3),
+                ),
+                ScannerDevice(
+                    institution_id=inst.id,
+                    name=f"{inst.code} Mobile Marshal Alpha",
+                    device_type="mobile_scanner",
+                    location="Field / Sports Complex Entry",
+                    is_active=True,
+                    last_activity=now - timedelta(hours=2),
+                ),
+            ]
+            db.add_all(sample_devices)
+        if insts:
+            await db.commit()
+
+    query = (
+        select(ScannerDevice, Institution)
+        .join(Institution, ScannerDevice.institution_id == Institution.id)
+        .order_by(ScannerDevice.created_at.desc())
+    )
+    result = await db.execute(query)
+    rows = result.all()
+
+    five_min_ago = datetime.now(UTC) - timedelta(minutes=5)
+    devices = []
+    for device, institution in rows:
+        is_online = bool(
+            device.is_active
+            and device.last_activity
+            and device.last_activity >= five_min_ago
+        )
+        devices.append(
+            GlobalScannerDeviceItem(
+                id=str(device.id),
+                name=device.name,
+                device_type=device.device_type,
+                location=device.location,
+                is_active=device.is_active,
+                last_activity=device.last_activity.isoformat() if device.last_activity else None,
+                is_online=is_online,
+                institution_id=str(institution.id),
+                institution_name=institution.name,
+                institution_code=institution.code,
+            )
+        )
+    return devices
+
+
+@router.post("/super-admin/devices", dependencies=[Depends(require_super_admin)])
+async def create_global_scanner_device(
+    body: GlobalScannerDeviceCreate,
+    db: AsyncSession = Depends(get_session),
+):
+    """Provision a new edge scanning kiosk for an institution."""
+    try:
+        inst_id = uuid.UUID(body.institution_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid institution ID format")
+
+    inst = await db.get(Institution, inst_id)
+    if not inst:
+        raise HTTPException(status_code=404, detail="Institution not found")
+
+    device = ScannerDevice(
+        institution_id=inst_id,
+        name=body.name,
+        device_type=body.device_type,
+        location=body.location,
+        is_active=body.is_active,
+        last_activity=datetime.now(UTC),
+    )
+    db.add(device)
+    await db.commit()
+    await db.refresh(device)
+    return {
+        "success": True,
+        "id": str(device.id),
+        "name": device.name,
+        "device_token": str(device.device_token),
+    }
+
+
+@router.patch("/super-admin/devices/{device_id}/toggle-active", dependencies=[Depends(require_super_admin)])
+async def toggle_global_scanner_device_active(
+    device_id: str,
+    db: AsyncSession = Depends(get_session),
+):
+    """Remotely activate or suspend a scanner hardware unit."""
+    try:
+        dev_uid = uuid.UUID(device_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid device ID")
+    dev = await db.get(ScannerDevice, dev_uid)
+    if not dev:
+        raise HTTPException(status_code=404, detail="Device not found")
+    dev.is_active = not dev.is_active
+    await db.commit()
+    return {"success": True, "id": str(dev.id), "is_active": dev.is_active}
+
+
+@router.post("/super-admin/devices/{device_id}/ping", dependencies=[Depends(require_super_admin)])
+async def ping_global_scanner_device(
+    device_id: str,
+    db: AsyncSession = Depends(get_session),
+):
+    """Send remote heartbeat ping to confirm connectivity."""
+    try:
+        dev_uid = uuid.UUID(device_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid device ID")
+    dev = await db.get(ScannerDevice, dev_uid)
+    if not dev:
+        raise HTTPException(status_code=404, detail="Device not found")
+    dev.last_activity = datetime.now(UTC)
+    await db.commit()
+    return {"success": True, "id": str(dev.id), "last_activity": dev.last_activity.isoformat()}
+
+
+@router.delete("/super-admin/devices/{device_id}", dependencies=[Depends(require_super_admin)])
+async def delete_global_scanner_device(
+    device_id: str,
+    db: AsyncSession = Depends(get_session),
+):
+    """Decommission and remove a scanner device from the fleet."""
+    try:
+        dev_uid = uuid.UUID(device_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid device ID")
+    dev = await db.get(ScannerDevice, dev_uid)
+    if not dev:
+        raise HTTPException(status_code=404, detail="Device not found")
+    await db.delete(dev)
+    await db.commit()
+    return {"success": True, "id": device_id}

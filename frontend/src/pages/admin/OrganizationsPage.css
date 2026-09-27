@@ -443,19 +443,21 @@
 
 /* Tactile Buttons */
 .orgs-btn-primary {
-  background: var(--text-primary);
-  color: var(--surface-0);
-  border: none;
-  font-weight: 600;
-  transition: transform 140ms var(--ease-out), opacity 150ms ease;
+  background: var(--brand-primary) !important;
+  color: var(--brand-contrast-text) !important;
+  border: 1px solid var(--brand-border) !important;
+  box-shadow: 0 2px 12px var(--brand-glow) !important;
+  font-weight: 600 !important;
+  transition: transform 140ms var(--ease-out), box-shadow 150ms ease, opacity 150ms ease !important;
 }
 
 .orgs-btn-primary:hover {
-  opacity: 0.92;
+  box-shadow: 0 4px 18px var(--brand-glow) !important;
+  opacity: 0.95 !important;
 }
 
 .orgs-btn-primary:active {
-  transform: scale(0.97);
+  transform: scale(0.97) !important;
 }
 
 .orgs-btn-secondary {

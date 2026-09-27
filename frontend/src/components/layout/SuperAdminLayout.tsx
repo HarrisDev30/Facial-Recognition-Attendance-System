@@ -3,6 +3,8 @@ import {
   IconActivity,
   IconBuildingArch,
   IconDeviceCctv,
+  IconBroadcast,
+  IconCpu,
   IconUser,
 } from "@tabler/icons-react";
 import { useAuthStore } from "../../store/authStore";
@@ -13,9 +15,11 @@ export default function SuperAdminLayout() {
   const navigate = useNavigate();
 
   const navItems = [
-    { label: "Platform Telemetry", icon: IconActivity, to: "/super-admin/dashboard" },
+    { label: "Platform Operations", icon: IconActivity, to: "/super-admin/dashboard" },
     { label: "University Tenants", icon: IconBuildingArch, to: "/super-admin/institutions" },
     { label: "Global Scanner Fleet", icon: IconDeviceCctv, to: "/super-admin/devices" },
+    { label: "Incident & Broadcasts", icon: IconBroadcast, to: "/super-admin/broadcasts" },
+    { label: "System & Infrastructure", icon: IconCpu, to: "/super-admin/system" },
     { label: "Profile", icon: IconUser, to: "/super-admin/profile" },
   ];
 

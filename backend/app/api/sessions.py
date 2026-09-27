@@ -1,8 +1,14 @@
 import uuid
 
 from app.database import get_session
-from app.middleware.auth import get_current_user, require_admin, require_admin_or_marshal
-from app.models.user import User
+from app.middleware.auth import (
+    DomainScope,
+    get_current_user,
+    get_domain_scope,
+    require_admin,
+    require_admin_or_marshal,
+)
+from app.models.user import User, UserRole
 from app.schemas.attendance import (
     SessionCreate,
     SessionResponse,
@@ -29,6 +35,22 @@ class SessionExtendRequest(BaseModel):
     minutes: int = Field(15, ge=1, le=240)
 
 
+def _session_response(s) -> SessionResponse:
+    status_val = s.status.value if hasattr(s.status, "value") else str(s.status)
+    return SessionResponse(
+        id=str(s.id),
+        event_id=str(s.event_id),
+        name=s.name,
+        start_time=s.start_time,
+        end_time=s.end_time,
+        status=status_val,
+        confidence_threshold=s.confidence_threshold,
+        detection_zone=s.detection_zone,
+        activated_at=s.activated_at,
+        deactivated_at=s.deactivated_at,
+        created_at=s.created_at,
+    )
+
 
 @router.get(
     "/api/events/{event_id}/sessions",
@@ -37,25 +59,16 @@ class SessionExtendRequest(BaseModel):
 async def list_sessions(
     event_id: uuid.UUID,
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    event = await get_event(db, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if not scope.is_super_admin and scope.institution_id and event.institution_id != scope.institution_id:
+        raise HTTPException(status_code=404, detail="Event not found")
+
     items = await get_sessions(db, event_id)
-    return [
-        SessionResponse(
-            id=str(s.id),
-            event_id=str(s.event_id),
-            name=s.name,
-            start_time=s.start_time,
-            end_time=s.end_time,
-            status=s.status.value,
-            confidence_threshold=s.confidence_threshold,
-            detection_zone=s.detection_zone,
-            activated_at=s.activated_at,
-            deactivated_at=s.deactivated_at,
-            created_at=s.created_at,
-        )
-        for s in items
-    ]
+    return [_session_response(s) for s in items]
 
 
 @router.post(
@@ -67,49 +80,35 @@ async def create_session(
     event_id: uuid.UUID,
     body: SessionCreate,
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
     event = await get_event(db, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
+    if not scope.is_super_admin and scope.institution_id and event.institution_id != scope.institution_id:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if event.organization_id:
+        scope.assert_can_manage_org(event.organization_id)
+
     att_session = await service_create_session(db, event_id, body.model_dump())
-    return SessionResponse(
-        id=str(att_session.id),
-        event_id=str(att_session.event_id),
-        name=att_session.name,
-        start_time=att_session.start_time,
-        end_time=att_session.end_time,
-        status=att_session.status.value,
-        confidence_threshold=att_session.confidence_threshold,
-        detection_zone=att_session.detection_zone,
-        activated_at=att_session.activated_at,
-        deactivated_at=att_session.deactivated_at,
-        created_at=att_session.created_at,
-    )
+    await db.commit()
+    return _session_response(att_session)
 
 
 @router.get("/api/sessions/{session_id}", response_model=SessionResponse)
 async def get_session_route(
     session_id: uuid.UUID,
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
     att_session = await service_get_session(db, session_id)
     if att_session is None:
         raise HTTPException(status_code=404, detail="Session not found")
-    return SessionResponse(
-        id=str(att_session.id),
-        event_id=str(att_session.event_id),
-        name=att_session.name,
-        start_time=att_session.start_time,
-        end_time=att_session.end_time,
-        status=att_session.status.value,
-        confidence_threshold=att_session.confidence_threshold,
-        detection_zone=att_session.detection_zone,
-        activated_at=att_session.activated_at,
-        deactivated_at=att_session.deactivated_at,
-        created_at=att_session.created_at,
-    )
+    event = await get_event(db, att_session.event_id)
+    if event and not scope.is_super_admin and scope.institution_id and event.institution_id != scope.institution_id:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    return _session_response(att_session)
 
 
 @router.put("/api/sessions/{session_id}", response_model=SessionResponse)
@@ -117,25 +116,21 @@ async def update_session(
     session_id: uuid.UUID,
     body: SessionUpdate,
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
-    data = {k: v for k, v in body.model_dump().items() if v is not None}
-    att_session = await service_update_session(db, session_id, data)
+    att_session = await service_get_session(db, session_id)
     if att_session is None:
         raise HTTPException(status_code=404, detail="Session not found")
-    return SessionResponse(
-        id=str(att_session.id),
-        event_id=str(att_session.event_id),
-        name=att_session.name,
-        start_time=att_session.start_time,
-        end_time=att_session.end_time,
-        status=att_session.status.value,
-        confidence_threshold=att_session.confidence_threshold,
-        detection_zone=att_session.detection_zone,
-        activated_at=att_session.activated_at,
-        deactivated_at=att_session.deactivated_at,
-        created_at=att_session.created_at,
-    )
+    event = await get_event(db, att_session.event_id)
+    if event is None or (not scope.is_super_admin and scope.institution_id and event.institution_id != scope.institution_id):
+        raise HTTPException(status_code=404, detail="Session not found")
+    if event.organization_id:
+        scope.assert_can_manage_org(event.organization_id)
+
+    data = {k: v for k, v in body.model_dump().items() if v is not None}
+    updated = await service_update_session(db, session_id, data)
+    await db.commit()
+    return _session_response(updated)
 
 
 @router.patch(
@@ -145,24 +140,15 @@ async def update_session(
 async def activate_session(
     session_id: uuid.UUID,
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    # Enforces marshal or admin check with department/co-host authorization
+    await scope.assert_can_operate_session(session_id, db)
     att_session = await service_activate_session(db, session_id)
     if att_session is None:
         raise HTTPException(status_code=404, detail="Session not found")
-    return SessionResponse(
-        id=str(att_session.id),
-        event_id=str(att_session.event_id),
-        name=att_session.name,
-        start_time=att_session.start_time,
-        end_time=att_session.end_time,
-        status=att_session.status.value,
-        confidence_threshold=att_session.confidence_threshold,
-        detection_zone=att_session.detection_zone,
-        activated_at=att_session.activated_at,
-        deactivated_at=att_session.deactivated_at,
-        created_at=att_session.created_at,
-    )
+    await db.commit()
+    return _session_response(att_session)
 
 
 @router.patch(
@@ -172,24 +158,14 @@ async def activate_session(
 async def deactivate_session(
     session_id: uuid.UUID,
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    await scope.assert_can_operate_session(session_id, db)
     att_session = await service_deactivate_session(db, session_id)
     if att_session is None:
         raise HTTPException(status_code=404, detail="Session not found")
-    return SessionResponse(
-        id=str(att_session.id),
-        event_id=str(att_session.event_id),
-        name=att_session.name,
-        start_time=att_session.start_time,
-        end_time=att_session.end_time,
-        status=att_session.status.value,
-        confidence_threshold=att_session.confidence_threshold,
-        detection_zone=att_session.detection_zone,
-        activated_at=att_session.activated_at,
-        deactivated_at=att_session.deactivated_at,
-        created_at=att_session.created_at,
-    )
+    await db.commit()
+    return _session_response(att_session)
 
 
 @router.post(
@@ -200,22 +176,12 @@ async def extend_session_endpoint(
     session_id: uuid.UUID,
     body: SessionExtendRequest = SessionExtendRequest(minutes=15),
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    await scope.assert_can_operate_session(session_id, db)
     att_session = await service_extend_session(db, session_id, body.minutes)
     if att_session is None:
         raise HTTPException(status_code=404, detail="Session not found")
-    return SessionResponse(
-        id=str(att_session.id),
-        event_id=str(att_session.event_id),
-        name=att_session.name,
-        start_time=att_session.start_time,
-        end_time=att_session.end_time,
-        status=att_session.status.value,
-        confidence_threshold=att_session.confidence_threshold,
-        detection_zone=att_session.detection_zone,
-        activated_at=att_session.activated_at,
-        deactivated_at=att_session.deactivated_at,
-        created_at=att_session.created_at,
-    )
+    await db.commit()
+    return _session_response(att_session)
 

@@ -19,6 +19,8 @@ class EventCreate(BaseModel):
         "department_only", pattern=r"^(all|department_only|selected_departments)$"
     )
     co_host_dept_ids: list[str] | None = None
+    auto_create_session: bool | None = True
+    default_session_name: str | None = None
 
 
 class EventUpdate(BaseModel):
@@ -62,6 +64,8 @@ class EventResponse(BaseModel):
     photo_url: str | None = None
     target_scope: str = "department_only"
     co_host_dept_ids: list[str] | None = None
+    sessions_count: int = 0
+    active_sessions_count: int = 0
 
     model_config = {"from_attributes": True}
 

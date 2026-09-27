@@ -299,8 +299,28 @@ async def check_in(
 async def list_session_logs(
     session_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    att_session = await attendance_service.get_session_for_attendance(session, session_id)
+    if att_session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    event = await session.get(Event, att_session.event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    if not scope.is_super_admin:
+        if scope.institution_id and event.institution_id != scope.institution_id:
+            raise HTTPException(status_code=404, detail="Session not found")
+        if scope.is_org_admin or scope.is_marshal:
+            event_org = event.organization_id
+            co_hosts = [
+                uuid.UUID(str(c)) if not isinstance(c, uuid.UUID) else c
+                for c in (event.co_host_dept_ids or [])
+            ]
+            if event_org not in scope.assigned_org_ids and not any(cid in scope.assigned_org_ids for cid in co_hosts):
+                raise HTTPException(status_code=403, detail="Not authorized to view logs for this department session")
+
     logs = await attendance_service.get_session_logs(session, session_id)
     result = []
     for log in logs:
@@ -326,8 +346,23 @@ async def list_session_logs(
 async def list_attendee_logs(
     attendee_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    attendee = await attendee_service.get_attendee(session, attendee_id)
+    if attendee is None:
+        raise HTTPException(status_code=404, detail="Attendee not found")
+
+    if not scope.is_super_admin:
+        if scope.institution_id and attendee.institution_id != scope.institution_id:
+            raise HTTPException(status_code=404, detail="Attendee not found")
+        # Self-access allowed
+        is_self = attendee.user_id == scope.user.id or (
+            attendee.email and scope.user.email and attendee.email.lower() == scope.user.email.lower()
+        )
+        if not is_self and not scope.is_institution_admin:
+            if (scope.is_org_admin or scope.is_marshal) and attendee.organization_id not in scope.assigned_org_ids:
+                raise HTTPException(status_code=403, detail="Not authorized to view logs for this attendee")
+
     logs = await attendance_service.get_attendee_logs(session, attendee_id)
     return [
         AttendanceLogResponse(
@@ -349,15 +384,28 @@ async def list_attendee_logs(
 async def session_summary(
     session_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
     att_session = await attendance_service.get_session_for_attendance(session, session_id)
     if att_session is None:
         raise HTTPException(status_code=404, detail="Session not found")
 
+    event = await session.get(Event, att_session.event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    if not scope.is_super_admin and scope.institution_id and event.institution_id != scope.institution_id:
+        raise HTTPException(status_code=404, detail="Session not found")
+
     present = await attendance_service.count_present(session, session_id)
 
-    total_result = await session.execute(select(func.count(Attendee.id)))
+    total_query = select(func.count(Attendee.id))
+    if event.institution_id:
+        total_query = total_query.where(Attendee.institution_id == event.institution_id)
+    if event.organization_id and event.target_scope != EventTargetScope.all:
+        total_query = total_query.where(Attendee.organization_id == event.organization_id)
+
+    total_result = await session.execute(total_query)
     total_attendees = total_result.scalar() or 0
 
     return AttendanceSummary(
@@ -365,7 +413,7 @@ async def session_summary(
         session_name=att_session.name,
         total_attendees=total_attendees,
         present_count=present,
-        absent_count=total_attendees - present,
+        absent_count=max(0, total_attendees - present),
     )
 
 

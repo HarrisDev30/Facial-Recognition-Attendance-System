@@ -21,7 +21,6 @@ import {
   IconPhoto,
 } from "@tabler/icons-react";
 import * as eventsApi from "../../api/events";
-import { getSessions } from "../../api/sessions";
 import type { EventResponse, EventCreate, EventUpdate } from "../../types/event";
 import { useFormSubmit } from "../../hooks";
 import { usePagination } from "../../hooks";
@@ -76,16 +75,9 @@ export default function AdminEventsPage() {
       setEvents(res.items);
 
       const counts: Record<string, number> = {};
-      await Promise.all(
-        res.items.map(async (event) => {
-          try {
-            const sessions = await getSessions(event.id);
-            counts[event.id] = sessions.length;
-          } catch {
-            counts[event.id] = 0;
-          }
-        }),
-      );
+      for (const event of res.items) {
+        counts[event.id] = event.sessions_count ?? 0;
+      }
       setSessionCounts(counts);
     } catch {
       setEvents([]);
@@ -285,7 +277,7 @@ export default function AdminEventsPage() {
   return (
     <Container size="xl" pt={0} pb="4xl">
       <PageHeader title="Events">
-        <Button leftSection={<IconPlus size={18} />} onClick={openCreate}>
+        <Button leftSection={<IconPlus size={18} />} onClick={openCreate} className="btn-brand">
           Create Event
         </Button>
       </PageHeader>

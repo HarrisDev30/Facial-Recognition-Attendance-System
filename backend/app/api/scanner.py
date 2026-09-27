@@ -2,7 +2,11 @@ import uuid
 
 from app.config import settings
 from app.database import get_session
-from app.middleware.auth import require_admin_or_marshal
+from app.middleware.auth import (
+    DomainScope,
+    get_domain_scope,
+    require_admin_or_marshal,
+)
 from app.models.user import User
 from app.schemas.scanner import (
     FrameProcessResponse,
@@ -28,19 +32,22 @@ async def process_frame(
     session_id: str = Form(...),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    try:
+        sess_uuid = uuid.UUID(session_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid session ID")
+
+    # Enforce departmental & tenant operational permissions
+    await scope.assert_can_operate_session(sess_uuid, db)
+
     image_bytes = await file.read()
     if not image_bytes:
         return FrameProcessResponse(face_count=0, identified=False)
 
     if len(image_bytes) > settings.max_image_size_bytes:
         raise HTTPException(status_code=413, detail="Image too large (max 5MB)")
-
-    try:
-        sess_uuid = uuid.UUID(session_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid session ID")
 
     result = await scanner_service.process_frame(db, sess_uuid, image_bytes)
     return FrameProcessResponse(**result)
@@ -61,7 +68,7 @@ async def scanner_stream(
         await websocket.close(code=4001)
         return
     role = payload.get("role")
-    if role not in ("admin", "marshal"):
+    if role not in ("admin", "marshal", "org_admin", "super_admin"):
         await websocket.close(code=4003)
         return
     await connect_to_session(session_id, websocket)
@@ -78,12 +85,14 @@ async def scanner_stream(
 async def qr_checkin(
     body: QRCheckInRequest,
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
     try:
         sess_uuid = uuid.UUID(body.session_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid session ID")
+
+    await scope.assert_can_operate_session(sess_uuid, db)
 
     result = await scanner_service.qr_checkin(db, sess_uuid, body.attendee_id)
     return QRCheckInResponse(**result)
@@ -93,15 +102,17 @@ async def qr_checkin(
 async def manual_override(
     body: ManualOverrideRequest,
     db: AsyncSession = Depends(get_session),
-    current_user: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
     try:
         sess_uuid = uuid.UUID(body.session_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid session ID")
 
+    await scope.assert_can_operate_session(sess_uuid, db)
+
     result = await scanner_service.manual_override(
-        db, sess_uuid, body.attendee_id, current_user.id, body.reason
+        db, sess_uuid, body.attendee_id, scope.user.id, body.reason
     )
     return ManualOverrideResponse(**result)
 
@@ -110,12 +121,14 @@ async def manual_override(
 async def live_stats(
     session_id: str,
     db: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
     try:
         sess_uuid = uuid.UUID(session_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid session ID")
+
+    await scope.assert_can_operate_session(sess_uuid, db)
 
     result = await scanner_service.get_live_stats(db, sess_uuid)
     return LiveStatsResponse(**result)

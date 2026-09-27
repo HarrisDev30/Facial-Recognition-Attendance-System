@@ -3,7 +3,13 @@ import uuid
 
 from app.config import settings
 from app.database import get_session
-from app.middleware.auth import get_current_user, require_admin, require_admin_or_marshal
+from app.middleware.auth import (
+    DomainScope,
+    get_current_user,
+    get_domain_scope,
+    require_admin,
+    require_admin_or_marshal,
+)
 from app.models.attendee import Attendee
 from app.models.organization import Organization
 from app.models.user import User, UserRole
@@ -24,7 +30,7 @@ from sqlalchemy.orm import selectinload
 router = APIRouter(prefix="/api/events", tags=["events"])
 
 
-def _event_response(e) -> EventResponse:
+def _event_response(e, sessions_count: int = 0, active_sessions_count: int = 0) -> EventResponse:
     org_id_str = str(e.organization_id) if e.organization_id else None
     org = e.__dict__.get("organization")
     org_code = org.code if org else None
@@ -53,6 +59,8 @@ def _event_response(e) -> EventResponse:
         photo_url=e.photo_url,
         target_scope=target_scope_val,
         co_host_dept_ids=e.co_host_dept_ids,
+        sessions_count=sessions_count,
+        active_sessions_count=active_sessions_count,
     )
 
 
@@ -82,7 +90,7 @@ async def list_events(
         session, organization_id=org_filter, institution_id=inst_id
     )
     return EventListResponse(
-        items=[_event_response(e) for e in items],
+        items=[_event_response(e, s_cnt, act_s_cnt) for e, s_cnt, act_s_cnt in items],
         total=total,
     )
 
@@ -279,30 +287,47 @@ async def update_event(
     event_id: uuid.UUID,
     body: EventUpdate,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    event = await event_service.get_event(session, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if not scope.is_super_admin and scope.institution_id and event.institution_id != scope.institution_id:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if event.organization_id:
+        scope.assert_can_manage_org(event.organization_id)
+
     data = body.model_dump(exclude_unset=True)
     target_org_id = data.get("organization_id") or data.get("department_id")
     if target_org_id:
+        scope.assert_can_manage_org(target_org_id)
         data["organization_id"] = uuid.UUID(target_org_id)
     if "department_id" in data:
         del data["department_id"]
 
-    event = await event_service.update_event(session, event_id, data)
-    if event is None:
-        raise HTTPException(status_code=404, detail="Event not found")
-    return _event_response(event)
+    updated = await event_service.update_event(session, event_id, data)
+    await session.commit()
+    return _event_response(updated)
 
 
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_event(
     event_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    event = await event_service.get_event(session, event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if not scope.is_super_admin and scope.institution_id and event.institution_id != scope.institution_id:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if event.organization_id:
+        scope.assert_can_manage_org(event.organization_id)
+
     ok = await event_service.delete_event(session, event_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Event not found")
+    await session.commit()
     return None
 
 
@@ -311,11 +336,15 @@ async def upload_event_photo(
     event_id: uuid.UUID,
     file: UploadFile = File(...),
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
     event = await event_service.get_event(session, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
+    if not scope.is_super_admin and scope.institution_id and event.institution_id != scope.institution_id:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if event.organization_id:
+        scope.assert_can_manage_org(event.organization_id)
 
     content = await file.read()
     if not content:
@@ -340,11 +369,15 @@ async def upload_event_photo(
 async def delete_event_photo(
     event_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_admin_or_marshal),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
     event = await event_service.get_event(session, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
+    if not scope.is_super_admin and scope.institution_id and event.institution_id != scope.institution_id:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if event.organization_id:
+        scope.assert_can_manage_org(event.organization_id)
 
     event.photo_url = None
     await session.commit()

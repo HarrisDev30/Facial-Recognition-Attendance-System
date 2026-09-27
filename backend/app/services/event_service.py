@@ -38,7 +38,7 @@ async def create_event(
     session: AsyncSession, data: dict, created_by: uuid.UUID
 ) -> Event:
     data = dict(data)
-    auto_create = data.pop("auto_create_session", False)
+    auto_create = data.pop("auto_create_session", True)
     default_sess_name = data.pop("default_session_name", "General Attendance")
 
     # If institution_id not passed, resolve from organization
@@ -129,11 +129,19 @@ async def get_events(
     organization_id: str | None = None,
     department_id: str | None = None,
     institution_id: uuid.UUID | None = None,
-) -> list[Event]:
+) -> list[tuple[Event, int, int]]:
     org_filter = organization_id or department_id
     query = (
-        select(Event)
+        select(
+            Event,
+            func.count(AttendanceSession.id).label("sessions_count"),
+            func.sum(
+                case((AttendanceSession.status == SessionStatus.active, 1), else_=0)
+            ).label("active_sessions_count"),
+        )
+        .outerjoin(AttendanceSession, AttendanceSession.event_id == Event.id)
         .options(selectinload(Event.organization))
+        .group_by(Event.id)
         .order_by(Event.created_at.desc())
         .offset(skip)
         .limit(limit)
@@ -155,7 +163,7 @@ async def get_events(
         except ValueError:
             pass
     result = await session.execute(query)
-    return list(result.scalars().all())
+    return [(row[0], row[1] or 0, row[2] or 0) for row in result.all()]
 
 
 async def count_events(

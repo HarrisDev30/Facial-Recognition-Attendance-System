@@ -276,6 +276,9 @@ export default function EventAttendanceDetailPage() {
                 {sessions.map((session) => {
                   const isAttended = Boolean(session.verified_at);
                   const isActive = session.status === "active";
+                  const isPast =
+                    session.status === "completed" ||
+                    (Boolean(session.end_time) && new Date(session.end_time).getTime() < Date.now());
                   const meta = session.verification_method
                     ? (VERIFICATION_ICONS[session.verification_method] ?? {
                         label: "Verified",
@@ -288,7 +291,7 @@ export default function EventAttendanceDetailPage() {
                     <div
                       key={session.session_id}
                       className={`timeline-node-card ${isActive ? "is-active" : ""} ${
-                        isAttended ? "is-attended" : ""
+                        isAttended ? "is-attended" : isPast ? "is-past" : ""
                       }`}
                     >
                       <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
@@ -323,8 +326,12 @@ export default function EventAttendanceDetailPage() {
                           <Badge size="xs" color="red" variant="filled" styles={{ root: { fontWeight: 700, flexShrink: 0 } }}>
                             Live Now
                           </Badge>
+                        ) : isPast ? (
+                          <Badge size="xs" color="gray" variant="outline" styles={{ root: { fontWeight: 500, flexShrink: 0 } }}>
+                            Missed
+                          </Badge>
                         ) : (
-                          <Badge size="xs" color="gray" variant="light" styles={{ root: { fontWeight: 500, flexShrink: 0 } }}>
+                          <Badge size="xs" color="indigo" variant="light" styles={{ root: { fontWeight: 500, flexShrink: 0 } }}>
                             Upcoming
                           </Badge>
                         )}

@@ -120,23 +120,51 @@ html, body {
   transform: scale(0.97) !important;
 }
 
-/* Brand Primary Button */
-.btn-brand {
-  background: var(--brand-primary);
-  color: var(--brand-contrast-text);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 16px -2px var(--brand-glow);
-  font-weight: 600;
+/* Brand Primary Button & Universal Action Button */
+.btn-brand,
+.admin-btn-primary {
+  background: var(--brand-primary) !important;
+  color: var(--brand-contrast-text) !important;
+  border: 1px solid var(--brand-border) !important;
+  box-shadow: 0 2px 14px var(--brand-glow) !important;
+  font-weight: 600 !important;
   transition: transform var(--duration-fast) var(--ease-out),
-              box-shadow var(--duration-fast) var(--ease-out);
+              box-shadow var(--duration-fast) var(--ease-out),
+              opacity var(--duration-fast) ease !important;
 }
 
-.btn-brand:hover {
-  box-shadow: 0 0 24px 2px var(--brand-glow);
+.btn-brand:hover,
+.admin-btn-primary:hover {
+  box-shadow: 0 4px 20px var(--brand-glow) !important;
+  opacity: 0.95 !important;
 }
 
-.btn-brand:active {
-  transform: scale(0.97);
+.btn-brand:active,
+.admin-btn-primary:active {
+  transform: scale(0.97) !important;
+}
+
+/* Secondary & Subtle Action Buttons */
+.btn-secondary,
+.admin-btn-secondary {
+  background: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-subtle) !important;
+  font-weight: 500 !important;
+  transition: background-color var(--duration-fast) ease,
+              border-color var(--duration-fast) ease,
+              transform var(--duration-fast) var(--ease-out) !important;
+}
+
+.btn-secondary:hover,
+.admin-btn-secondary:hover {
+  background: var(--surface-2) !important;
+  border-color: var(--border-hover) !important;
+}
+
+.btn-secondary:active,
+.admin-btn-secondary:active {
+  transform: scale(0.97) !important;
 }
 
 /* Brand Card & Glow Accents */
@@ -503,4 +531,38 @@ html, body {
   -webkit-overflow-scrolling: touch;
   max-height: calc(100dvh - 140px);
 }
+
+/* ─── Universal Left-Section Icon Overlap / Merge Fix ─── */
+.mantine-Input-wrapper:has([data-position="left"]) .mantine-Input-input,
+.mantine-Input-wrapper:has(.mantine-Input-section[data-position="left"]) input,
+.mantine-TextInput-root .mantine-Input-wrapper:has([data-position="left"]) input,
+.mantine-Select-root .mantine-Input-wrapper:has([data-position="left"]) input,
+.superadmin-search-input .mantine-Input-input,
+.superadmin-search-input input {
+  padding-left: 36px !important;
+}
+
+.mantine-Input-section[data-position="left"],
+.mantine-TextInput-section[data-position="left"],
+.mantine-Select-section[data-position="left"] {
+  width: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+}
+
+/* ─── Universal Status Badge Anti-Truncation ─── */
+.status-badge-cell,
+.mantine-Badge-root {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.mantine-Badge-label {
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
 

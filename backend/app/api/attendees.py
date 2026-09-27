@@ -5,7 +5,13 @@ from pathlib import Path
 
 from app.config import settings
 from app.database import get_session
-from app.middleware.auth import get_current_user, require_admin, require_admin_or_marshal
+from app.middleware.auth import (
+    DomainScope,
+    get_current_user,
+    get_domain_scope,
+    require_admin,
+    require_admin_or_marshal,
+)
 from app.models.attendee import Attendee, AttendeeType
 from app.models.consent import Consent
 from app.models.data_removal_request import DataRemovalRequest
@@ -441,17 +447,14 @@ async def get_attendee_profile_photo(
 @router.get("", response_model=list[AttendeeResponse])
 async def list_attendees(
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
     query = (
         select(Attendee, Organization)
         .outerjoin(Organization, Attendee.organization_id == Organization.id)
         .order_by(Attendee.last_name, Attendee.first_name)
     )
-    if current_user.role != UserRole.super_admin:
-        if not current_user.institution_id:
-            return []
-        query = query.where(Attendee.institution_id == current_user.institution_id)
+    query = scope.scope_query(query, Attendee)
 
     result = await session.execute(query)
     rows = result.all()
@@ -474,7 +477,7 @@ async def list_attendees(
                 last_name=a.last_name,
                 email=a.email,
                 attendee_type=att_type_val,
-                department_id=str(a.organization_id),
+                department_id=str(a.organization_id) if a.organization_id else "",
                 department_name=org.name if org else None,
                 department_code=org.code if org else None,
                 consent_given=a.consent_given,
@@ -490,8 +493,15 @@ async def list_attendees(
 async def create_attendee(
     body: AttendeeCreate,
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(require_admin),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    if not scope.is_admin_or_higher:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin authorization required")
+
+    dept_id = uuid.UUID(body.department_id)
+    scope.assert_can_manage_org(dept_id)
+
+    current_user = scope.user
     existing = await session.execute(
         select(Attendee).where(
             Attendee.identifier == body.identifier,
@@ -515,7 +525,6 @@ async def create_attendee(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Attendee with email '{body.email}' already exists in this campus",
             )
-    dept_id = uuid.UUID(body.department_id)
     org = await session.get(Organization, dept_id)
     if org is None or (current_user.role != UserRole.super_admin and org.institution_id != current_user.institution_id):
         raise HTTPException(status_code=404, detail="Department not found for this campus")
@@ -560,7 +569,7 @@ async def create_attendee(
         last_name=attendee.last_name,
         email=attendee.email,
         attendee_type=att_type_val,
-        department_id=str(attendee.organization_id),
+        department_id=str(attendee.organization_id) if attendee.organization_id else "",
         department_name=org.name if org else None,
         department_code=org.code if org else None,
         consent_given=attendee.consent_given,
@@ -574,13 +583,16 @@ async def create_attendee(
 async def get_attendee(
     attendee_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
     attendee = await attendee_service.get_attendee(session, attendee_id)
     if attendee is None:
         raise HTTPException(status_code=404, detail="Attendee not found")
-    if current_user.role != UserRole.super_admin and attendee.institution_id != current_user.institution_id:
-        raise HTTPException(status_code=404, detail="Attendee not found")
+    if not scope.is_super_admin:
+        if scope.institution_id and attendee.institution_id != scope.institution_id:
+            raise HTTPException(status_code=404, detail="Attendee not found")
+        if (scope.is_org_admin or scope.is_marshal) and attendee.organization_id not in scope.assigned_org_ids:
+            raise HTTPException(status_code=404, detail="Attendee not found")
 
     org = await session.get(Organization, attendee.organization_id)
     att_type_val = attendee.attendee_type.value if hasattr(attendee.attendee_type, "value") else str(attendee.attendee_type)
@@ -596,7 +608,7 @@ async def get_attendee(
         last_name=attendee.last_name,
         email=attendee.email,
         attendee_type=att_type_val,
-        department_id=str(attendee.organization_id),
+        department_id=str(attendee.organization_id) if attendee.organization_id else "",
         department_name=org.name if org else None,
         department_code=org.code if org else None,
         consent_given=attendee.consent_given,
@@ -611,17 +623,26 @@ async def update_attendee(
     attendee_id: uuid.UUID,
     body: AttendeeCreate,
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(require_admin),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    if not scope.is_admin_or_higher:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin authorization required")
+
     attendee_check = await attendee_service.get_attendee(session, attendee_id)
     if attendee_check is None:
         raise HTTPException(status_code=404, detail="Attendee not found")
-    if current_user.role != UserRole.super_admin and attendee_check.institution_id != current_user.institution_id:
-        raise HTTPException(status_code=404, detail="Attendee not found")
+    if not scope.is_super_admin:
+        if attendee_check.institution_id != scope.institution_id:
+            raise HTTPException(status_code=404, detail="Attendee not found")
+        if scope.is_org_admin:
+            scope.assert_can_manage_org(attendee_check.organization_id)
 
     data = body.model_dump()
     if "department_id" in data and data["department_id"]:
-        data["organization_id"] = uuid.UUID(data.pop("department_id"))
+        new_dept_id = uuid.UUID(data.pop("department_id"))
+        if not scope.is_super_admin and scope.is_org_admin:
+            scope.assert_can_manage_org(new_dept_id)
+        data["organization_id"] = new_dept_id
     data["attendee_type"] = AttendeeType(body.attendee_type)
     attendee = await attendee_service.update_attendee(session, attendee_id, data)
     if attendee is None:
@@ -635,7 +656,7 @@ async def update_attendee(
         last_name=attendee.last_name,
         email=attendee.email,
         attendee_type=att_type_val,
-        department_id=str(attendee.organization_id),
+        department_id=str(attendee.organization_id) if attendee.organization_id else "",
         department_name=org.name if org else None,
         department_code=org.code if org else None,
         consent_given=attendee.consent_given,
@@ -649,13 +670,19 @@ async def update_attendee(
 async def delete_attendee(
     attendee_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(require_admin),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    if not scope.is_admin_or_higher:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin authorization required")
+
     attendee_check = await attendee_service.get_attendee(session, attendee_id)
     if attendee_check is None:
         raise HTTPException(status_code=404, detail="Attendee not found")
-    if current_user.role != UserRole.super_admin and attendee_check.institution_id != current_user.institution_id:
-        raise HTTPException(status_code=404, detail="Attendee not found")
+    if not scope.is_super_admin:
+        if attendee_check.institution_id != scope.institution_id:
+            raise HTTPException(status_code=404, detail="Attendee not found")
+        if scope.is_org_admin:
+            scope.assert_can_manage_org(attendee_check.organization_id)
 
     ok = await attendee_service.delete_attendee(session, attendee_id)
     if not ok:

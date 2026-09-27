@@ -16,6 +16,8 @@ export interface EventResponse {
   photo_url: string | null;
   target_scope?: string;
   co_host_dept_ids?: string[] | null;
+  sessions_count?: number;
+  active_sessions_count?: number;
 }
 
 export interface EventCreate {

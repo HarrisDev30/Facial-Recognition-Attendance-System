@@ -37,7 +37,7 @@ import {
   getMyAttendanceSummary,
   getMyProfile,
 } from "../../api/attendees";
-import { getAllEvents } from "../../api/events";
+import { getUpcomingEvents } from "../../api/events";
 import type {
   AttendanceLogEntry,
   AttendanceSummary,
@@ -241,7 +241,7 @@ export default function StudentDashboardPage() {
       const [logRes, summaryRes, upcomingRes, profileRes] = await Promise.all([
         getMyAttendanceLogs({ page: 1, size: 10, sort: "date_desc" }),
         getMyAttendanceSummary(),
-        getAllEvents(1, 4),
+        getUpcomingEvents(1, 10),
         getMyProfile().catch(() => null),
       ]);
       setLogs(logRes.items);
@@ -287,7 +287,10 @@ export default function StudentDashboardPage() {
   const totalAttended = summary?.total_events_attended ?? 0;
   const attendanceRate = summary?.attendance_rate ?? 0;
   const isBiometricActive = !!(user?.profile_photo_url || user?.attendee_type);
-  const nextEvent = upcoming.length > 0 ? upcoming[0] : null;
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const nextEvent = useMemo(() => {
+    return upcoming.find((e) => e.active_sessions_count > 0 || e.date >= todayStr) ?? (upcoming.length > 0 ? upcoming[0] : null);
+  }, [upcoming, todayStr]);
 
   // Next Event Date Info (Month + Day, e.g. AUG 4)
   const nextEventDateInfo = useMemo(() => {

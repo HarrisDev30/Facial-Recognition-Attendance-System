@@ -89,7 +89,27 @@ async def preview_frame(
     }
 
 
-from app.middleware.auth import get_current_user
+from app.middleware.auth import DomainScope, get_current_user, get_domain_scope
+
+
+def _assert_can_access_attendee_biometrics(scope: DomainScope, attendee: attendee_service.Attendee) -> None:
+    if scope.is_super_admin:
+        return
+    if scope.institution_id and attendee.institution_id != scope.institution_id:
+        raise HTTPException(status_code=404, detail="Attendee not found")
+    # Self-access allowed
+    if attendee.user_id == scope.user.id or (
+        attendee.email and scope.user.email and attendee.email.lower() == scope.user.email.lower()
+    ):
+        return
+    if scope.is_institution_admin:
+        return
+    if (scope.is_org_admin or scope.is_marshal) and attendee.organization_id in scope.assigned_org_ids:
+        return
+    raise HTTPException(
+        status_code=403,
+        detail="Not authorized to access or manage biometrics for this attendee",
+    )
 
 
 @router.post("/consent/{attendee_id}")
@@ -97,8 +117,13 @@ async def set_consent(
     attendee_id: uuid.UUID,
     body: ConsentRequest,
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    attendee_obj = await attendee_service.get_attendee(session, attendee_id)
+    if attendee_obj is None:
+        raise HTTPException(status_code=404, detail="Attendee not found")
+    _assert_can_access_attendee_biometrics(scope, attendee_obj)
+
     attendee = await registration_service.update_consent(session, attendee_id, body.consent_given)
     if attendee is None:
         raise HTTPException(status_code=404, detail="Attendee not found")
@@ -119,11 +144,12 @@ async def upload_embedding(
     file: UploadFile = File(...),
     camera_angle: str | None = Form(None),
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
     attendee = await attendee_service.get_attendee(session, attendee_id)
     if attendee is None:
         raise HTTPException(status_code=404, detail="Attendee not found")
+    _assert_can_access_attendee_biometrics(scope, attendee)
 
     image_bytes = await file.read()
     if len(image_bytes) > settings.max_image_size_bytes:
@@ -193,8 +219,13 @@ async def upload_embedding(
 async def list_embeddings(
     attendee_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
+    attendee = await attendee_service.get_attendee(session, attendee_id)
+    if attendee is None:
+        raise HTTPException(status_code=404, detail="Attendee not found")
+    _assert_can_access_attendee_biometrics(scope, attendee)
+
     embeddings = await registration_service.get_embeddings(session, attendee_id)
     return [
         {

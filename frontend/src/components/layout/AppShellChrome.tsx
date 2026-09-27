@@ -161,20 +161,6 @@ export default function AppShellChrome({
 
   return (
     <>
-      {/* 2px Top-Edge Brand Energy Ribbon */}
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 2,
-          background: "var(--brand-gradient)",
-          zIndex: 2000,
-          pointerEvents: "none",
-          transition: "background 200ms ease",
-        }}
-      />
       <AppShell
         header={{ height: 64 }}
         navbar={{ width: navbarWidth, breakpoint: "sm", collapsed: { mobile: !opened } }}

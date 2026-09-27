@@ -48,6 +48,8 @@ import InstitutionSettingsPage from "./pages/admin/InstitutionSettingsPage";
 import SuperAdminDashboardPage from "./pages/super-admin/SuperAdminDashboardPage";
 import SuperAdminInstitutionsPage from "./pages/super-admin/SuperAdminInstitutionsPage";
 import SuperAdminDevicesPage from "./pages/super-admin/SuperAdminDevicesPage";
+import SuperAdminBroadcastsPage from "./pages/super-admin/SuperAdminBroadcastsPage";
+import SuperAdminSystemPage from "./pages/super-admin/SuperAdminSystemPage";
 
 // Scanner Pages
 import ScannerDisplay from "./pages/scanner/ScannerDisplay";
@@ -117,6 +119,8 @@ export default function App() {
             <Route path="/super-admin/dashboard" element={<SuperAdminDashboardPage />} />
             <Route path="/super-admin/institutions" element={<SuperAdminInstitutionsPage />} />
             <Route path="/super-admin/devices" element={<SuperAdminDevicesPage />} />
+            <Route path="/super-admin/broadcasts" element={<SuperAdminBroadcastsPage />} />
+            <Route path="/super-admin/system" element={<SuperAdminSystemPage />} />
             <Route path="/super-admin/profile" element={<StudentProfilePage />} />
           </Route>
         </Route>

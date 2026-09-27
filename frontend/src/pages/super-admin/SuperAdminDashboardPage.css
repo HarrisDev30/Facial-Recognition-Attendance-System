@@ -1,0 +1,832 @@
+/* ==========================================================================
+   Super Admin Dashboard Styles — Enterprise Flagship Architecture
+   Campus Cards Matrix, Mantine RingProgress Gauges, and Multi-Deck Layout
+   ========================================================================== */
+
+:root {
+  --craft-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.superadmin-container {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* ─── 1. Executive Split Header Card ─── */
+.superadmin-header-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 22px 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(520px, 1.35fr);
+  align-items: stretch;
+  gap: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1060px) {
+  .superadmin-header-card {
+    grid-template-columns: 1fr;
+    padding: 18px 20px;
+    gap: 20px;
+  }
+}
+
+.superadmin-identity-col {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.superadmin-title-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.superadmin-eyebrow {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  margin-bottom: 3px;
+}
+
+.superadmin-greeting-title {
+  font-size: clamp(1.35rem, 2.1vw, 1.95rem);
+  font-weight: 750;
+  color: var(--text-primary);
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  margin: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.superadmin-sub-tagline {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+}
+
+.superadmin-credential-stack {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.superadmin-id-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.superadmin-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.superadmin-status-pill.maintenance {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.superadmin-pulse-beacon {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  display: inline-block;
+  animation: pulse-beacon-anim 2s infinite cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+@keyframes pulse-beacon-anim {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.superadmin-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.superadmin-btn-primary {
+  background: var(--brand-primary, #0070f3) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--brand-border, rgba(0, 112, 243, 0.3)) !important;
+  box-shadow: 0 2px 12px var(--brand-glow, rgba(0, 112, 243, 0.2)) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  transition: transform 160ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), box-shadow 150ms ease, opacity 150ms ease !important;
+}
+
+.superadmin-btn-primary:active {
+  transform: scale(0.97) !important;
+}
+
+.superadmin-btn-secondary {
+  background: var(--surface-0) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  transition: transform 160ms var(--craft-ease-out), background-color 150ms ease !important;
+}
+
+.superadmin-btn-secondary:hover {
+  background: var(--surface-2) !important;
+}
+
+.superadmin-btn-secondary:active {
+  transform: scale(0.97) !important;
+}
+
+/* ─── Header Visual Telemetry Slides ─── */
+.superadmin-visual-frame {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  align-items: stretch;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .superadmin-visual-frame {
+    grid-template-columns: 1fr;
+  }
+}
+
+.superadmin-visual-slide {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.superadmin-slide-category {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+.superadmin-slide-gauge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 2px 0;
+}
+
+.superadmin-slide-chart {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  margin: 2px 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.superadmin-slide-big-metric {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.superadmin-slide-subtext {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+/* ─── 2. Main Bento Deck Panels ─── */
+.superadmin-bento-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+
+.superadmin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.superadmin-card-heading-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.superadmin-card-heading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  text-transform: capitalize;
+  margin: 0;
+}
+
+.superadmin-card-subheading {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.superadmin-card-meta-count {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono, monospace);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+
+/* ─── 3. Campus Cards Matrix (Zero Horizontal Scroll) ─── */
+.superadmin-campus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+  margin-top: 6px;
+}
+
+@media (max-width: 640px) {
+  .superadmin-campus-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.superadmin-campus-card {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 160ms var(--craft-ease-out), border-color 150ms ease, box-shadow 150ms ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.superadmin-campus-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.18));
+  box-shadow: var(--shadow-card-hover, 0 8px 24px rgba(0, 0, 0, 0.08));
+}
+
+.superadmin-campus-card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.superadmin-campus-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.superadmin-campus-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.superadmin-campus-slug {
+  font-size: 0.6875rem;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 2px;
+  display: block;
+}
+
+.superadmin-campus-metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.superadmin-campus-metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.superadmin-campus-metric-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.superadmin-campus-metric-val {
+  font-size: 0.9375rem;
+  font-weight: 750;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.superadmin-campus-admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  padding: 0 2px;
+}
+
+.superadmin-campus-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ─── 4. Telemetry Duo Tiles & Toolbar ─── */
+.superadmin-telemetry-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.superadmin-telemetry-tile {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.superadmin-telemetry-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.superadmin-telemetry-tile-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.superadmin-telemetry-tile-value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.superadmin-telemetry-tile-sub {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.superadmin-card-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.superadmin-search-input {
+  flex: 1;
+  max-width: 360px;
+  min-width: 220px;
+}
+
+/* ─── 5. Tables & System Page Styles ─── */
+.superadmin-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  width: 100%;
+}
+
+.superadmin-data-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.superadmin-data-table thead tr th {
+  background: var(--surface-0) !important;
+  color: var(--text-secondary) !important;
+  font-size: 0.725rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 10px 14px !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+.superadmin-data-table tbody tr {
+  transition: background-color 100ms ease;
+}
+
+.superadmin-data-table tbody tr:hover {
+  background: var(--surface-0) !important;
+}
+
+.superadmin-data-table tbody tr td {
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  vertical-align: middle;
+}
+
+.superadmin-brand-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.superadmin-tabular-num {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ─── 6. Dedicated Broadcast Hub Styles ─── */
+.superadmin-switch-box {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.superadmin-preview-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  animation: pulse-banner 3s infinite ease-in-out;
+}
+
+@keyframes pulse-banner {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.88; }
+}
+
+.superadmin-preview-banner.banner-orange {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #d97706;
+}
+
+.superadmin-preview-banner.banner-blue {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #2563eb;
+}
+
+.superadmin-preview-banner.banner-red {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #dc2626;
+}
+
+.superadmin-active-announcement-card {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* ─── 7. Modal Campus Selector & Severity Controls ─── */
+.superadmin-modal-scope-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.superadmin-modal-scope-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.superadmin-modal-scope-tab:hover {
+  color: var(--text-primary);
+  background: var(--surface-1);
+}
+
+.superadmin-modal-scope-tab.active {
+  background: var(--brand-primary, #0070f3);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 112, 243, 0.25);
+}
+
+.superadmin-modal-campus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.superadmin-modal-campus-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-0);
+  cursor: pointer;
+  transition: all 120ms ease;
+  user-select: none;
+  text-align: left;
+}
+
+.superadmin-modal-campus-chip:hover {
+  border-color: var(--brand-primary, #0070f3);
+  background: var(--surface-1);
+}
+
+.superadmin-modal-campus-chip.selected {
+  background: rgba(0, 112, 243, 0.08);
+  border-color: var(--brand-primary, #0070f3);
+}
+
+.superadmin-modal-severity-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.superadmin-modal-severity-btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-0);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 120ms ease;
+  color: var(--text-secondary);
+}
+
+.superadmin-modal-severity-btn.active-orange {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: #f59e0b;
+  color: #d97706;
+}
+
+.superadmin-modal-severity-btn.active-red {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.superadmin-modal-severity-btn.active-blue {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+/* ─── Anti-Truncation & Table Actions ─── */
+.superadmin-table-actions-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+}
+
+.superadmin-table-actions-group .mantine-Button-root {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* ─── Scanner Fleet Polish ─── */
+.scanner-device-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
+  transition: transform 160ms var(--craft-ease-out), border-color 160ms ease;
+}
+
+.scanner-device-avatar.online {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  border-color: rgba(34, 197, 94, 0.25);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.15);
+}
+
+.scanner-device-avatar.offline {
+  background: var(--surface-0);
+  color: var(--text-muted);
+  border-color: var(--border-subtle);
+}
+
+.scanner-beacon-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: relative;
+  display: inline-block;
+}
+
+.scanner-beacon-dot.online {
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+}
+
+.scanner-beacon-dot.online::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 50%;
+  border: 1.5px solid #22c55e;
+  animation: pulse-beacon-anim 2s infinite cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+.scanner-beacon-dot.offline {
+  background: #94a3b8;
+}
+
+.scanner-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+.scanner-pill-badge.online {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.scanner-pill-badge.offline {
+  background: var(--surface-0);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.scanner-hardware-card-option {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-0);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 160ms var(--craft-ease-out), border-color 160ms ease, background 160ms ease;
+  user-select: none;
+}
+
+.scanner-hardware-card-option:hover {
+  border-color: var(--brand-primary, #0070f3);
+  background: var(--surface-1);
+}
+
+.scanner-hardware-card-option:active {
+  transform: scale(0.98);
+}
+
+.scanner-hardware-card-option.selected {
+  border-color: var(--brand-primary, #0070f3);
+  background: rgba(0, 112, 243, 0.08);
+  box-shadow: 0 0 0 1px var(--brand-primary, #0070f3);
+}
+

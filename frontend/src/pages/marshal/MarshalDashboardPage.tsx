@@ -250,9 +250,12 @@ export default function MarshalDashboardPage() {
               className="marshal-action-btn-secondary"
               size="sm"
               leftSection={<IconUsers size={16} />}
-              onClick={() => setSearchModalOpen(true)}
+              onClick={() => {
+                setOverrideSessionId(null);
+                setSearchModalOpen(true);
+              }}
             >
-              Search Students
+              {sessions.length > 0 ? "Search & Check In" : "Student Directory"}
             </Button>
             <Button
               className="marshal-action-btn-secondary"
@@ -723,7 +726,8 @@ export default function MarshalDashboardPage() {
           setSearchModalOpen(false);
           setOverrideSessionId(null);
         }}
-        sessionId={overrideSessionId || sessions[0]?.session_id}
+        sessionId={overrideSessionId}
+        activeSessions={sessions}
         attendees={attendees}
         onSuccess={() => {
           execute();

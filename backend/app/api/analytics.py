@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.database import get_session
-from app.middleware.auth import get_current_user
+from app.middleware.auth import DomainScope, get_current_user, get_domain_scope
 from app.models.attendance_log import AttendanceLog
 from app.models.attendance_session import AttendanceSession, SessionStatus
 from app.models.attendee import Attendee, AttendeeType
@@ -76,20 +76,26 @@ class AtRiskStudentEntry(BaseModel):
 @router.get("/institution/summary", response_model=InstitutionSummaryMetrics)
 async def get_institution_summary_metrics(
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
-    if current_user.role not in (UserRole.admin, UserRole.super_admin, UserRole.org_admin):
+    if not scope.is_admin_or_higher:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin authorization required")
 
-    inst_id = current_user.institution_id
+    inst_id = scope.institution_id
+    assigned_orgs = scope.assigned_org_ids if scope.is_org_admin else None
 
     # 1. Total attendees by type
     att_stmt = select(
         Attendee.attendee_type,
         func.count(Attendee.id)
     ).group_by(Attendee.attendee_type)
-    if inst_id and current_user.role != UserRole.super_admin:
+    if inst_id and not scope.is_super_admin:
         att_stmt = att_stmt.where(Attendee.institution_id == inst_id)
+    if assigned_orgs is not None:
+        if assigned_orgs:
+            att_stmt = att_stmt.where(Attendee.organization_id.in_(assigned_orgs))
+        else:
+            att_stmt = att_stmt.where(Attendee.organization_id == None)  # noqa: E711
     
     att_res = await session.execute(att_stmt)
     att_counts = {r[0]: r[1] for r in att_res.all()}
@@ -101,8 +107,13 @@ async def get_institution_summary_metrics(
         Organization.org_type,
         func.count(Organization.id)
     ).group_by(Organization.org_type)
-    if inst_id and current_user.role != UserRole.super_admin:
+    if inst_id and not scope.is_super_admin:
         org_stmt = org_stmt.where(Organization.institution_id == inst_id)
+    if assigned_orgs is not None:
+        if assigned_orgs:
+            org_stmt = org_stmt.where(Organization.id.in_(assigned_orgs))
+        else:
+            org_stmt = org_stmt.where(Organization.id == None)  # noqa: E711
     
     org_res = await session.execute(org_stmt)
     org_counts = {r[0]: r[1] for r in org_res.all()}
@@ -111,15 +122,31 @@ async def get_institution_summary_metrics(
 
     # 3. Events count
     ev_stmt = select(func.count(Event.id)).where(Event.status != EventStatus.cancelled)
-    if inst_id and current_user.role != UserRole.super_admin:
+    if inst_id and not scope.is_super_admin:
         ev_stmt = ev_stmt.where(Event.institution_id == inst_id)
+    if assigned_orgs is not None:
+        if assigned_orgs:
+            ev_stmt = ev_stmt.where(Event.organization_id.in_(assigned_orgs))
+        else:
+            ev_stmt = ev_stmt.where(Event.organization_id == None)  # noqa: E711
     ev_res = await session.execute(ev_stmt)
     total_events = ev_res.scalar() or 0
 
     # 4. Active sessions
     sess_stmt = select(func.count(AttendanceSession.id)).where(AttendanceSession.status == SessionStatus.active)
-    if inst_id and current_user.role != UserRole.super_admin:
+    if inst_id and not scope.is_super_admin:
         sess_stmt = sess_stmt.join(Event, AttendanceSession.event_id == Event.id).where(Event.institution_id == inst_id)
+        if assigned_orgs is not None:
+            if assigned_orgs:
+                sess_stmt = sess_stmt.where(Event.organization_id.in_(assigned_orgs))
+            else:
+                sess_stmt = sess_stmt.where(Event.organization_id == None)  # noqa: E711
+    elif assigned_orgs is not None:
+        sess_stmt = sess_stmt.join(Event, AttendanceSession.event_id == Event.id)
+        if assigned_orgs:
+            sess_stmt = sess_stmt.where(Event.organization_id.in_(assigned_orgs))
+        else:
+            sess_stmt = sess_stmt.where(Event.organization_id == None)  # noqa: E711
     sess_res = await session.execute(sess_stmt)
     active_sessions_count = sess_res.scalar() or 0
 
@@ -128,8 +155,13 @@ async def get_institution_summary_metrics(
         func.count(ScannerDevice.id),
         func.count(case((ScannerDevice.is_active.is_(True), 1)))
     )
-    if inst_id and current_user.role != UserRole.super_admin:
+    if inst_id and not scope.is_super_admin:
         dev_stmt = dev_stmt.where(ScannerDevice.institution_id == inst_id)
+    if assigned_orgs is not None:
+        if assigned_orgs:
+            dev_stmt = dev_stmt.where(ScannerDevice.organization_id.in_(assigned_orgs))
+        else:
+            dev_stmt = dev_stmt.where(ScannerDevice.organization_id == None)  # noqa: E711
     dev_res = await session.execute(dev_stmt)
     total_devices, active_devices = dev_res.first() or (0, 0)
 
@@ -139,10 +171,22 @@ async def get_institution_summary_metrics(
         func.avg(AttendanceLog.confidence_score),
         func.count(func.distinct(AttendanceLog.attendee_id))
     )
-    if inst_id and current_user.role != UserRole.super_admin:
+    if inst_id and not scope.is_super_admin:
         log_stmt = log_stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
                            .join(Event, AttendanceSession.event_id == Event.id)\
                            .where(Event.institution_id == inst_id)
+        if assigned_orgs is not None:
+            if assigned_orgs:
+                log_stmt = log_stmt.where(Event.organization_id.in_(assigned_orgs))
+            else:
+                log_stmt = log_stmt.where(Event.organization_id == None)  # noqa: E711
+    elif assigned_orgs is not None:
+        log_stmt = log_stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
+                           .join(Event, AttendanceSession.event_id == Event.id)
+        if assigned_orgs:
+            log_stmt = log_stmt.where(Event.organization_id.in_(assigned_orgs))
+        else:
+            log_stmt = log_stmt.where(Event.organization_id == None)  # noqa: E711
     
     log_res = await session.execute(log_stmt)
     total_checkins, avg_conf, distinct_attended = log_res.first() or (0, 0.0, 0)
@@ -170,19 +214,24 @@ async def get_institution_summary_metrics(
 @router.get("/institution/colleges-comparison", response_model=list[CollegeAttendanceBenchmark])
 async def get_colleges_attendance_comparison(
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
-    if current_user.role not in (UserRole.admin, UserRole.super_admin, UserRole.org_admin):
+    if not scope.is_admin_or_higher:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin authorization required")
 
-    inst_id = current_user.institution_id
+    inst_id = scope.institution_id
 
     # Fetch all academic colleges/departments
     org_stmt = select(Organization).where(
         Organization.org_type == OrgType.COLLEGE
     ).order_by(Organization.name.asc())
-    if inst_id and current_user.role != UserRole.super_admin:
+    if inst_id and not scope.is_super_admin:
         org_stmt = org_stmt.where(Organization.institution_id == inst_id)
+    if scope.is_org_admin:
+        if scope.assigned_org_ids:
+            org_stmt = org_stmt.where(Organization.id.in_(scope.assigned_org_ids))
+        else:
+            org_stmt = org_stmt.where(Organization.id == None)  # noqa: E711
     
     org_res = await session.execute(org_stmt)
     colleges = org_res.scalars().all()
@@ -234,12 +283,12 @@ async def get_hourly_traffic_distribution(
     days: int = Query(7, ge=1, le=30),
     organization_id: uuid.UUID | None = Query(None),
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
-    if current_user.role not in (UserRole.admin, UserRole.super_admin, UserRole.org_admin):
+    if not scope.is_admin_or_higher:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin authorization required")
 
-    inst_id = current_user.institution_id
+    inst_id = scope.institution_id
     since_date = datetime.now(UTC) - timedelta(days=days)
 
     stmt = select(
@@ -247,16 +296,30 @@ async def get_hourly_traffic_distribution(
         AttendanceLog.verification_method,
     ).where(AttendanceLog.verified_at >= since_date)
 
-    if inst_id and current_user.role != UserRole.super_admin:
+    if inst_id and not scope.is_super_admin:
         stmt = stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
                    .join(Event, AttendanceSession.event_id == Event.id)\
                    .where(Event.institution_id == inst_id)
         if organization_id:
+            if scope.is_org_admin:
+                scope.assert_can_manage_org(organization_id)
             stmt = stmt.where(Event.organization_id == organization_id)
+        elif scope.is_org_admin:
+            if scope.assigned_org_ids:
+                stmt = stmt.where(Event.organization_id.in_(scope.assigned_org_ids))
+            else:
+                stmt = stmt.where(Event.organization_id == None)  # noqa: E711
     elif organization_id:
         stmt = stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
                    .join(Event, AttendanceSession.event_id == Event.id)\
                    .where(Event.organization_id == organization_id)
+    elif scope.is_org_admin:
+        stmt = stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
+                   .join(Event, AttendanceSession.event_id == Event.id)
+        if scope.assigned_org_ids:
+            stmt = stmt.where(Event.organization_id.in_(scope.assigned_org_ids))
+        else:
+            stmt = stmt.where(Event.organization_id == None)  # noqa: E711
 
     res = await session.execute(stmt)
     logs = res.all()
@@ -305,12 +368,12 @@ async def get_hourly_traffic_distribution(
 async def get_verification_breakdown(
     organization_id: uuid.UUID | None = Query(None),
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
-    if current_user.role not in (UserRole.admin, UserRole.super_admin, UserRole.org_admin):
+    if not scope.is_admin_or_higher:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin authorization required")
 
-    inst_id = current_user.institution_id
+    inst_id = scope.institution_id
 
     stmt = select(
         AttendanceLog.verification_method,
@@ -318,16 +381,30 @@ async def get_verification_breakdown(
         func.avg(AttendanceLog.confidence_score)
     ).group_by(AttendanceLog.verification_method)
 
-    if inst_id and current_user.role != UserRole.super_admin:
+    if inst_id and not scope.is_super_admin:
         stmt = stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
                    .join(Event, AttendanceSession.event_id == Event.id)\
                    .where(Event.institution_id == inst_id)
         if organization_id:
+            if scope.is_org_admin:
+                scope.assert_can_manage_org(organization_id)
             stmt = stmt.where(Event.organization_id == organization_id)
+        elif scope.is_org_admin:
+            if scope.assigned_org_ids:
+                stmt = stmt.where(Event.organization_id.in_(scope.assigned_org_ids))
+            else:
+                stmt = stmt.where(Event.organization_id == None)  # noqa: E711
     elif organization_id:
         stmt = stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
                    .join(Event, AttendanceSession.event_id == Event.id)\
                    .where(Event.organization_id == organization_id)
+    elif scope.is_org_admin:
+        stmt = stmt.join(AttendanceSession, AttendanceLog.session_id == AttendanceSession.id)\
+                   .join(Event, AttendanceSession.event_id == Event.id)
+        if scope.assigned_org_ids:
+            stmt = stmt.where(Event.organization_id.in_(scope.assigned_org_ids))
+        else:
+            stmt = stmt.where(Event.organization_id == None)  # noqa: E711
 
     res = await session.execute(stmt)
     rows = res.all()
@@ -372,19 +449,27 @@ async def get_at_risk_students(
     limit: int = Query(20, ge=1, le=100),
     organization_id: uuid.UUID | None = Query(None),
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    scope: DomainScope = Depends(get_domain_scope),
 ):
-    if current_user.role not in (UserRole.admin, UserRole.super_admin, UserRole.org_admin):
+    if not scope.is_admin_or_higher:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin authorization required")
 
-    inst_id = current_user.institution_id
+    inst_id = scope.institution_id
 
-    # Total available active events in this institution
+    # Total available active events in this institution / org
     total_ev_stmt = select(func.count(Event.id)).where(Event.status != EventStatus.cancelled)
-    if inst_id and current_user.role != UserRole.super_admin:
+    if inst_id and not scope.is_super_admin:
         total_ev_stmt = total_ev_stmt.where(Event.institution_id == inst_id)
     if organization_id:
+        if scope.is_org_admin:
+            scope.assert_can_manage_org(organization_id)
         total_ev_stmt = total_ev_stmt.where(Event.organization_id == organization_id)
+    elif scope.is_org_admin:
+        if scope.assigned_org_ids:
+            total_ev_stmt = total_ev_stmt.where(Event.organization_id.in_(scope.assigned_org_ids))
+        else:
+            total_ev_stmt = total_ev_stmt.where(Event.organization_id == None)  # noqa: E711
+
     total_ev_res = await session.execute(total_ev_stmt)
     total_events_available = max(1, total_ev_res.scalar() or 1)
 
@@ -402,10 +487,17 @@ async def get_at_risk_students(
         .group_by(Attendee.id, Organization.id)
     )
 
-    if inst_id and current_user.role != UserRole.super_admin:
+    if inst_id and not scope.is_super_admin:
         query = query.where(Attendee.institution_id == inst_id)
     if organization_id:
+        if scope.is_org_admin:
+            scope.assert_can_manage_org(organization_id)
         query = query.where(Attendee.organization_id == organization_id)
+    elif scope.is_org_admin:
+        if scope.assigned_org_ids:
+            query = query.where(Attendee.organization_id.in_(scope.assigned_org_ids))
+        else:
+            query = query.where(Attendee.organization_id == None)  # noqa: E711
 
     res = await session.execute(query)
     rows = res.all()
