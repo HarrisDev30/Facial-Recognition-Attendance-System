@@ -50,19 +50,6 @@ import { formatTime } from "../../utils/formatters";
 import { getApiError } from "../../utils/error";
 import "./ScannerDisplay.css";
 
-function dataURLtoBlob(dataURL: string): Blob {
-  const arr = dataURL.split(",");
-  const mimeMatch = arr[0].match(/:(.*?);/);
-  const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-  return new Blob([u8arr], { type: mime });
-}
-
 export default function ScannerDisplay() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
@@ -86,10 +73,16 @@ export default function ScannerDisplay() {
     time: string;
     method?: string;
   } | null>(null);
+  const [alreadyCheckedInNotice, setAlreadyCheckedInNotice] = useState<{
+    name: string;
+    time: string;
+  } | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scanningRef = useRef(false);
+  const alreadyCheckedInTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const verifiedIdsRef = useRef<Set<string>>(new Set());
 
   // ─── Camera Devices & External USB Camera Selection ───
   const { devices, refresh: refreshDevices } = useCameraDevices();
@@ -112,7 +105,7 @@ export default function ScannerDisplay() {
     error: cameraError,
     startCamera,
     stopCamera,
-    captureFrame,
+    captureBlob,
   } = useCamera({ deviceId: selectedDeviceId || undefined });
 
   // Handle switching cameras dynamically
@@ -126,7 +119,15 @@ export default function ScannerDisplay() {
   };
 
   const handleAttendeeVerified = useCallback(
-    (name: string, method: string = "face_recognition", timestamp?: string) => {
+    (name: string, method: string = "face_recognition", timestamp?: string, attendeeId?: string) => {
+      const key = attendeeId || name;
+      if (verifiedIdsRef.current.has(key)) {
+        return;
+      }
+      verifiedIdsRef.current.add(key);
+      if (name) verifiedIdsRef.current.add(name);
+      if (attendeeId) verifiedIdsRef.current.add(attendeeId);
+
       const timeStr = timestamp ? formatTime(timestamp) : new Date().toLocaleTimeString();
       setLatestVerified({ name, time: timeStr, method });
       setIsMatchPulse(true);
@@ -140,36 +141,46 @@ export default function ScannerDisplay() {
         setLatestVerified((curr) => (curr?.name === name ? null : curr));
       }, 4000);
 
-      setIdentified((prev) => [
-        {
-          event: "attendee_identified",
-          attendee_name: name,
-          timestamp: timestamp || new Date().toISOString(),
-          verification_method: method,
-        },
-        ...prev,
-      ].slice(0, 40));
+      setIdentified((prev) => {
+        const isDuplicate = prev.some(
+          (item) =>
+            (attendeeId && item.attendee_id === attendeeId) ||
+            (!attendeeId && item.attendee_name === name) ||
+            item.attendee_name === name,
+        );
+        if (isDuplicate) return prev;
+        return [
+          {
+            event: "attendee_identified",
+            attendee_id: attendeeId,
+            attendee_name: name,
+            timestamp: timestamp || new Date().toISOString(),
+            verification_method: method,
+          },
+          ...prev,
+        ].slice(0, 40);
+      });
 
       setStats((prev) =>
         prev
           ? {
-              ...prev,
-              total_checked_in: prev.total_checked_in + 1,
-              check_in_rate:
-                prev.total_registered > 0
-                  ? Math.round(
-                      ((prev.total_checked_in + 1) / prev.total_registered) * 100 * 10,
-                    ) / 10
-                  : 0,
-              recent_check_ins: [
-                {
-                  attendee_name: name,
-                  timestamp: timestamp || new Date().toISOString(),
-                  method,
-                },
-                ...prev.recent_check_ins,
-              ].slice(0, 15),
-            }
+            ...prev,
+            total_checked_in: prev.total_checked_in + 1,
+            check_in_rate:
+              prev.total_registered > 0
+                ? Math.round(
+                  ((prev.total_checked_in + 1) / prev.total_registered) * 100 * 10,
+                ) / 10
+                : 0,
+            recent_check_ins: [
+              {
+                attendee_name: name,
+                timestamp: timestamp || new Date().toISOString(),
+                method,
+              },
+              ...prev.recent_check_ins.filter((rc) => rc.attendee_name !== name),
+            ].slice(0, 15),
+          }
           : prev,
       );
     },
@@ -190,6 +201,7 @@ export default function ScannerDisplay() {
           msg.attendee_name || "Student",
           msg.verification_method || "face_recognition",
           msg.timestamp,
+          msg.attendee_id,
         );
       }
     },
@@ -208,6 +220,13 @@ export default function ScannerDisplay() {
         setSession(s);
         setStats(st);
         setAttendees(atts);
+        if (st?.recent_check_ins) {
+          st.recent_check_ins.forEach((rc) => {
+            if (rc.attendee_name) {
+              verifiedIdsRef.current.add(rc.attendee_name);
+            }
+          });
+        }
 
         if (s.activated_at) {
           const started = new Date(s.activated_at).getTime();
@@ -227,6 +246,7 @@ export default function ScannerDisplay() {
     })();
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (alreadyCheckedInTimerRef.current) clearTimeout(alreadyCheckedInTimerRef.current);
     };
   }, [sessionId]);
 
@@ -242,13 +262,35 @@ export default function ScannerDisplay() {
 
     scanIntervalRef.current = setInterval(async () => {
       if (scanningRef.current) return;
-      const frameData = captureFrame();
-      if (!frameData) return;
-
       scanningRef.current = true;
       try {
-        const blob = dataURLtoBlob(frameData);
+        const blob = await captureBlob("image/jpeg", 0.85);
+        if (!blob) return;
+
         const res: FrameProcessResponse = await processFrame(sessionId, blob);
+
+        // Option B: Ephemeral badge for already checked in students
+        const alreadyIn = (res.identifications || []).find(
+          (fi) => fi.already_checked_in && fi.attendee_name,
+        );
+        if (alreadyIn && alreadyIn.attendee_name) {
+          const timeStr = new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          });
+          setAlreadyCheckedInNotice({
+            name: alreadyIn.attendee_name,
+            time: timeStr,
+          });
+          if (alreadyCheckedInTimerRef.current) {
+            clearTimeout(alreadyCheckedInTimerRef.current);
+          }
+          alreadyCheckedInTimerRef.current = setTimeout(() => {
+            setAlreadyCheckedInNotice(null);
+          }, 2500);
+        }
+
         const matched = (res.identifications || []).filter(
           (fi) => fi.attendee_name && !fi.already_checked_in,
         );
@@ -259,6 +301,7 @@ export default function ScannerDisplay() {
               fi.attendee_name || "Student",
               "face_recognition",
               new Date().toISOString(),
+              fi.attendee_id,
             );
           });
         }
@@ -275,14 +318,14 @@ export default function ScannerDisplay() {
         scanIntervalRef.current = null;
       }
     };
-  }, [continuousMode, cameraActive, sessionId, captureFrame, handleAttendeeVerified]);
+  }, [continuousMode, cameraActive, sessionId, captureBlob, handleAttendeeVerified]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
+      document.documentElement.requestFullscreen().catch(() => { });
       setFullscreen(true);
     } else {
-      document.exitFullscreen().catch(() => {});
+      document.exitFullscreen().catch(() => { });
       setFullscreen(false);
     }
   };
@@ -525,6 +568,13 @@ export default function ScannerDisplay() {
               </>
             )}
 
+            {/* Option B: Ephemeral Already Checked In Pill */}
+            {alreadyCheckedInNotice && (
+              <div className="kiosk-already-checked-in-pill">
+                ⚡ {alreadyCheckedInNotice.name} — Already Checked In
+              </div>
+            )}
+
             {/* Instant Verified Pop-Up Banner */}
             {latestVerified && (
               <div className="kiosk-match-overlay">
@@ -655,7 +705,7 @@ export default function ScannerDisplay() {
                   const initial = item.attendee_name?.[0]?.toUpperCase() || "S";
                   return (
                     <div
-                      key={`${item.timestamp}-${idx}`}
+                      key={`${item.attendee_id || item.attendee_name || item.timestamp}-${idx}`}
                       className={`kiosk-feed-item ${idx === 0 ? "is-first" : ""}`}
                     >
                       <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
@@ -800,7 +850,7 @@ export default function ScannerDisplay() {
         attendees={attendees}
         onSuccess={() => {
           if (sessionId) {
-            getLiveStats(sessionId).then(setStats).catch(() => {});
+            getLiveStats(sessionId).then(setStats).catch(() => { });
           }
         }}
       />

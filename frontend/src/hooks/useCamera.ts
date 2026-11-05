@@ -12,11 +12,13 @@ interface UseCameraReturn {
   startCamera: (customDeviceId?: string | unknown) => Promise<void>;
   stopCamera: () => void;
   captureFrame: () => string | null;
+  captureBlob: (type?: string, quality?: number) => Promise<Blob | null>;
 }
 
 export function useCamera(options?: UseCameraOptions): UseCameraReturn {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,16 +62,56 @@ export function useCamera(options?: UseCameraOptions): UseCameraReturn {
   const captureFrame = useCallback((): string | null => {
     const video = videoRef.current;
     if (!video) return null;
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    const canvas = canvasRef.current ?? (canvasRef.current = document.createElement("canvas"));
+    const width = video.videoWidth || 640;
+    const height = video.videoHeight || 480;
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
     ctx.drawImage(video, 0, 0);
     return canvas.toDataURL("image/jpeg", 0.8);
   }, []);
 
-  return { videoRef, streamRef, cameraActive, error, startCamera, stopCamera, captureFrame };
+  const captureBlob = useCallback(
+    (type = "image/jpeg", quality = 0.85): Promise<Blob | null> => {
+      return new Promise((resolve) => {
+        const video = videoRef.current;
+        if (!video) {
+          resolve(null);
+          return;
+        }
+        const canvas = canvasRef.current ?? (canvasRef.current = document.createElement("canvas"));
+        const width = video.videoWidth || 640;
+        const height = video.videoHeight || 480;
+        if (canvas.width !== width) canvas.width = width;
+        if (canvas.height !== height) canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+        ctx.drawImage(video, 0, 0);
+        canvas.toBlob(
+          (blob) => {
+            resolve(blob);
+          },
+          type,
+          quality,
+        );
+      });
+    },
+    [],
+  );
+
+  return {
+    videoRef,
+    streamRef,
+    cameraActive,
+    error,
+    startCamera,
+    stopCamera,
+    captureFrame,
+    captureBlob,
+  };
 }
-
-

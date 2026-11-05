@@ -70,10 +70,11 @@ export default function ScannerMultiFace() {
   const [marshalOpen, { open: openMarshal, close: closeMarshal }] = useDisclosure(false);
   const [cameraStarted, setCameraStarted] = useState(false);
 
-  const { videoRef, cameraActive, startCamera, stopCamera, captureFrame } = useCamera();
+  const { videoRef, cameraActive, startCamera, stopCamera, captureBlob } = useCamera();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const scanningRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const verifiedAttendeesRef = useRef<Set<string>>(new Set());
 
   const {
     connectionStatus: wsStatus,
@@ -82,25 +83,45 @@ export default function ScannerMultiFace() {
   } = useWebSocket(sessionId ?? "", {
     onMessage: (msg: WSMessage) => {
       if (msg.event === "attendee_identified") {
-        setIdentified((prev) => [msg, ...prev].slice(0, 30));
+        const key = msg.attendee_id || msg.attendee_name || "";
+        if (key && verifiedAttendeesRef.current.has(key)) {
+          return;
+        }
+        if (key) {
+          verifiedAttendeesRef.current.add(key);
+          if (msg.attendee_id) verifiedAttendeesRef.current.add(msg.attendee_id);
+          if (msg.attendee_name) verifiedAttendeesRef.current.add(msg.attendee_name);
+        }
+
+        setIdentified((prev) => {
+          const isDup = prev.some(
+            (p) =>
+              (msg.attendee_id && p.attendee_id === msg.attendee_id) ||
+              (!msg.attendee_id && p.attendee_name === msg.attendee_name) ||
+              p.attendee_name === msg.attendee_name,
+          );
+          if (isDup) return prev;
+          return [msg, ...prev].slice(0, 30);
+        });
+
         setStats((prev) =>
           prev
             ? {
-                ...prev,
-                total_checked_in: prev.total_checked_in + 1,
-                check_in_rate:
-                  prev.total_registered > 0
-                    ? Math.round(((prev.total_checked_in + 1) / prev.total_registered) * 100 * 10) / 10
-                    : 0,
-                recent_check_ins: [
-                  {
-                    attendee_name: msg.attendee_name || "",
-                    timestamp: msg.timestamp || new Date().toISOString(),
-                    method: msg.verification_method || "face_recognition",
-                  },
-                  ...prev.recent_check_ins,
-                ].slice(0, 10),
-              }
+              ...prev,
+              total_checked_in: prev.total_checked_in + 1,
+              check_in_rate:
+                prev.total_registered > 0
+                  ? Math.round(((prev.total_checked_in + 1) / prev.total_registered) * 100 * 10) / 10
+                  : 0,
+              recent_check_ins: [
+                {
+                  attendee_name: msg.attendee_name || "",
+                  timestamp: msg.timestamp || new Date().toISOString(),
+                  method: msg.verification_method || "face_recognition",
+                },
+                ...prev.recent_check_ins.filter((rc) => rc.attendee_name !== msg.attendee_name),
+              ].slice(0, 10),
+            }
             : prev,
         );
       }
@@ -117,6 +138,13 @@ export default function ScannerMultiFace() {
         ]);
         setSession(s);
         setStats(st);
+        if (st?.recent_check_ins) {
+          st.recent_check_ins.forEach((rc) => {
+            if (rc.attendee_name) {
+              verifiedAttendeesRef.current.add(rc.attendee_name);
+            }
+          });
+        }
       } catch (err) {
         setError(getApiError(err) || "Failed to load scanner data");
       } finally {
@@ -140,38 +168,73 @@ export default function ScannerMultiFace() {
     if (scanningRef.current || !sessionId) return;
     scanningRef.current = true;
     try {
-      const dataUrl = captureFrame();
-      if (!dataUrl) {
+      const blob = await captureBlob("image/jpeg", 0.85);
+      if (!blob) {
         scanningRef.current = false;
         return;
       }
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
       const result: FrameProcessResponse = await processFrame(sessionId, blob);
       setLastResults(result.identifications || []);
 
-      const newCheckins = (result.identifications || []).filter(
-        (fi) => fi.attendee_name && !fi.already_checked_in,
-      );
+      const newCheckins = (result.identifications || []).filter((fi) => {
+        if (!fi.attendee_name || fi.already_checked_in) return false;
+        const key = fi.attendee_id || fi.attendee_name;
+        if (verifiedAttendeesRef.current.has(key)) return false;
+        return true;
+      });
+
       if (newCheckins.length > 0) {
+        newCheckins.forEach((fi) => {
+          const key = fi.attendee_id || fi.attendee_name || "";
+          if (key) {
+            verifiedAttendeesRef.current.add(key);
+            if (fi.attendee_id) verifiedAttendeesRef.current.add(fi.attendee_id);
+            if (fi.attendee_name) verifiedAttendeesRef.current.add(fi.attendee_name);
+          }
+        });
+
+        setIdentified((prev) => {
+          const toAdd: WSMessage[] = newCheckins
+            .filter(
+              (fi) =>
+                !prev.some(
+                  (p) =>
+                    (fi.attendee_id && p.attendee_id === fi.attendee_id) ||
+                    (!fi.attendee_id && p.attendee_name === fi.attendee_name) ||
+                    p.attendee_name === fi.attendee_name,
+                ),
+            )
+            .map((fi) => ({
+              event: "attendee_identified",
+              attendee_id: fi.attendee_id,
+              attendee_name: fi.attendee_name,
+              timestamp: new Date().toISOString(),
+              verification_method: "face_recognition",
+            }));
+          if (toAdd.length === 0) return prev;
+          return [...toAdd, ...prev].slice(0, 30);
+        });
+
         setStats((prev) =>
           prev
             ? {
-                ...prev,
-                total_checked_in: prev.total_checked_in + newCheckins.length,
-                check_in_rate:
-                  prev.total_registered > 0
-                    ? Math.round(((prev.total_checked_in + newCheckins.length) / prev.total_registered) * 100 * 10) / 10
-                    : 0,
-                recent_check_ins: [
-                  ...newCheckins.map((fi) => ({
-                    attendee_name: fi.attendee_name || "",
-                    timestamp: new Date().toISOString(),
-                    method: "face_recognition" as const,
-                  })),
-                  ...prev.recent_check_ins,
-                ].slice(0, 10),
-              }
+              ...prev,
+              total_checked_in: prev.total_checked_in + newCheckins.length,
+              check_in_rate:
+                prev.total_registered > 0
+                  ? Math.round(((prev.total_checked_in + newCheckins.length) / prev.total_registered) * 100 * 10) / 10
+                  : 0,
+              recent_check_ins: [
+                ...newCheckins.map((fi) => ({
+                  attendee_name: fi.attendee_name || "",
+                  timestamp: new Date().toISOString(),
+                  method: "face_recognition" as const,
+                })),
+                ...prev.recent_check_ins.filter(
+                  (rc) => !newCheckins.some((nc) => nc.attendee_name === rc.attendee_name),
+                ),
+              ].slice(0, 10),
+            }
             : prev,
         );
       }
@@ -180,7 +243,7 @@ export default function ScannerMultiFace() {
     } finally {
       scanningRef.current = false;
     }
-  }, [captureFrame, sessionId]);
+  }, [captureBlob, sessionId]);
 
   useEffect(() => {
     if (!cameraActive || !sessionId) return;
@@ -296,7 +359,7 @@ export default function ScannerMultiFace() {
       </Paper>
 
       {errorLog.length > 0 && (
-        <Alert color="orange" mb="md" withCloseButton onClose={() => {}}>
+        <Alert color="orange" mb="md" withCloseButton onClose={() => { }}>
           {errorLog[errorLog.length - 1]}
         </Alert>
       )}
@@ -484,7 +547,7 @@ export default function ScannerMultiFace() {
             ) : (
               <Stack gap={4}>
                 {identified.slice(0, 8).map((item, idx) => (
-                  <Paper key={`${item.timestamp}-${idx}`} p="xs" radius="sm" withBorder>
+                  <Paper key={`${item.attendee_id || item.attendee_name || item.timestamp}-${idx}`} p="xs" radius="sm" withBorder>
                     <Group justify="space-between" wrap="nowrap">
                       <div style={{ minWidth: 0 }}>
                         <Text size="sm" fw={500} truncate>{item.attendee_name}</Text>

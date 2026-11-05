@@ -227,6 +227,44 @@
   border-bottom-right-radius: 3px;
 }
 
+/* Option B: Subtle HUD Badge for Already Checked In Students */
+.kiosk-already-checked-in-pill {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: rgba(24, 24, 27, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #f59e0b;
+  border-radius: 9999px;
+  color: #fef3c7;
+  font-family: var(--font-sans, Geist, Inter, -apple-system, sans-serif);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 16px rgba(245, 158, 11, 0.25);
+  z-index: 15;
+  pointer-events: none;
+  animation: pillFadeSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pillFadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
 /* Floating Match Banner Overlay */
 .kiosk-match-overlay {
   position: absolute;

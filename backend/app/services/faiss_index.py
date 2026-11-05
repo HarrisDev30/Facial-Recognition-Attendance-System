@@ -142,7 +142,7 @@ def search_institution(
             return None, None
         inst_idx.last_accessed = time.time()
         idx_ref = inst_idx.index
-        aids = list(inst_idx.attendee_ids)
+        aids = inst_idx.attendee_ids
 
     q = np.frombuffer(query_embedding, dtype=np.float32).reshape(1, -1)
     q_norm = np.linalg.norm(q)
@@ -181,7 +181,7 @@ def batch_search_institution(
             return [(None, None)] * len(query_embeddings)
         inst_idx.last_accessed = time.time()
         idx_ref = inst_idx.index
-        aids = list(inst_idx.attendee_ids)
+        aids = inst_idx.attendee_ids
 
     queries = []
     for emb_bytes in query_embeddings:

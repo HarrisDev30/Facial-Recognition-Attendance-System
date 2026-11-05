@@ -21,7 +21,7 @@ from app.services.websocket_manager import (
     connect_to_session,
     disconnect_from_session,
 )
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, WebSocket
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile, WebSocket
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/api/scanner", tags=["scanner"])
@@ -29,6 +29,7 @@ router = APIRouter(prefix="/api/scanner", tags=["scanner"])
 
 @router.post("/frame", response_model=FrameProcessResponse)
 async def process_frame(
+    background_tasks: BackgroundTasks,
     session_id: str = Form(...),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_session),
@@ -49,7 +50,10 @@ async def process_frame(
     if len(image_bytes) > settings.max_image_size_bytes:
         raise HTTPException(status_code=413, detail="Image too large (max 5MB)")
 
-    result = await scanner_service.process_frame(db, sess_uuid, image_bytes)
+    result = await scanner_service.process_frame(
+        db, sess_uuid, image_bytes, background_tasks=background_tasks
+    )
+    result.pop("pending_notifications", None)
     return FrameProcessResponse(**result)
 
 
